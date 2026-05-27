@@ -1,15 +1,14 @@
-import FooterFour from '../../../layouts/footers/FooterFour'
-import HeaderOne from '../../../layouts/headers/HeaderOne'
-import ContactArea from './ContactArea'
+import FutureFooter from "../../../layouts/footers/FutureFooter";
+import FutureHeader from "../../../layouts/headers/FutureHeader";
+import ContactArea from "./ContactArea";
 
 const Contact = () => {
-   return (
-      <>
-         <HeaderOne style={true} />
-         <ContactArea />
-         <FooterFour />
-      </>
-   )
-}
+  return (
+    <>
+      <FutureHeader style_1={true} style_2={false} /> <ContactArea />
+      <FutureFooter />
+    </>
+  );
+};
 
-export default Contact
+export default Contact;

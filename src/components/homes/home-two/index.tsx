@@ -1,15 +1,15 @@
-import FooterOne from "../../../layouts/footers/FooterOne"
-import HeroBanner from "./HeroBanner"
-import FeedbackOne from "./FeedbackOne"
-import Property from "./Property"
-import BLockFeatureOne from "./BLockFeatureOne"
-import FancyBannerOne from "./FancyBannerOne"
-import BLockFeatureTwo from "./BLockFeatureTwo"
-import FeedbackTwo from "./FeedbackTwo"
-import Blog from "./Blog"
-import FAQ from "./FAQ"
-import FancyBannerTwo from "./FancyBannerTwo"
-import HeaderTwo from "../../../layouts/headers/HeaderTwo"
+import FooterOne from "../../../layouts/footers/FooterOne";
+import HeroBanner from "./HeroBanner";
+import FeedbackOne from "./FeedbackOne";
+import Property from "./Property";
+import BLockFeatureOne from "./BLockFeatureOne";
+import FancyBannerOne from "./FancyBannerOne";
+import BLockFeatureTwo from "./BLockFeatureTwo";
+import FeedbackTwo from "./FeedbackTwo";
+import Blog from "./Blog";
+import FAQ from "./FAQ";
+import FancyBannerTwo from "./FancyBannerTwo";
+import HeaderTwo from "../../../layouts/headers/FutureHeader";
 
 const HomeTwo = () => {
   return (
@@ -24,10 +24,10 @@ const HomeTwo = () => {
       <FeedbackTwo />
       <Blog style={false} />
       <FAQ />
-      <FancyBannerTwo/>
+      <FancyBannerTwo />
       <FooterOne style={true} />
     </>
-  )
-}
+  );
+};
 
-export default HomeTwo
+export default HomeTwo;

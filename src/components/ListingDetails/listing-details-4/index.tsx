@@ -1,17 +1,18 @@
-import FooterFour from "../../../layouts/footers/FooterFour"
-import HeaderFour from "../../../layouts/headers/HeaderFour"
-import FancyBanner from "../../common/FancyBanner"
-import ListingDetailsFourArea from "./ListingDetailsFourArea"
+import FooterFour from "../../../layouts/footers/FooterFour";
+import FutureFooter from "../../../layouts/footers/FutureFooter";
+import FutureHeader from "../../../layouts/headers/FutureHeader";
+import HeaderFour from "../../../layouts/headers/HeaderFour";
+import FancyBanner from "../../common/FancyBanner";
+import ListingDetailsFourArea from "./ListingDetailsFourArea";
 
 const ListingDetailsFour = () => {
-   return (
-      <>
-         <HeaderFour />
-         <ListingDetailsFourArea />
-         <FancyBanner />
-         <FooterFour />
-      </>
-   )
-}
+  return (
+    <>
+      <FutureHeader style_1={true} style_2={false} /> <ListingDetailsFourArea />
+      <FancyBanner />
+      <FutureFooter />
+    </>
+  );
+};
 
-export default ListingDetailsFour
+export default ListingDetailsFour;
