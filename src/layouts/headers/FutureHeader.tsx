@@ -59,9 +59,8 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                       </li>
                       <li className="d-none d-md-inline-block ms-3 ms-xl-4 me-xl-4">
                         <Link
-                          to="dashboard/add-property"
+                          to="/calculator"
                           className={style_1 ? "btn-ten" : "btn-two rounded-0"}
-                          target="_blank"
                         >
                           <span>Open Calculator</span>{" "}
                           <i className="fa-thin fa-arrow-up-right"></i>

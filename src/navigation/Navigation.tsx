@@ -71,6 +71,7 @@ import Buy from "../pages/FutureBuy";
 import Sell from "../pages/FutureSell";
 import FutureAbout from "../pages/FutureAbout";
 import FutureContact from "../pages/FutureContact";
+import Calculator from "../my-components/Calculator";
 
 const AppNavigation = () => {
   return (
@@ -124,7 +125,8 @@ const AppNavigation = () => {
         <Route path="/listing_details_01" element={<ListingDetailsOne />} />
         <Route path="/listing_details_02" element={<ListingDetailsTwo />} />
         <Route path="/listing_details_03" element={<ListingDetailsThree />} />
-        <Route path="/sell" element={<Sell />} />
+        <Route path="/sell/:id" element={<Sell />} />
+        <Route path="/calculator" element={<Calculator />} />
         <Route path="/listing_details_05" element={<ListingDetailsFive />} />
         <Route path="/listing_details_06" element={<ListingDetailsSix />} />
         <Route path="/blog_01" element={<BlogOne />} />
