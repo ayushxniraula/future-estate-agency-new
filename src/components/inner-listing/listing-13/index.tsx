@@ -1,7 +1,7 @@
 import FutureFooter from "../../../layouts/footers/FutureFooter";
 import FutureHeader from "../../../layouts/headers/FutureHeader";
 import FancyBanner from "../../common/FancyBanner";
-import ListingThirteenArea from "./ListingThirteenArea";
+import ListingThirteenArea from "./FutureBuyListing";
 
 const ListingThirteen = () => {
   return (

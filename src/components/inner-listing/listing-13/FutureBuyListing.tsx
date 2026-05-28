@@ -586,7 +586,7 @@ function SidebarFilters({
 }
 
 // ─── Main Component ───────────────────────────────────────────
-const ListingThirteenArea = () => {
+const BuyListing = () => {
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -991,4 +991,4 @@ const ListingThirteenArea = () => {
   );
 };
 
-export default ListingThirteenArea;
+export default BuyListing;
