@@ -1,31 +1,30 @@
-import HeroBanner from "./HeroBanner";
-import Category from "./Category";
-import BLockFeatureOne from "./BLockFeatureOne";
-import PropertyOne from "./PropertyOne";
-import BLockFeatureTwo from "./BLockFeatureTwo";
-import FancyBannerOne from "./FancyBannerOne";
-import Brand from "./Brand";
-import FancyBannerTwo from "./FancyBannerTwo";
-import Footer from "../../../layouts/footers/Footer";
-import PropertyTwo from "./PropertyTwo";
-import Feedback from "./Feedback";
 import HeaderTwo from "../../../layouts/headers/FutureHeader";
+import Brand from "../home-four/Brand";
+import Category from "../home-four/Category";
+import PropertyOne from "../home-four/PropertyOne";
+import PropertyTwo from "../home-four/PropertyTwo";
+import BLockFeatureOne from "../home-two/BLockFeatureOne";
+import BLockFeatureTwo from "../home-two/BLockFeatureTwo";
+import FancyBannerOne from "../home-two/FancyBannerOne";
+import FancyBannerTwo from "../home-two/FancyBannerTwo";
+import Feedback from "../home-two/FeedbackOne";
+import HeroBanner from "../home-two/HeroBanner";
 
 const HomeThree = () => {
   return (
     <>
       <HeaderTwo style_1={true} style_2={false} />
       <HeroBanner />
-      <Category style={false} />
+      <Category />
       <BLockFeatureOne />
       <PropertyOne />
-      <PropertyTwo style={false} />
+      <PropertyTwo />
       <BLockFeatureTwo />
       <FancyBannerOne />
-      <Feedback style={false} />
+      <Feedback />
       <Brand />
       <FancyBannerTwo />
-      <Footer />
+      <footer />
     </>
   );
 };

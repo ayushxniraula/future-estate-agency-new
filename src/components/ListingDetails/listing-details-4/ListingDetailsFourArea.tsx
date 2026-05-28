@@ -67,18 +67,8 @@ function formatPrice(price: number, status: string): string {
 
 // Build a free OpenStreetMap embed URL from a location string.
 // We pass the location as the "q" search param in the Nominatim-based embed.
-function buildOsmUrl(location: string): string {
-  const encoded = encodeURIComponent(location);
-  // Use OpenStreetMap's export/embed endpoint — no API key required.
-  return `https://www.openstreetmap.org/export/embed.html?bbox=-180%2C-90%2C180%2C90&layer=mapnik&marker=0%2C0&query=${encoded}`;
-}
 
 // Better approach: use a search-based embed that actually centres on the address
-function buildNominatimEmbedUrl(location: string): string {
-  // openstreetmap.org/search with an iframe-friendly format
-  const q = encodeURIComponent(location);
-  return `https://www.openstreetmap.org/export/embed.html?bbox=-180%2C-90%2C180%2C90&layer=mapnik&query=${q}`;
-}
 
 // ─── Sub-components ───────────────────────────────────────────
 
