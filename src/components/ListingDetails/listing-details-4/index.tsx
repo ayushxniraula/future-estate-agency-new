@@ -1,7 +1,7 @@
 import FutureFooter from "../../../layouts/footers/FutureFooter";
 import FutureHeader from "../../../layouts/headers/FutureHeader";
 import FancyBanner from "../../common/FancyBanner";
-import ListingDetailsFourArea from "./ListingDetailsFourArea";
+import ListingDetailsFourArea from "./BuyDetail";
 
 const ListingDetailsFour = () => {
   return (

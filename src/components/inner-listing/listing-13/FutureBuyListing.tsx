@@ -1,5 +1,6 @@
 // ============================================================
 //  ListingThirteenArea.tsx — Supabase-powered property listing
+//  Improved: better cards, sidebar polish, hover states, typography
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -99,6 +100,21 @@ function getStatusLabel(status: string): string {
   }
 }
 
+function getStatusColor(status: string): string {
+  switch (status) {
+    case "For Sale":
+      return "#e84545";
+    case "For Rent":
+      return "#2196f3";
+    case "Sold":
+      return "#4caf50";
+    case "Rented":
+      return "#ff9800";
+    default:
+      return "#666";
+  }
+}
+
 function defaultFilters(range: [number, number]): FiltersState {
   return {
     keyword: "",
@@ -112,6 +128,304 @@ function defaultFilters(range: [number, number]): FiltersState {
     sqftMin: "",
     sqftMax: "",
   };
+}
+
+// ─── Global styles injected once ─────────────────────────────
+const INJECTED_STYLE = `
+  /* Property card improvements */
+  .listing-card-improved {
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    border: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .listing-card-improved:hover {
+    box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+    transform: translateY(-3px);
+  }
+  .listing-card-improved .img-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+  .listing-card-improved .img-wrap img {
+    transition: transform 0.4s ease;
+  }
+  .listing-card-improved:hover .img-wrap img {
+    transform: scale(1.04);
+  }
+
+  /* Status badge */
+  .status-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #fff;
+    z-index: 3;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Fav button */
+  .fav-btn-improved {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    color: #999;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .fav-btn-improved:hover {
+    background: #e84545;
+    color: #fff;
+    transform: scale(1.1);
+  }
+
+  /* Card body */
+  .card-body-improved {
+    padding: 18px 20px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-body-improved .prop-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-decoration: none;
+    line-height: 1.3;
+    display: block;
+    margin-bottom: 5px;
+    transition: color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-body-improved .prop-title:hover { color: #e84545; }
+  .card-body-improved .prop-location {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-body-improved .prop-location::before {
+    content: "📍";
+    font-size: 11px;
+  }
+
+  /* Feature pills */
+  .feature-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .feature-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f6f6f8;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    color: #444;
+    font-weight: 500;
+  }
+  .feature-pill img { width: 14px; height: 14px; opacity: 0.7; }
+
+  /* Card footer */
+  .card-footer-improved {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 16px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: auto;
+  }
+  .card-footer-improved .price {
+    font-size: 19px;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.3px;
+  }
+  .card-footer-improved .price sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: #888;
+  }
+  .card-footer-improved .detail-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .card-footer-improved .detail-btn:hover {
+    background: #e84545;
+    transform: rotate(45deg);
+  }
+
+  /* Type filter bar */
+  .type-filter-bar {
+    border-bottom: 1px solid #eee;
+    background: #fff;
+  }
+  .type-filter-bar ul { gap: 6px !important; padding: 14px 0; }
+  .type-pill {
+    padding: 7px 18px;
+    border-radius: 30px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #555;
+    text-decoration: none;
+    border: 1.5px solid #e0e0e0;
+    transition: all 0.2s;
+    white-space: nowrap;
+    background: #fff;
+  }
+  .type-pill:hover {
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+    background: #f8f8f8;
+  }
+  .type-pill.active {
+    background: #e84545;
+    border-color: #e84545;
+    color: #fff;
+  }
+
+  /* Sidebar improvements */
+  .sidebar-improved {
+    background: #fff;
+    border-right: 1px solid #eee;
+    height: 100%;
+  }
+  .sidebar-inner {
+    padding: 28px 22px;
+  }
+  .sidebar-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f2f2f2;
+  }
+  .sidebar-section:last-child { border-bottom: none; }
+  .sidebar-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .sidebar-input {
+    width: 100%;
+    padding: 9px 13px;
+    border-radius: 9px;
+    border: 1.5px solid #e8e8e8;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: border-color 0.2s, background 0.2s;
+    outline: none;
+  }
+  .sidebar-input:focus {
+    border-color: #1a1a1a;
+    background: #fff;
+  }
+  .amenity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: #555;
+    cursor: pointer;
+    padding: 5px 0;
+  }
+  .amenity-item input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #e84545;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .reset-btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 9px;
+    border: 1.5px solid #1a1a1a;
+    background: transparent;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover {
+    background: #1a1a1a;
+    color: #fff;
+  }
+
+  /* Sort bar */
+  .listing-header-filter {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 12px 18px;
+  }
+  .results-count {
+    font-size: 14px;
+    color: #777;
+  }
+  .results-count strong { color: #1a1a1a; }
+
+  /* Carousel dots */
+  .carousel-dot {
+    transition: all 0.2s;
+  }
+`;
+
+function injectStyle() {
+  if (
+    typeof document !== "undefined" &&
+    !document.getElementById("listing-improved-styles")
+  ) {
+    const el = document.createElement("style");
+    el.id = "listing-improved-styles";
+    el.textContent = INJECTED_STYLE;
+    document.head.appendChild(el);
+  }
 }
 
 // ─── Image Carousel ───────────────────────────────────────────
@@ -129,8 +443,8 @@ function CarouselOrImage({
       <div
         style={{
           width: "100%",
-          height: "220px",
-          background: "#2a2a2a",
+          height: "230px",
+          background: "#f0f0f2",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -154,11 +468,16 @@ function CarouselOrImage({
   };
 
   return (
-    <div style={{ position: "relative", overflow: "hidden", height: "220px" }}>
+    <div style={{ position: "relative", overflow: "hidden", height: "230px" }}>
       <img
         src={images[current]}
         alt={title}
-        style={{ width: "100%", height: "220px", objectFit: "cover" }}
+        style={{
+          width: "100%",
+          height: "230px",
+          objectFit: "cover",
+          display: "block",
+        }}
         loading="lazy"
       />
       {images.length > 1 && (
@@ -172,20 +491,21 @@ function CarouselOrImage({
           <div
             style={{
               position: "absolute",
-              bottom: "8px",
+              bottom: "10px",
               left: "50%",
               transform: "translateX(-50%)",
               display: "flex",
-              gap: "4px",
+              gap: "5px",
             }}
           >
             {images.map((_, i) => (
               <span
                 key={i}
+                className="carousel-dot"
                 style={{
-                  width: "6px",
+                  width: i === current ? "16px" : "6px",
                   height: "6px",
-                  borderRadius: "50%",
+                  borderRadius: "3px",
                   display: "inline-block",
                   background: i === current ? "#fff" : "rgba(255,255,255,0.5)",
                 }}
@@ -202,40 +522,27 @@ function carouselBtnStyle(side: "left" | "right"): React.CSSProperties {
   return {
     position: "absolute",
     top: "50%",
-    [side]: "8px",
+    [side]: "10px",
     transform: "translateY(-50%)",
-    background: "rgba(0,0,0,0.45)",
+    background: "rgba(0,0,0,0.35)",
+    backdropFilter: "blur(4px)",
     color: "#fff",
     border: "none",
     borderRadius: "50%",
-    width: "28px",
-    height: "28px",
-    fontSize: "18px",
+    width: "32px",
+    height: "32px",
+    fontSize: "20px",
     lineHeight: "1",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
+    transition: "background 0.2s",
   };
 }
 
-// ─── Price Range Slider (FIXED) ───────────────────────────────
-//
-//  THE BUG that was in the previous version:
-//    Both inputs had `pointerEvents: "none"` — this made them impossible
-//    to drag. The browser never delivered any mouse/touch events to them.
-//
-//  THE FIX:
-//    • Remove pointerEvents restriction entirely (defaults to "auto").
-//    • Both inputs are full-width, absolutely positioned on the same track.
-//    • z-index controls which thumb is on top:
-//        – max thumb (z:4) sits above min thumb (z:3) normally.
-//        – When min thumb is pushed to the far right (minAtMax), we flip
-//          their z-indices so the user can still drag max to the right.
-//    • The coloured fill div uses `pointerEvents:"none"` (correctly) so it
-//      doesn't interfere with thumb dragging.
-//
+// ─── Price Range Slider ───────────────────────────────────────
 function PriceRangeSlider({
   min,
   max,
@@ -262,23 +569,38 @@ function PriceRangeSlider({
 
   return (
     <div>
-      {/* Labels */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          fontSize: "12px",
-          marginBottom: "6px",
-          color: "var(--text-muted,#888)",
+          fontSize: "12.5px",
+          marginBottom: "10px",
+          color: "#888",
+          fontWeight: 500,
         }}
       >
-        <span>$ {value[0].toLocaleString()}</span>
-        <span>$ {value[1].toLocaleString()} USD</span>
+        <span
+          style={{
+            background: "#f4f4f6",
+            padding: "3px 8px",
+            borderRadius: "6px",
+            color: "#333",
+          }}
+        >
+          ${value[0].toLocaleString()}
+        </span>
+        <span
+          style={{
+            background: "#f4f4f6",
+            padding: "3px 8px",
+            borderRadius: "6px",
+            color: "#333",
+          }}
+        >
+          ${value[1].toLocaleString()}
+        </span>
       </div>
-
-      {/* Track area */}
       <div style={{ position: "relative", height: "20px" }}>
-        {/* Full grey track — non-interactive */}
         <div
           style={{
             position: "absolute",
@@ -286,13 +608,11 @@ function PriceRangeSlider({
             left: 0,
             right: 0,
             height: "4px",
-            background: "#ddd",
+            background: "#eee",
             borderRadius: "2px",
             pointerEvents: "none",
           }}
         />
-
-        {/* Coloured fill between thumbs — non-interactive */}
         <div
           style={{
             position: "absolute",
@@ -300,13 +620,11 @@ function PriceRangeSlider({
             left: `${pct(value[0])}%`,
             right: `${100 - pct(value[1])}%`,
             height: "4px",
-            background: "var(--bs-danger,#e84545)",
+            background: "#e84545",
             borderRadius: "2px",
             pointerEvents: "none",
           }}
         />
-
-        {/* MIN thumb */}
         <input
           type="range"
           min={min}
@@ -326,12 +644,9 @@ function PriceRangeSlider({
             outline: "none",
             border: "none",
             cursor: "pointer",
-            // Raise above max only when pushed to the far right
             zIndex: minAtMax ? 5 : 3,
           }}
         />
-
-        {/* MAX thumb */}
         <input
           type="range"
           min={min}
@@ -378,23 +693,16 @@ function SidebarFilters({
     onChange({ amenities: next });
   };
 
-  const sel: React.CSSProperties = {
-    width: "100%",
-    padding: "8px 12px",
-    borderRadius: "6px",
-  };
-
   return (
-    <div className="advance-search-panel h-100 border-end">
-      <div className="main-bg grey-bg h-100" style={{ padding: "24px 20px" }}>
-        {/* Listing status */}
-        <div className="filter-block mb-25">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">Type</label>
+    <div className="sidebar-improved">
+      <div className="sidebar-inner">
+        {/* Type */}
+        <div className="sidebar-section">
+          <span className="sidebar-label">Listing Type</span>
           <select
-            className="form-select"
+            className="sidebar-input"
             value={filters.status}
             onChange={(e) => onChange({ status: e.target.value })}
-            style={sel}
           >
             <option value="">All Listings</option>
             <option value="For Sale">For Sale</option>
@@ -405,47 +713,44 @@ function SidebarFilters({
         </div>
 
         {/* Keyword */}
-        <div className="filter-block mb-25">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">
-            Keyword
-          </label>
+        <div className="sidebar-section">
+          <span className="sidebar-label">Keyword</span>
           <input
             type="text"
-            className="form-control"
+            className="sidebar-input"
             placeholder="Ex: home, villa"
             value={filters.keyword}
             onChange={(e) => onChange({ keyword: e.target.value })}
-            style={sel}
           />
         </div>
 
         {/* Location */}
-        <div className="filter-block mb-25">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">
-            Location
-          </label>
+        <div className="sidebar-section">
+          <span className="sidebar-label">Location</span>
           <input
             type="text"
-            className="form-control"
+            className="sidebar-input"
             placeholder="City, address…"
             value={filters.location}
             onChange={(e) => onChange({ location: e.target.value })}
-            style={sel}
           />
         </div>
 
         {/* Bed / Bath */}
-        <div className="filter-block mb-25">
-          <div className="row g-2">
-            <div className="col-6">
-              <label className="fs-14 fw-500 color-dark mb-10 d-block">
-                Bed
-              </label>
+        <div className="sidebar-section">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+            }}
+          >
+            <div>
+              <span className="sidebar-label">Bedrooms</span>
               <select
-                className="form-select"
+                className="sidebar-input"
                 value={filters.bedrooms}
                 onChange={(e) => onChange({ bedrooms: e.target.value })}
-                style={sel}
               >
                 <option value="">Any</option>
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -455,15 +760,12 @@ function SidebarFilters({
                 ))}
               </select>
             </div>
-            <div className="col-6">
-              <label className="fs-14 fw-500 color-dark mb-10 d-block">
-                Bath
-              </label>
+            <div>
+              <span className="sidebar-label">Bathrooms</span>
               <select
-                className="form-select"
+                className="sidebar-input"
                 value={filters.bathrooms}
                 onChange={(e) => onChange({ bathrooms: e.target.value })}
-                style={sel}
               >
                 <option value="">Any</option>
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -477,39 +779,25 @@ function SidebarFilters({
         </div>
 
         {/* Amenities */}
-        <div className="filter-block mb-25">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">
-            Amenities
-          </label>
-          <div className="row g-1">
+        <div className="sidebar-section">
+          <span className="sidebar-label">Amenities</span>
+          <div className="amenity-grid">
             {AMENITY_OPTIONS.map((a) => (
-              <div className="col-6" key={a}>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.amenities.includes(a)}
-                    onChange={() => toggleAmenity(a)}
-                  />
-                  <span>{a}</span>
-                </label>
-              </div>
+              <label key={a} className="amenity-item">
+                <input
+                  type="checkbox"
+                  checked={filters.amenities.includes(a)}
+                  onChange={() => toggleAmenity(a)}
+                />
+                <span>{a}</span>
+              </label>
             ))}
           </div>
         </div>
 
         {/* Price Range */}
-        <div className="filter-block mb-25">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">
-            Price Range
-          </label>
+        <div className="sidebar-section">
+          <span className="sidebar-label">Price Range</span>
           <PriceRangeSlider
             min={priceMinMax[0]}
             max={priceMinMax[1]}
@@ -519,17 +807,14 @@ function SidebarFilters({
         </div>
 
         {/* Min Year Built */}
-        <div className="filter-block mb-25">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">
-            Min Year Built
-          </label>
+        <div className="sidebar-section">
+          <span className="sidebar-label">Min Year Built</span>
           <select
-            className="form-select"
+            className="sidebar-input"
             value={filters.minYearBuilt}
             onChange={(e) => onChange({ minYearBuilt: e.target.value })}
-            style={sel}
           >
-            <option value="">Any</option>
+            <option value="">Any Year</option>
             {[2024, 2022, 2020, 2018, 2015, 2010, 2005, 2000].map((y) => (
               <option key={y} value={String(y)}>
                 {y}
@@ -539,47 +824,101 @@ function SidebarFilters({
         </div>
 
         {/* Sqft */}
-        <div className="filter-block mb-30">
-          <label className="fs-14 fw-500 color-dark mb-10 d-block">Sqft</label>
-          <div className="row g-2">
-            <div className="col-6">
-              <input
-                type="number"
-                placeholder="Min"
-                className="form-control"
-                value={filters.sqftMin}
-                onChange={(e) => onChange({ sqftMin: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                }}
-              />
-            </div>
-            <div className="col-6">
-              <input
-                type="number"
-                placeholder="Max"
-                className="form-control"
-                value={filters.sqftMax}
-                onChange={(e) => onChange({ sqftMax: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                }}
-              />
-            </div>
+        <div className="sidebar-section">
+          <span className="sidebar-label">Square Footage</span>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px",
+            }}
+          >
+            <input
+              type="number"
+              placeholder="Min sqft"
+              className="sidebar-input"
+              value={filters.sqftMin}
+              onChange={(e) => onChange({ sqftMin: e.target.value })}
+            />
+            <input
+              type="number"
+              placeholder="Max sqft"
+              className="sidebar-input"
+              value={filters.sqftMax}
+              onChange={(e) => onChange({ sqftMax: e.target.value })}
+            />
           </div>
         </div>
 
-        <button
-          className="btn-four w-100"
-          onClick={onReset}
-          style={{ width: "100%", padding: "10px", borderRadius: "6px" }}
-        >
-          Reset Filters
+        <button className="reset-btn" onClick={onReset}>
+          Reset All Filters
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Property Card ────────────────────────────────────────────
+function PropertyCard({ item }: { item: Property }) {
+  return (
+    <div className="listing-card-improved">
+      <div className="img-wrap">
+        <div style={{ position: "relative" }}>
+          <span
+            className="status-badge"
+            style={{ background: getStatusColor(item.status) }}
+          >
+            {getStatusLabel(item.status)}
+          </span>
+          <Link to="#" className="fav-btn-improved">
+            <i className="fa-light fa-heart" style={{ fontSize: "14px" }} />
+          </Link>
+          <CarouselOrImage images={item.images || []} title={item.title} />
+        </div>
+      </div>
+
+      <div className="card-body-improved">
+        <Link to={`/sell/${item.id}`} className="prop-title">
+          {item.title}
+        </Link>
+        <div className="prop-location">{item.location}</div>
+
+        {(item.sqft || item.bedrooms != null || item.bathrooms != null) && (
+          <div className="feature-pills">
+            {item.sqft && (
+              <div className="feature-pill">
+                <img src="/assets/images/icon/icon_32.svg" alt="" />
+                <span>{item.sqft.toLocaleString()} sqft</span>
+              </div>
+            )}
+            {item.bedrooms != null && (
+              <div className="feature-pill">
+                <img src="/assets/images/icon/icon_33.svg" alt="" />
+                <span>{item.bedrooms} bed</span>
+              </div>
+            )}
+            {item.bathrooms != null && (
+              <div className="feature-pill">
+                <img src="/assets/images/icon/icon_34.svg" alt="" />
+                <span>{item.bathrooms} bath</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="card-footer-improved">
+        <div className="price">
+          $
+          {item.price.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
+          {item.status === "For Rent" && <sub> / mo</sub>}
+        </div>
+        <Link to={`/sell/${item.id}`} className="detail-btn">
+          <i className="bi bi-arrow-up-right" />
+        </Link>
       </div>
     </div>
   );
@@ -587,6 +926,8 @@ function SidebarFilters({
 
 // ─── Main Component ───────────────────────────────────────────
 const BuyListing = () => {
+  injectStyle();
+
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -600,7 +941,6 @@ const BuyListing = () => {
     defaultFilters([0, 1_000_000]),
   );
 
-  // Fetch
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -630,7 +970,6 @@ const BuyListing = () => {
     })();
   }, []);
 
-  // Filter + Sort
   const filteredProperties = useCallback(() => {
     let list = [...allProperties];
     if (selectedType !== "All")
@@ -724,16 +1063,29 @@ const BuyListing = () => {
 
   return (
     <div className="property-listing-seven lg-pt-100">
-      {/* Top type bar */}
-      <div className="listing-type-filter">
+      {/* Type bar */}
+      <div className="type-filter-bar listing-type-filter">
         <div className="wrapper">
-          <ul className="style-none d-flex flex-wrap align-items-center justify-content-center justify-content-xxl-between">
-            <li>Select Type:</li>
+          <ul
+            className="style-none d-flex flex-wrap align-items-center"
+            style={{ gap: "8px", padding: "14px 0" }}
+          >
+            <li
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "#aaa",
+                letterSpacing: "0.5px",
+                marginRight: "4px",
+              }}
+            >
+              TYPE:
+            </li>
             {PROPERTY_TYPES.map((type, i) => (
               <li key={i}>
                 <Link
                   to="#"
-                  className={selectedType === type ? "active" : ""}
+                  className={`type-pill${selectedType === type ? " active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     setSelectedType(type);
@@ -749,34 +1101,41 @@ const BuyListing = () => {
 
       <div className="wrapper">
         <div className="row gx-0">
-          {/* Main column */}
+          {/* Main */}
           <div className="col-xxl-9 col-lg-8">
-            <div className="ps-3 pe-3 ps-md-4 pe-md-4 ps-xxl-5 pe-xxl-5 pt-50 pb-200 xl-pb-120 md-pb-80">
+            <div className="ps-3 pe-3 ps-md-4 pe-md-4 ps-xxl-5 pe-xxl-5 pt-40 pb-200 xl-pb-120 md-pb-80">
               {/* Header */}
-              <div className="listing-header-filter d-sm-flex justify-content-between align-items-center mb-40 lg-mb-30">
-                <div>
+              <div className="listing-header-filter d-sm-flex justify-content-between align-items-center mb-35 lg-mb-25">
+                <div className="results-count">
                   {loading ? (
-                    <span>Loading properties…</span>
+                    <span style={{ color: "#aaa" }}>Loading…</span>
                   ) : error ? (
-                    <span style={{ color: "red" }}>Error: {error}</span>
+                    <span style={{ color: "#e84545" }}>Error: {error}</span>
                   ) : (
                     <>
                       Showing{" "}
-                      <span className="color-dark fw-500">
+                      <strong>
                         {sortedProperties.length === 0 ? 0 : itemOffset + 1}–
                         {itemOffset + currentItems.length}
-                      </span>{" "}
-                      of{" "}
-                      <span className="color-dark fw-500">
-                        {sortedProperties.length}
-                      </span>{" "}
-                      results
+                      </strong>{" "}
+                      of <strong>{sortedProperties.length}</strong> results
                     </>
                   )}
                 </div>
                 <div className="d-flex align-items-center xs-mt-20">
-                  <div className="short-filter d-flex align-items-center">
-                    <div className="fs-16 me-2">Sort by:</div>
+                  <div
+                    className="short-filter d-flex align-items-center"
+                    style={{ gap: "10px" }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        color: "#888",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Sort:
+                    </span>
                     <NiceSelect
                       className="nice-select rounded-0"
                       options={[
@@ -784,8 +1143,8 @@ const BuyListing = () => {
                         { value: "oldest", text: "Oldest" },
                         { value: "best_seller", text: "Best Seller" },
                         { value: "best_match", text: "Best Match" },
-                        { value: "price_low", text: "Price Low" },
-                        { value: "price_high", text: "Price High" },
+                        { value: "price_low", text: "Price ↑" },
+                        { value: "price_high", text: "Price ↓" },
                       ]}
                       defaultCurrent={0}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -798,23 +1157,28 @@ const BuyListing = () => {
                 </div>
               </div>
 
+              {/* Loading */}
               {loading && (
                 <div className="text-center py-5">
                   <div
                     className="spinner-border"
                     role="status"
-                    style={{ width: "2.5rem", height: "2.5rem" }}
+                    style={{
+                      width: "2.5rem",
+                      height: "2.5rem",
+                      color: "#e84545",
+                    }}
                   />
-                  <p className="mt-3 color-dark">Loading properties…</p>
+                  <p className="mt-3" style={{ color: "#aaa" }}>
+                    Loading properties…
+                  </p>
                 </div>
               )}
 
+              {/* Error */}
               {!loading && error && (
-                <div
-                  className="text-center py-5"
-                  style={{ color: "var(--bs-danger)" }}
-                >
-                  <p>⚠ {error}</p>
+                <div className="text-center py-5">
+                  <p style={{ color: "#e84545" }}>⚠ {error}</p>
                   <button
                     className="btn-four mt-3"
                     onClick={() => window.location.reload()}
@@ -824,11 +1188,17 @@ const BuyListing = () => {
                 </div>
               )}
 
+              {/* Empty */}
               {!loading && !error && sortedProperties.length === 0 && (
                 <div className="text-center py-5">
                   <div style={{ fontSize: "3rem" }}>🏠</div>
-                  <p className="mt-3 color-dark fs-18">No properties found</p>
-                  <p className="color-muted">
+                  <p
+                    className="mt-3"
+                    style={{ fontSize: "17px", fontWeight: 600, color: "#333" }}
+                  >
+                    No properties found
+                  </p>
+                  <p style={{ color: "#aaa", fontSize: "14px" }}>
                     Try adjusting your filters or{" "}
                     <button
                       onClick={handleReset}
@@ -838,6 +1208,7 @@ const BuyListing = () => {
                         padding: 0,
                         cursor: "pointer",
                         textDecoration: "underline",
+                        color: "#e84545",
                       }}
                     >
                       reset all filters
@@ -846,123 +1217,29 @@ const BuyListing = () => {
                 </div>
               )}
 
+              {/* Grid */}
               {!loading && !error && sortedProperties.length > 0 && (
                 <>
-                  <div className="row gx-xxl-5">
+                  <div className="row gx-xxl-4 gy-4">
                     {currentItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="col-xxl-4 col-md-6 d-flex mb-80 lg-mb-50"
-                      >
-                        <div className="listing-card-one style-two shadow-none h-100 w-100">
-                          <div className="img-gallery">
-                            <div className="prperty-carousel-slider position-relative overflow-hidden">
-                              <div className="tag fw-500">
-                                {getStatusLabel(item.status)}
-                              </div>
-                              <Link to="#" className="fav-btn tran3s">
-                                <i className="fa-light fa-heart"></i>
-                              </Link>
-                              <CarouselOrImage
-                                images={item.images || []}
-                                title={item.title}
-                              />
-                            </div>
-                          </div>
-                          <div className="property-info pt-20">
-                            <Link
-                              to={`/sell/${item.id}`}
-                              className="title tran3s"
-                            >
-                              {item.title}
-                            </Link>
-                            <div className="address">{item.location}</div>
-                            <ul className="style-none feature d-flex flex-wrap align-items-center justify-content-between pb-15 pt-5">
-                              {item.sqft && (
-                                <li className="d-flex align-items-center">
-                                  <img
-                                    src="/assets/images/icon/icon_32.svg"
-                                    alt=""
-                                    className="lazy-img icon me-2"
-                                  />
-                                  <span className="fs-16">
-                                    <span className="color-dark">
-                                      {item.sqft.toLocaleString()}
-                                    </span>{" "}
-                                    sqft
-                                  </span>
-                                </li>
-                              )}
-                              {item.bedrooms != null && (
-                                <li className="d-flex align-items-center">
-                                  <img
-                                    src="/assets/images/icon/icon_33.svg"
-                                    alt=""
-                                    className="lazy-img icon me-2"
-                                  />
-                                  <span className="fs-16">
-                                    <span className="color-dark">
-                                      {String(item.bedrooms).padStart(2, "0")}
-                                    </span>{" "}
-                                    bed
-                                  </span>
-                                </li>
-                              )}
-                              {item.bathrooms != null && (
-                                <li className="d-flex align-items-center">
-                                  <img
-                                    src="/assets/images/icon/icon_34.svg"
-                                    alt=""
-                                    className="lazy-img icon me-2"
-                                  />
-                                  <span className="fs-16">
-                                    <span className="color-dark">
-                                      {String(item.bathrooms).padStart(2, "0")}
-                                    </span>{" "}
-                                    bath
-                                  </span>
-                                </li>
-                              )}
-                            </ul>
-                            <div className="pl-footer top-border bottom-border d-flex align-items-center justify-content-between">
-                              <strong className="price fw-500 color-dark">
-                                $
-                                {item.price.toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                                {item.status === "For Rent" && (
-                                  <>
-                                    {" "}
-                                    / <sub>m</sub>
-                                  </>
-                                )}
-                              </strong>
-                              <Link
-                                to={`/sell/${item.id}`}
-                                className="btn-four"
-                              >
-                                <i className="bi bi-arrow-up-right"></i>
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
+                      <div key={item.id} className="col-xxl-4 col-md-6 d-flex">
+                        <PropertyCard item={item} />
                       </div>
                     ))}
                   </div>
 
                   {pageCount > 1 && (
-                    <div className="pt-5">
+                    <div className="pt-5 text-center">
                       <ReactPaginate
                         breakLabel="..."
                         nextLabel={
-                          <i className="fa-regular fa-chevron-right"></i>
+                          <i className="fa-regular fa-chevron-right" />
                         }
                         onPageChange={handlePageClick}
                         pageRangeDisplayed={5}
                         pageCount={pageCount}
                         previousLabel={
-                          <i className="fa-regular fa-chevron-left"></i>
+                          <i className="fa-regular fa-chevron-left" />
                         }
                         renderOnZeroPageCount={null}
                         className="pagination-two d-inline-flex align-items-center justify-content-center style-none"

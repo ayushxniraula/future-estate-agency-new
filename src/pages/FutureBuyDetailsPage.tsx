@@ -2,7 +2,7 @@ import Wrapper from "../layouts/Wrapper";
 import SEO from "../components/SEO";
 import ListingDetailsFourMain from "../components/ListingDetails/listing-details-4";
 
-const Sell = () => {
+const FutureBuyDetailPage = () => {
   return (
     <Wrapper>
       <SEO pageTitle={"Listing Details Four Homy"} />
@@ -11,4 +11,4 @@ const Sell = () => {
   );
 };
 
-export default Sell;
+export default FutureBuyDetailPage;

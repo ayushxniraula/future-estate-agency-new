@@ -63,7 +63,7 @@ import DashboardSavedSearch from "../pages/DashboardSavedSearch";
 import DashboardReview from "../pages/DashboardReview";
 import FutureHome from "../pages/FutureHome";
 import Buy from "../pages/FutureBuy";
-import Sell from "../pages/FutureSell";
+import Sell from "../pages/FutureBuyDetailsPage";
 import FutureAbout from "../pages/FutureAbout";
 import FutureContact from "../pages/FutureContact";
 import Calculator from "../my-components/Calculator";
