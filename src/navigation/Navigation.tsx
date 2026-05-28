@@ -63,10 +63,11 @@ import DashboardSavedSearch from "../pages/DashboardSavedSearch";
 import DashboardReview from "../pages/DashboardReview";
 import FutureHome from "../pages/FutureHome";
 import Buy from "../pages/FutureBuy";
-import Sell from "../pages/FutureBuyDetailsPage";
 import FutureAbout from "../pages/FutureAbout";
 import FutureContact from "../pages/FutureContact";
 import Calculator from "../my-components/Calculator";
+import FutureBuyDetailPage from "../pages/FutureBuyDetailsPage";
+import SellPropertyArea from "../my-components/Sell";
 
 const AppNavigation = () => {
   return (
@@ -120,7 +121,8 @@ const AppNavigation = () => {
         <Route path="/listing_details_01" element={<ListingDetailsOne />} />
         <Route path="/listing_details_02" element={<ListingDetailsTwo />} />
         <Route path="/listing_details_03" element={<ListingDetailsThree />} />
-        <Route path="/sell/:id" element={<Sell />} />
+        <Route path="/sell" element={<SellPropertyArea />} />
+        <Route path="/buy/:id" element={<FutureBuyDetailPage />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/listing_details_05" element={<ListingDetailsFive />} />
         <Route path="/listing_details_06" element={<ListingDetailsSix />} />

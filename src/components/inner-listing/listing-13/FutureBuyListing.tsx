@@ -878,7 +878,7 @@ function PropertyCard({ item }: { item: Property }) {
       </div>
 
       <div className="card-body-improved">
-        <Link to={`/sell/${item.id}`} className="prop-title">
+        <Link to={`/buy/${item.id}`} className="prop-title">
           {item.title}
         </Link>
         <div className="prop-location">{item.location}</div>
@@ -916,7 +916,7 @@ function PropertyCard({ item }: { item: Property }) {
           })}
           {item.status === "For Rent" && <sub> / mo</sub>}
         </div>
-        <Link to={`/sell/${item.id}`} className="detail-btn">
+        <Link to={`/buy/${item.id}`} className="detail-btn">
           <i className="bi bi-arrow-up-right" />
         </Link>
       </div>

@@ -1102,7 +1102,7 @@ function SimilarProperties({
               >
                 {getStatusLabel(item.status)}
               </span>
-              <Link to={`/sell/${item.id}`} className="sc-detail-btn">
+              <Link to={`/buy/${item.id}`} className="sc-detail-btn">
                 <i className="bi bi-arrow-up-right" />
               </Link>
             </div>
