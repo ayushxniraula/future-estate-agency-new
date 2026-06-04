@@ -71,6 +71,17 @@ const NavMenu = () => {
           Calculator
         </Link>
       </li>
+      <li
+        className={`nav-item ${isActive("/propcompare") ? "dashboard-menu" : ""}`}
+      >
+        <Link
+          onClick={() => setNavClick(!navClick)}
+          className="nav-link"
+          to="/propcompare"
+        >
+          Property Compare
+        </Link>
+      </li>
 
       <li
         className={`nav-item ${isActive("/contact") ? "dashboard-menu" : ""}`}

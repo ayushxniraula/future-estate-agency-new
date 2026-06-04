@@ -68,6 +68,7 @@ import FutureContact from "../pages/FutureContact";
 import Calculator from "../my-components/Calculator";
 import FutureBuyDetailPage from "../pages/FutureBuyDetailsPage";
 import SellPropertyArea from "../my-components/Sell";
+import PropertyCompare from "../my-components/CompareProp";
 
 const AppNavigation = () => {
   return (
@@ -124,6 +125,7 @@ const AppNavigation = () => {
         <Route path="/sell" element={<SellPropertyArea />} />
         <Route path="/buy/:id" element={<FutureBuyDetailPage />} />
         <Route path="/calculator" element={<Calculator />} />
+        <Route path="/propcompare" element={<PropertyCompare />} />
         <Route path="/listing_details_05" element={<ListingDetailsFive />} />
         <Route path="/listing_details_06" element={<ListingDetailsSix />} />
         <Route path="/blog_01" element={<BlogOne />} />
