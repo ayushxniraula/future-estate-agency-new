@@ -41,30 +41,17 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                 <ul className="d-flex align-items-center style-none">
                   {!style_2 ? (
                     <>
-                      <li className="d-flex align-items-center login-btn-one">
-                        <i className="fa-regular fa-lock"></i>
+                      <li
+                        className="d-none d-md-inline-block ms-3 ms-xl-4 me-xl-4"
+                        style={{ cursor: "pointer" }}
+                      >
                         <a
                           onClick={() => setLoginModal(true)}
-                          style={{ cursor: "pointer" }}
-                          data-bs-toggle="modal"
-                          data-bs-target="#loginModal"
-                          className="fw-500 tran3s"
-                        >
-                          Login{" "}
-                          <span className="d-none d-sm-inline-block">
-                            {" "}
-                            {""} / Sign up
-                          </span>
-                        </a>
-                      </li>
-                      <li className="d-none d-md-inline-block ms-3 ms-xl-4 me-xl-4">
-                        <Link
-                          to="/calculator"
                           className={style_1 ? "btn-ten" : "btn-two rounded-0"}
                         >
-                          <span>Open Calculator</span>{" "}
+                          <span>Login / Sign Up</span>{" "}
                           <i className="fa-thin fa-arrow-up-right"></i>
-                        </Link>
+                        </a>
                       </li>
                       <li className="d-none d-xl-block">
                         <button

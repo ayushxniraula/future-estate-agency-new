@@ -60,6 +60,17 @@ const NavMenu = () => {
           About
         </Link>
       </li>
+      <li
+        className={`nav-item ${isActive("/calculator") ? "dashboard-menu" : ""}`}
+      >
+        <Link
+          onClick={() => setNavClick(!navClick)}
+          className="nav-link"
+          to="/calculator"
+        >
+          Calculator
+        </Link>
+      </li>
 
       <li
         className={`nav-item ${isActive("/contact") ? "dashboard-menu" : ""}`}

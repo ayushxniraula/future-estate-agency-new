@@ -1,6 +1,7 @@
 // ============================================================
-//  ListingThirteenArea.tsx — Supabase-powered property listing
-//  Improved: better cards, sidebar polish, hover states, typography
+//  BuyListing.tsx — Supabase-powered property listing
+//  Refined: DM Serif Display + DM Sans, editorial layout,
+//  compact type bar, generous padding, luxury card design
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -88,30 +89,30 @@ const AMENITY_OPTIONS = [
 function getStatusLabel(status: string): string {
   switch (status) {
     case "For Sale":
-      return "FOR SELL";
+      return "For Sale";
     case "For Rent":
-      return "FOR RENT";
+      return "For Rent";
     case "Sold":
-      return "SOLD";
+      return "Sold";
     case "Rented":
-      return "RENTED";
+      return "Rented";
     default:
-      return status?.toUpperCase() ?? "";
+      return status ?? "";
   }
 }
 
-function getStatusColor(status: string): string {
+function getStatusColor(status: string): { bg: string; text: string } {
   switch (status) {
     case "For Sale":
-      return "#e84545";
+      return { bg: "rgba(232,69,69,0.92)", text: "#fff" };
     case "For Rent":
-      return "#2196f3";
+      return { bg: "rgba(33,150,243,0.92)", text: "#fff" };
     case "Sold":
-      return "#4caf50";
+      return { bg: "rgba(76,175,80,0.92)", text: "#fff" };
     case "Rented":
-      return "#ff9800";
+      return { bg: "rgba(255,152,0,0.92)", text: "#fff" };
     default:
-      return "#666";
+      return { bg: "rgba(80,80,80,0.88)", text: "#fff" };
   }
 }
 
@@ -132,297 +133,487 @@ function defaultFilters(range: [number, number]): FiltersState {
 
 // ─── Global styles injected once ─────────────────────────────
 const INJECTED_STYLE = `
-  /* Property card improvements */
-  .listing-card-improved {
-    border-radius: 14px;
+  /* ── Google Fonts ── */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+  /* ── Root design tokens ── */
+  :root {
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', system-ui, sans-serif;
+    --c-ink:        #1a1715;
+    --c-ink-2:      #4a4845;
+    --c-ink-3:      #8a8785;
+    --c-rule:       #ede9e4;
+    --c-surface:    #faf9f7;
+    --c-white:      #ffffff;
+    --c-accent:     #c8402a;
+    --c-accent-h:   #a83320;
+    --radius-card:  16px;
+    --radius-sm:    10px;
+    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
+    --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
+  }
+
+  /* ── Base font ── */
+  .buy-listing-root,
+  .buy-listing-root * {
+    font-family: var(--font-body);
+  }
+
+  /* ── Outer page padding ── */
+  .buy-listing-root {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  @media (min-width: 768px) {
+    .buy-listing-root {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+  }
+  @media (min-width: 1200px) {
+    .buy-listing-root {
+      padding-left: 56px;
+      padding-right: 56px;
+    }
+  }
+
+  /* ── Type filter bar ── */
+  .type-bar {
+    background: var(--c-white);
+    border-bottom: 1px solid var(--c-rule);
+    padding: 0 32px;
+  }
+  .type-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .type-bar-inner::-webkit-scrollbar { display: none; }
+  .type-bar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--c-ink-3);
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+  .type-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--c-ink-2);
+    text-decoration: none;
+    border: 1px solid var(--c-rule);
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    background: var(--c-white);
+    letter-spacing: 0.1px;
+    flex-shrink: 0;
+  }
+  .type-pill:hover {
+    border-color: var(--c-ink);
+    color: var(--c-ink);
+    background: var(--c-surface);
+  }
+  .type-pill.active {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-white);
+  }
+
+  /* ── Property card ── */
+  .prop-card {
+    border-radius: var(--radius-card);
     overflow: hidden;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    transition: box-shadow 0.25s ease, transform 0.25s ease;
-    border: 1px solid rgba(0,0,0,0.06);
+    background: var(--c-white);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.28s ease, transform 0.28s ease;
+    border: 1px solid var(--c-rule);
     display: flex;
     flex-direction: column;
     width: 100%;
   }
-  .listing-card-improved:hover {
-    box-shadow: 0 8px 28px rgba(0,0,0,0.13);
-    transform: translateY(-3px);
+  .prop-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-4px);
   }
-  .listing-card-improved .img-wrap {
+
+  /* image wrap */
+  .prop-card__img-wrap {
     position: relative;
     overflow: hidden;
   }
-  .listing-card-improved .img-wrap img {
-    transition: transform 0.4s ease;
+  .prop-card__img-wrap img {
+    transition: transform 0.45s ease;
+    display: block;
   }
-  .listing-card-improved:hover .img-wrap img {
-    transform: scale(1.04);
-  }
-
-  /* Status badge */
-  .status-badge {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    color: #fff;
-    z-index: 3;
-    backdrop-filter: blur(4px);
+  .prop-card:hover .prop-card__img-wrap img {
+    transform: scale(1.05);
   }
 
-  /* Fav button */
-  .fav-btn-improved {
+  /* status badge — compact */
+  .prop-card__badge {
     position: absolute;
     top: 12px;
-    right: 12px;
-    width: 34px;
-    height: 34px;
+    left: 12px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    z-index: 3;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    line-height: 1.6;
+  }
+
+  /* fav button */
+  .prop-card__fav {
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.92);
+    background: rgba(255,255,255,0.9);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 3;
-    color: #999;
+    color: #aaa;
     transition: background 0.2s, color 0.2s, transform 0.2s;
     text-decoration: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   }
-  .fav-btn-improved:hover {
-    background: #e84545;
-    color: #fff;
-    transform: scale(1.1);
+  .prop-card__fav:hover {
+    background: var(--c-accent);
+    color: var(--c-white);
+    transform: scale(1.12);
   }
 
-  /* Card body */
-  .card-body-improved {
-    padding: 18px 20px 16px;
+  /* card body */
+  .prop-card__body {
+    padding: 20px 22px 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
   }
-  .card-body-improved .prop-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1a1a1a;
-    text-decoration: none;
-    line-height: 1.3;
-    display: block;
+
+  /* type chip above title */
+  .prop-card__type {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--c-ink-3);
     margin-bottom: 5px;
+  }
+
+  .prop-card__title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--c-ink);
+    text-decoration: none;
+    line-height: 1.25;
+    display: block;
+    margin-bottom: 6px;
     transition: color 0.2s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .card-body-improved .prop-title:hover { color: #e84545; }
-  .card-body-improved .prop-location {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 14px;
+  .prop-card__title:hover { color: var(--c-accent); }
+
+  .prop-card__location {
+    font-size: 12.5px;
+    color: var(--c-ink-3);
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 4px;
   }
-  .card-body-improved .prop-location::before {
-    content: "📍";
-    font-size: 11px;
+
+  /* divider */
+  .prop-card__divider {
+    height: 1px;
+    background: var(--c-rule);
+    margin: 0 -22px 14px;
   }
 
-  /* Feature pills */
-  .feature-pills {
+  /* feature row */
+  .prop-card__features {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
-    margin-bottom: 14px;
   }
-  .feature-pill {
+  .prop-card__feat {
     display: flex;
     align-items: center;
     gap: 5px;
-    background: #f6f6f8;
+    background: var(--c-surface);
     border-radius: 8px;
     padding: 5px 10px;
-    font-size: 12.5px;
-    color: #444;
+    font-size: 12px;
+    color: var(--c-ink-2);
     font-weight: 500;
+    border: 1px solid var(--c-rule);
   }
-  .feature-pill img { width: 14px; height: 14px; opacity: 0.7; }
+  .prop-card__feat img { width: 13px; height: 13px; opacity: 0.6; }
 
-  /* Card footer */
-  .card-footer-improved {
+  /* card footer */
+  .prop-card__footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px 16px;
-    border-top: 1px solid #f0f0f0;
+    padding: 14px 22px 18px;
     margin-top: auto;
   }
-  .card-footer-improved .price {
-    font-size: 19px;
-    font-weight: 800;
-    color: #1a1a1a;
-    letter-spacing: -0.3px;
+  .prop-card__price {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--c-ink);
+    letter-spacing: -0.5px;
+    line-height: 1;
   }
-  .card-footer-improved .price sub {
-    font-size: 12px;
+  .prop-card__price sup {
+    font-family: var(--font-body);
+    font-size: 13px;
     font-weight: 500;
-    color: #888;
+    color: var(--c-ink-3);
+    vertical-align: super;
+    margin-right: 1px;
   }
-  .card-footer-improved .detail-btn {
+  .prop-card__price sub {
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--c-ink-3);
+  }
+  .prop-card__arrow {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #1a1a1a;
+    background: var(--c-ink);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: var(--c-white);
     text-decoration: none;
-    transition: background 0.2s, transform 0.2s;
-    font-size: 14px;
+    transition: background 0.2s, transform 0.25s;
+    font-size: 13px;
     flex-shrink: 0;
   }
-  .card-footer-improved .detail-btn:hover {
-    background: #e84545;
+  .prop-card__arrow:hover {
+    background: var(--c-accent);
     transform: rotate(45deg);
   }
 
-  /* Type filter bar */
-  .type-filter-bar {
-    border-bottom: 1px solid #eee;
-    background: #fff;
-  }
-  .type-filter-bar ul { gap: 6px !important; padding: 14px 0; }
-  .type-pill {
-    padding: 7px 18px;
-    border-radius: 30px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: #555;
-    text-decoration: none;
-    border: 1.5px solid #e0e0e0;
-    transition: all 0.2s;
-    white-space: nowrap;
-    background: #fff;
-  }
-  .type-pill:hover {
-    border-color: #1a1a1a;
-    color: #1a1a1a;
-    background: #f8f8f8;
-  }
-  .type-pill.active {
-    background: #e84545;
-    border-color: #e84545;
-    color: #fff;
+  /* carousel */
+  .carousel-dot {
+    transition: all 0.22s ease;
   }
 
-  /* Sidebar improvements */
-  .sidebar-improved {
-    background: #fff;
-    border-right: 1px solid #eee;
-    height: 100%;
+  /* ── Sidebar ── */
+  .sidebar-panel {
+    background: var(--c-white);
+    border-right: 1px solid var(--c-rule);
+    min-height: 100%;
   }
-  .sidebar-inner {
-    padding: 28px 22px;
+  .sidebar-panel__inner {
+    padding: 32px 24px;
+  }
+  .sidebar-panel__heading {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--c-ink);
+    margin-bottom: 28px;
+    letter-spacing: -0.2px;
   }
   .sidebar-section {
-    margin-bottom: 24px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #f2f2f2;
+    margin-bottom: 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--c-rule);
   }
-  .sidebar-section:last-child { border-bottom: none; }
+  .sidebar-section:last-of-type { border-bottom: none; }
   .sidebar-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.8px;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    color: #aaa;
-    margin-bottom: 10px;
+    color: var(--c-ink-3);
+    margin-bottom: 9px;
     display: block;
   }
   .sidebar-input {
     width: 100%;
     padding: 9px 13px;
-    border-radius: 9px;
-    border: 1.5px solid #e8e8e8;
-    font-size: 14px;
-    color: #333;
-    background: #fafafa;
-    transition: border-color 0.2s, background 0.2s;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    font-size: 13.5px;
+    font-family: var(--font-body);
+    color: var(--c-ink);
+    background: var(--c-surface);
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
     outline: none;
+    appearance: none;
+    -webkit-appearance: none;
   }
   .sidebar-input:focus {
-    border-color: #1a1a1a;
-    background: #fff;
+    border-color: var(--c-ink);
+    background: var(--c-white);
+    box-shadow: 0 0 0 3px rgba(26,23,21,0.06);
   }
   .amenity-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 4px;
   }
   .amenity-item {
     display: flex;
     align-items: center;
     gap: 7px;
     font-size: 12.5px;
-    color: #555;
+    color: var(--c-ink-2);
     cursor: pointer;
     padding: 5px 0;
+    font-family: var(--font-body);
   }
   .amenity-item input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
-    accent-color: #e84545;
+    width: 14px;
+    height: 14px;
+    accent-color: var(--c-accent);
     cursor: pointer;
     flex-shrink: 0;
   }
   .reset-btn {
     width: 100%;
     padding: 11px;
-    border-radius: 9px;
-    border: 1.5px solid #1a1a1a;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-ink);
     background: transparent;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
-    color: #1a1a1a;
+    font-family: var(--font-body);
+    color: var(--c-ink);
     cursor: pointer;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.3px;
     transition: all 0.2s;
   }
   .reset-btn:hover {
-    background: #1a1a1a;
-    color: #fff;
+    background: var(--c-ink);
+    color: var(--c-white);
   }
 
-  /* Sort bar */
-  .listing-header-filter {
-    background: #f9f9f9;
-    border-radius: 10px;
+  /* ── Listing header ── */
+  .listing-header {
+    background: var(--c-surface);
+    border-radius: var(--radius-sm);
     padding: 12px 18px;
+    border: 1px solid var(--c-rule);
+    margin-bottom: 32px;
   }
   .results-count {
-    font-size: 14px;
-    color: #777;
+    font-size: 13.5px;
+    color: var(--c-ink-3);
+    font-family: var(--font-body);
   }
-  .results-count strong { color: #1a1a1a; }
+  .results-count strong {
+    color: var(--c-ink);
+    font-weight: 600;
+  }
+  /* sort row — keep label and select on same baseline */
+  .sort-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sort-row .nice-select {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+    line-height: 1 !important;
+    height: auto !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
 
-  /* Carousel dots */
-  .carousel-dot {
-    transition: all 0.2s;
+  /* ── Pagination ── */
+  .pagination-refined {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .pagination-refined li a,
+  .pagination-refined li span {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 14px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    color: var(--c-ink-2);
+    border: 1.5px solid transparent;
+    transition: all 0.18s;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .pagination-refined li a:hover {
+    border-color: var(--c-ink);
+    color: var(--c-ink);
+    background: var(--c-surface);
+  }
+  .pagination-refined li.selected a {
+    background: var(--c-ink);
+    color: var(--c-white);
+    border-color: var(--c-ink);
+  }
+  .pagination-refined li.disabled span {
+    opacity: 0.3;
+    cursor: default;
+  }
+  /* prev / next arrow buttons */
+  .pagination-refined li.previous a,
+  .pagination-refined li.next a {
+    border: 1.5px solid var(--c-rule);
+    background: var(--c-white);
+    color: var(--c-ink);
+    font-size: 13px;
+  }
+  .pagination-refined li.previous a:hover,
+  .pagination-refined li.next a:hover {
+    border-color: var(--c-ink);
+    background: var(--c-ink);
+    color: var(--c-white);
+  }
+  .pagination-refined li.previous.disabled a,
+  .pagination-refined li.next.disabled a {
+    opacity: 0.3;
+    pointer-events: none;
   }
 `;
 
 function injectStyle() {
   if (
     typeof document !== "undefined" &&
-    !document.getElementById("listing-improved-styles")
+    !document.getElementById("buy-listing-refined-styles")
   ) {
     const el = document.createElement("style");
-    el.id = "listing-improved-styles";
+    el.id = "buy-listing-refined-styles";
     el.textContent = INJECTED_STYLE;
     document.head.appendChild(el);
   }
@@ -443,12 +634,12 @@ function CarouselOrImage({
       <div
         style={{
           width: "100%",
-          height: "230px",
-          background: "#f0f0f2",
+          height: "220px",
+          background: "#f0ede8",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "3rem",
+          fontSize: "2.6rem",
         }}
       >
         🏠
@@ -468,13 +659,13 @@ function CarouselOrImage({
   };
 
   return (
-    <div style={{ position: "relative", overflow: "hidden", height: "230px" }}>
+    <div style={{ position: "relative", overflow: "hidden", height: "220px" }}>
       <img
         src={images[current]}
         alt={title}
         style={{
           width: "100%",
-          height: "230px",
+          height: "220px",
           objectFit: "cover",
           display: "block",
         }}
@@ -503,11 +694,11 @@ function CarouselOrImage({
                 key={i}
                 className="carousel-dot"
                 style={{
-                  width: i === current ? "16px" : "6px",
-                  height: "6px",
+                  width: i === current ? "18px" : "6px",
+                  height: "5px",
                   borderRadius: "3px",
                   display: "inline-block",
-                  background: i === current ? "#fff" : "rgba(255,255,255,0.5)",
+                  background: i === current ? "#fff" : "rgba(255,255,255,0.45)",
                 }}
               />
             ))}
@@ -524,14 +715,14 @@ function carouselBtnStyle(side: "left" | "right"): React.CSSProperties {
     top: "50%",
     [side]: "10px",
     transform: "translateY(-50%)",
-    background: "rgba(0,0,0,0.35)",
-    backdropFilter: "blur(4px)",
+    background: "rgba(26,23,21,0.38)",
+    backdropFilter: "blur(6px)",
     color: "#fff",
     border: "none",
     borderRadius: "50%",
-    width: "32px",
-    height: "32px",
-    fontSize: "20px",
+    width: "30px",
+    height: "30px",
+    fontSize: "18px",
     lineHeight: "1",
     cursor: "pointer",
     display: "flex",
@@ -558,43 +749,38 @@ function PriceRangeSlider({
     max === min ? 0 : ((v - min) / (max - min)) * 100;
   const minAtMax = value[0] >= value[1] - 1;
 
-  const handleMin = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = Math.min(Number(e.target.value), value[1] - 1);
-    onChange([next, value[1]]);
-  };
-  const handleMax = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = Math.max(Number(e.target.value), value[0] + 1);
-    onChange([value[0], next]);
-  };
-
   return (
     <div>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          fontSize: "12.5px",
-          marginBottom: "10px",
-          color: "#888",
-          fontWeight: 500,
+          fontSize: "12px",
+          marginBottom: "12px",
         }}
       >
         <span
           style={{
-            background: "#f4f4f6",
-            padding: "3px 8px",
-            borderRadius: "6px",
-            color: "#333",
+            background: "var(--c-surface)",
+            padding: "3px 9px",
+            borderRadius: "8px",
+            color: "var(--c-ink)",
+            fontWeight: 600,
+            border: "1px solid var(--c-rule)",
+            fontFamily: "var(--font-body)",
           }}
         >
           ${value[0].toLocaleString()}
         </span>
         <span
           style={{
-            background: "#f4f4f6",
-            padding: "3px 8px",
-            borderRadius: "6px",
-            color: "#333",
+            background: "var(--c-surface)",
+            padding: "3px 9px",
+            borderRadius: "8px",
+            color: "var(--c-ink)",
+            fontWeight: 600,
+            border: "1px solid var(--c-rule)",
+            fontFamily: "var(--font-body)",
           }}
         >
           ${value[1].toLocaleString()}
@@ -607,8 +793,8 @@ function PriceRangeSlider({
             top: "8px",
             left: 0,
             right: 0,
-            height: "4px",
-            background: "#eee",
+            height: "3px",
+            background: "var(--c-rule)",
             borderRadius: "2px",
             pointerEvents: "none",
           }}
@@ -619,8 +805,8 @@ function PriceRangeSlider({
             top: "8px",
             left: `${pct(value[0])}%`,
             right: `${100 - pct(value[1])}%`,
-            height: "4px",
-            background: "#e84545",
+            height: "3px",
+            background: "var(--c-ink)",
             borderRadius: "2px",
             pointerEvents: "none",
           }}
@@ -631,7 +817,9 @@ function PriceRangeSlider({
           max={max}
           step={1}
           value={value[0]}
-          onChange={handleMin}
+          onChange={(e) =>
+            onChange([Math.min(Number(e.target.value), value[1] - 1), value[1]])
+          }
           style={{
             position: "absolute",
             top: 0,
@@ -653,7 +841,9 @@ function PriceRangeSlider({
           max={max}
           step={1}
           value={value[1]}
-          onChange={handleMax}
+          onChange={(e) =>
+            onChange([value[0], Math.max(Number(e.target.value), value[0] + 1)])
+          }
           style={{
             position: "absolute",
             top: 0,
@@ -694,9 +884,10 @@ function SidebarFilters({
   };
 
   return (
-    <div className="sidebar-improved">
-      <div className="sidebar-inner">
-        {/* Type */}
+    <div className="sidebar-panel">
+      <div className="sidebar-panel__inner">
+        <p className="sidebar-panel__heading">Filters</p>
+
         <div className="sidebar-section">
           <span className="sidebar-label">Listing Type</span>
           <select
@@ -712,31 +903,28 @@ function SidebarFilters({
           </select>
         </div>
 
-        {/* Keyword */}
         <div className="sidebar-section">
           <span className="sidebar-label">Keyword</span>
           <input
             type="text"
             className="sidebar-input"
-            placeholder="Ex: home, villa"
+            placeholder="e.g. home, villa…"
             value={filters.keyword}
             onChange={(e) => onChange({ keyword: e.target.value })}
           />
         </div>
 
-        {/* Location */}
         <div className="sidebar-section">
           <span className="sidebar-label">Location</span>
           <input
             type="text"
             className="sidebar-input"
-            placeholder="City, address…"
+            placeholder="City or address…"
             value={filters.location}
             onChange={(e) => onChange({ location: e.target.value })}
           />
         </div>
 
-        {/* Bed / Bath */}
         <div className="sidebar-section">
           <div
             style={{
@@ -778,7 +966,6 @@ function SidebarFilters({
           </div>
         </div>
 
-        {/* Amenities */}
         <div className="sidebar-section">
           <span className="sidebar-label">Amenities</span>
           <div className="amenity-grid">
@@ -795,7 +982,6 @@ function SidebarFilters({
           </div>
         </div>
 
-        {/* Price Range */}
         <div className="sidebar-section">
           <span className="sidebar-label">Price Range</span>
           <PriceRangeSlider
@@ -806,7 +992,6 @@ function SidebarFilters({
           />
         </div>
 
-        {/* Min Year Built */}
         <div className="sidebar-section">
           <span className="sidebar-label">Min Year Built</span>
           <select
@@ -823,7 +1008,6 @@ function SidebarFilters({
           </select>
         </div>
 
-        {/* Sqft */}
         <div className="sidebar-section">
           <span className="sidebar-label">Square Footage</span>
           <div
@@ -860,63 +1044,84 @@ function SidebarFilters({
 
 // ─── Property Card ────────────────────────────────────────────
 function PropertyCard({ item }: { item: Property }) {
+  const badge = getStatusColor(item.status);
   return (
-    <div className="listing-card-improved">
-      <div className="img-wrap">
+    <div className="prop-card">
+      <div className="prop-card__img-wrap">
         <div style={{ position: "relative" }}>
           <span
-            className="status-badge"
-            style={{ background: getStatusColor(item.status) }}
+            className="prop-card__badge"
+            style={{ background: badge.bg, color: badge.text }}
           >
             {getStatusLabel(item.status)}
           </span>
-          <Link to="#" className="fav-btn-improved">
-            <i className="fa-light fa-heart" style={{ fontSize: "14px" }} />
+          <Link to="#" className="prop-card__fav">
+            <i className="fa-light fa-heart" style={{ fontSize: "13px" }} />
           </Link>
           <CarouselOrImage images={item.images || []} title={item.title} />
         </div>
       </div>
 
-      <div className="card-body-improved">
-        <Link to={`/buy/${item.id}`} className="prop-title">
+      <div className="prop-card__body">
+        {item.property_type && (
+          <div className="prop-card__type">{item.property_type}</div>
+        )}
+        <Link to={`/buy/${item.id}`} className="prop-card__title">
           {item.title}
         </Link>
-        <div className="prop-location">{item.location}</div>
+        <div className="prop-card__location">
+          <svg
+            width="11"
+            height="13"
+            viewBox="0 0 11 13"
+            fill="none"
+            style={{ flexShrink: 0, marginTop: "1px" }}
+          >
+            <path
+              d="M5.5 0C3.015 0 1 2.015 1 4.5c0 3.375 4.5 8.5 4.5 8.5S10 7.875 10 4.5C10 2.015 7.985 0 5.5 0zm0 6.25A1.75 1.75 0 1 1 5.5 2.75a1.75 1.75 0 0 1 0 3.5z"
+              fill="currentColor"
+            />
+          </svg>
+          {item.location}
+        </div>
 
         {(item.sqft || item.bedrooms != null || item.bathrooms != null) && (
-          <div className="feature-pills">
-            {item.sqft && (
-              <div className="feature-pill">
-                <img src="/assets/images/icon/icon_32.svg" alt="" />
-                <span>{item.sqft.toLocaleString()} sqft</span>
-              </div>
-            )}
-            {item.bedrooms != null && (
-              <div className="feature-pill">
-                <img src="/assets/images/icon/icon_33.svg" alt="" />
-                <span>{item.bedrooms} bed</span>
-              </div>
-            )}
-            {item.bathrooms != null && (
-              <div className="feature-pill">
-                <img src="/assets/images/icon/icon_34.svg" alt="" />
-                <span>{item.bathrooms} bath</span>
-              </div>
-            )}
-          </div>
+          <>
+            <div className="prop-card__divider" />
+            <div className="prop-card__features">
+              {item.sqft && (
+                <div className="prop-card__feat">
+                  <img src="/assets/images/icon/icon_32.svg" alt="" />
+                  <span>{item.sqft.toLocaleString()} ft²</span>
+                </div>
+              )}
+              {item.bedrooms != null && (
+                <div className="prop-card__feat">
+                  <img src="/assets/images/icon/icon_33.svg" alt="" />
+                  <span>{item.bedrooms} bed</span>
+                </div>
+              )}
+              {item.bathrooms != null && (
+                <div className="prop-card__feat">
+                  <img src="/assets/images/icon/icon_34.svg" alt="" />
+                  <span>{item.bathrooms} bath</span>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 
-      <div className="card-footer-improved">
-        <div className="price">
-          $
+      <div className="prop-card__footer">
+        <div className="prop-card__price">
+          <sup>$</sup>
           {item.price.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           })}
           {item.status === "For Rent" && <sub> / mo</sub>}
         </div>
-        <Link to={`/buy/${item.id}`} className="detail-btn">
+        <Link to={`/buy/${item.id}`} className="prop-card__arrow">
           <i className="bi bi-arrow-up-right" />
         </Link>
       </div>
@@ -1040,6 +1245,7 @@ const BuyListing = () => {
   }, [allProperties, selectedType, filters, sortBy]);
 
   const sortedProperties = filteredProperties();
+
   useEffect(() => {
     setItemOffset(0);
   }, [selectedType, filters, sortBy]);
@@ -1062,55 +1268,55 @@ const BuyListing = () => {
   };
 
   return (
-    <div className="property-listing-seven lg-pt-100">
-      {/* Type bar */}
-      <div className="type-filter-bar listing-type-filter">
+    <div className="buy-listing-root property-listing-seven lg-pt-100">
+      {/* ── Type filter bar ── */}
+      <div className="type-bar">
         <div className="wrapper">
-          <ul
-            className="style-none d-flex flex-wrap align-items-center"
-            style={{ gap: "8px", padding: "14px 0" }}
-          >
-            <li
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "#aaa",
-                letterSpacing: "0.5px",
-                marginRight: "4px",
-              }}
-            >
-              TYPE:
-            </li>
+          <div className="type-bar-inner">
+            <span className="type-bar-label">Type</span>
             {PROPERTY_TYPES.map((type, i) => (
-              <li key={i}>
-                <Link
-                  to="#"
-                  className={`type-pill${selectedType === type ? " active" : ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSelectedType(type);
-                  }}
-                >
-                  {type}
-                </Link>
-              </li>
+              <a
+                key={i}
+                href="#"
+                className={`type-pill${selectedType === type ? " active" : ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedType(type);
+                }}
+              >
+                {type}
+              </a>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
 
       <div className="wrapper">
         <div className="row gx-0">
-          {/* Main */}
+          {/* ── Sidebar ── */}
+          <div className="col-xxl-3 col-lg-4 order-lg-first">
+            <SidebarFilters
+              filters={filters}
+              onChange={(partial) =>
+                setFilters((prev) => ({ ...prev, ...partial }))
+              }
+              onReset={handleReset}
+              priceMinMax={priceMinMax}
+            />
+          </div>
+
+          {/* ── Main content ── */}
           <div className="col-xxl-9 col-lg-8">
-            <div className="ps-3 pe-3 ps-md-4 pe-md-4 ps-xxl-5 pe-xxl-5 pt-40 pb-200 xl-pb-120 md-pb-80">
-              {/* Header */}
-              <div className="listing-header-filter d-sm-flex justify-content-between align-items-center mb-35 lg-mb-25">
+            <div style={{ padding: "36px 28px 120px", maxWidth: "100%" }}>
+              {/* Header bar */}
+              <div className="listing-header d-sm-flex justify-content-between align-items-center">
                 <div className="results-count">
                   {loading ? (
-                    <span style={{ color: "#aaa" }}>Loading…</span>
+                    <span style={{ color: "var(--c-ink-3)" }}>Loading…</span>
                   ) : error ? (
-                    <span style={{ color: "#e84545" }}>Error: {error}</span>
+                    <span style={{ color: "var(--c-accent)" }}>
+                      Error: {error}
+                    </span>
                   ) : (
                     <>
                       Showing{" "}
@@ -1118,42 +1324,38 @@ const BuyListing = () => {
                         {sortedProperties.length === 0 ? 0 : itemOffset + 1}–
                         {itemOffset + currentItems.length}
                       </strong>{" "}
-                      of <strong>{sortedProperties.length}</strong> results
+                      of <strong>{sortedProperties.length}</strong> properties
                     </>
                   )}
                 </div>
-                <div className="d-flex align-items-center xs-mt-20">
-                  <div
-                    className="short-filter d-flex align-items-center"
-                    style={{ gap: "10px" }}
+                <div className="sort-row xs-mt-20">
+                  <span
+                    style={{
+                      fontSize: "12.5px",
+                      color: "var(--c-ink-3)",
+                      fontWeight: 500,
+                      lineHeight: 1,
+                    }}
                   >
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        color: "#888",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Sort:
-                    </span>
-                    <NiceSelect
-                      className="nice-select rounded-0"
-                      options={[
-                        { value: "newest", text: "Newest" },
-                        { value: "oldest", text: "Oldest" },
-                        { value: "best_seller", text: "Best Seller" },
-                        { value: "best_match", text: "Best Match" },
-                        { value: "price_low", text: "Price ↑" },
-                        { value: "price_high", text: "Price ↓" },
-                      ]}
-                      defaultCurrent={0}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setSortBy(e.target.value)
-                      }
-                      name="sort"
-                      placeholder=""
-                    />
-                  </div>
+                    Sort by
+                  </span>
+                  <NiceSelect
+                    className="nice-select rounded-0"
+                    options={[
+                      { value: "newest", text: "Newest" },
+                      { value: "oldest", text: "Oldest" },
+                      { value: "best_seller", text: "Best Seller" },
+                      { value: "best_match", text: "Best Match" },
+                      { value: "price_low", text: "Price ↑" },
+                      { value: "price_high", text: "Price ↓" },
+                    ]}
+                    defaultCurrent={0}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setSortBy(e.target.value)
+                    }
+                    name="sort"
+                    placeholder=""
+                  />
                 </div>
               </div>
 
@@ -1164,12 +1366,16 @@ const BuyListing = () => {
                     className="spinner-border"
                     role="status"
                     style={{
-                      width: "2.5rem",
-                      height: "2.5rem",
-                      color: "#e84545",
+                      width: "2.2rem",
+                      height: "2.2rem",
+                      color: "var(--c-accent)",
+                      borderWidth: "2px",
                     }}
                   />
-                  <p className="mt-3" style={{ color: "#aaa" }}>
+                  <p
+                    className="mt-3"
+                    style={{ color: "var(--c-ink-3)", fontSize: "14px" }}
+                  >
                     Loading properties…
                   </p>
                 </div>
@@ -1178,7 +1384,7 @@ const BuyListing = () => {
               {/* Error */}
               {!loading && error && (
                 <div className="text-center py-5">
-                  <p style={{ color: "#e84545" }}>⚠ {error}</p>
+                  <p style={{ color: "var(--c-accent)" }}>⚠ {error}</p>
                   <button
                     className="btn-four mt-3"
                     onClick={() => window.location.reload()}
@@ -1191,14 +1397,21 @@ const BuyListing = () => {
               {/* Empty */}
               {!loading && !error && sortedProperties.length === 0 && (
                 <div className="text-center py-5">
-                  <div style={{ fontSize: "3rem" }}>🏠</div>
+                  <div style={{ fontSize: "2.8rem", marginBottom: "12px" }}>
+                    🏠
+                  </div>
                   <p
-                    className="mt-3"
-                    style={{ fontSize: "17px", fontWeight: 600, color: "#333" }}
+                    style={{
+                      fontSize: "17px",
+                      fontFamily: "var(--font-display)",
+                      fontWeight: 400,
+                      color: "var(--c-ink)",
+                      marginBottom: "6px",
+                    }}
                   >
                     No properties found
                   </p>
-                  <p style={{ color: "#aaa", fontSize: "14px" }}>
+                  <p style={{ color: "var(--c-ink-3)", fontSize: "13.5px" }}>
                     Try adjusting your filters or{" "}
                     <button
                       onClick={handleReset}
@@ -1208,10 +1421,12 @@ const BuyListing = () => {
                         padding: 0,
                         cursor: "pointer",
                         textDecoration: "underline",
-                        color: "#e84545",
+                        color: "var(--c-accent)",
+                        fontFamily: "var(--font-body)",
+                        fontSize: "13.5px",
                       }}
                     >
-                      reset all filters
+                      reset all
                     </button>
                   </p>
                 </div>
@@ -1220,7 +1435,7 @@ const BuyListing = () => {
               {/* Grid */}
               {!loading && !error && sortedProperties.length > 0 && (
                 <>
-                  <div className="row gx-xxl-4 gy-4">
+                  <div className="row gx-3 gy-4">
                     {currentItems.map((item) => (
                       <div key={item.id} className="col-xxl-4 col-md-6 d-flex">
                         <PropertyCard item={item} />
@@ -1231,7 +1446,7 @@ const BuyListing = () => {
                   {pageCount > 1 && (
                     <div className="pt-5 text-center">
                       <ReactPaginate
-                        breakLabel="..."
+                        breakLabel="…"
                         nextLabel={
                           <i className="fa-regular fa-chevron-right" />
                         }
@@ -1242,25 +1457,13 @@ const BuyListing = () => {
                           <i className="fa-regular fa-chevron-left" />
                         }
                         renderOnZeroPageCount={null}
-                        className="pagination-two d-inline-flex align-items-center justify-content-center style-none"
+                        className="pagination-refined"
                       />
                     </div>
                   )}
                 </>
               )}
             </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="col-xxl-3 col-lg-4 order-lg-first">
-            <SidebarFilters
-              filters={filters}
-              onChange={(partial) =>
-                setFilters((prev) => ({ ...prev, ...partial }))
-              }
-              onReset={handleReset}
-              priceMinMax={priceMinMax}
-            />
           </div>
         </div>
       </div>
