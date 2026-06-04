@@ -69,6 +69,8 @@ import Calculator from "../my-components/Calculator";
 import FutureBuyDetailPage from "../pages/FutureBuyDetailsPage";
 import SellPropertyArea from "../my-components/Sell";
 import PropertyCompare from "../my-components/CompareProp";
+import PriceHeatmap from "../my-components/priceheatmap";
+import SmartFinder from "../my-components/smartai";
 
 const AppNavigation = () => {
   return (
@@ -126,6 +128,8 @@ const AppNavigation = () => {
         <Route path="/buy/:id" element={<FutureBuyDetailPage />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/propcompare" element={<PropertyCompare />} />
+        <Route path="/heat" element={<PriceHeatmap />} />
+        <Route path="/smart" element={<SmartFinder />} />
         <Route path="/listing_details_05" element={<ListingDetailsFive />} />
         <Route path="/listing_details_06" element={<ListingDetailsSix />} />
         <Route path="/blog_01" element={<BlogOne />} />

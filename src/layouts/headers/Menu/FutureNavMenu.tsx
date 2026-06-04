@@ -82,6 +82,24 @@ const NavMenu = () => {
           Property Compare
         </Link>
       </li>
+      <li className={`nav-item ${isActive("/heat") ? "dashboard-menu" : ""}`}>
+        <Link
+          onClick={() => setNavClick(!navClick)}
+          className="nav-link"
+          to="/heat"
+        >
+          Heat Map
+        </Link>
+      </li>
+      <li className={`nav-item ${isActive("/smart") ? "dashboard-menu" : ""}`}>
+        <Link
+          onClick={() => setNavClick(!navClick)}
+          className="nav-link"
+          to="/smart"
+        >
+          Smart Finder
+        </Link>
+      </li>
 
       <li
         className={`nav-item ${isActive("/contact") ? "dashboard-menu" : ""}`}

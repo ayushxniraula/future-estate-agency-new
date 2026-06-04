@@ -1,70 +1,157 @@
-import { useState } from "react";
-import { toast } from 'react-toastify';
-import * as yup from "yup";
-import { useForm } from "react-hook-form";
-import { yupResolver } from '@hookform/resolvers/yup';
-import { Link } from "react-router-dom";
+// ============================================================
+//  LoginForm.tsx  →  src/components/forms/LoginForm.tsx
+//
+//  Login flow:
+//    1. Look up email in pending_users
+//    2. If not found           → "No account found"
+//    3. If status = pending    → "Your account is pending approval"
+//    4. If status = verified   → compare password_plain
+//    5. On match               → save session to localStorage, reload
+// ============================================================
 
-interface FormData {
-   email: string;
-   password: string;
-}
+import { useState } from "react";
+import { supabase } from "../../my-components/supabase";
+
+// Key used to persist the logged-in client session
+export const CLIENT_SESSION_KEY = "ea_client_session";
 
 const LoginForm = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-   const schema = yup
-      .object({
-         email: yup.string().required().email().label("Email"),
-         password: yup.string().required().label("Password"),
-      })
-      .required();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-   const { register, handleSubmit, reset, formState: { errors }, } = useForm<FormData>({ resolver: yupResolver(schema), });
-   const onSubmit = () => {
-      const notify = () => toast('Login successfully', { position: 'top-center' });
-      notify();
-      reset();
-   };
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter your email and password.");
+      return;
+    }
 
-   const [isPasswordVisible, setPasswordVisibility] = useState(false);
+    setLoading(true);
 
-   const togglePasswordVisibility = () => {
-      setPasswordVisibility(!isPasswordVisible);
-   };
+    // ── 1. Fetch user record ──────────────────────────────
+    const { data: users, error: fetchErr } = await supabase
+      .from("pending_users")
+      .select("id, full_name, email, phone, status, username, password_plain")
+      .eq("email", email.trim().toLowerCase())
+      .limit(1);
 
-   return (
-      <form onSubmit={handleSubmit(onSubmit)}>
-         <div className="row">
-            <div className="col-12">
-               <div className="input-group-meta position-relative mb-25">
-                  <label>Email*</label>
-                  <input type="email" {...register("email")} placeholder="Youremail@gmail.com" />
-                  <p className="form_error">{errors.email?.message}</p>
-               </div>
-            </div>
-            <div className="col-12">
-               <div className="input-group-meta position-relative mb-20">
-                  <label>Password*</label>
-                  <input type={isPasswordVisible ? "text" : "password"} {...register("password")} placeholder="Enter Password" className="pass_log_id" />
-                  <span className="placeholder_icon"><span className={`passVicon ${isPasswordVisible ? "eye-slash" : ""}`}><img onClick={togglePasswordVisibility} src="/assets/images/icon/icon_68.svg" alt="" /></span></span>
-                  <p className="form_error">{errors.password?.message}</p>
-               </div>
-            </div>
-            <div className="col-12">
-               <div className="agreement-checkbox d-flex justify-content-between align-items-center">
-                  <div>
-                     <input type="checkbox" id="remember" />
-                     <label htmlFor="remember">Keep me logged in</label>
-                  </div>
-                  <Link to="#">Forget Password?</Link>
-               </div>
-            </div>
-            <div className="col-12">
-               <button type="submit" className="btn-two w-100 text-uppercase d-block mt-20">Login</button>
-            </div>
-         </div>
-      </form>
-   )
-}
+    setLoading(false);
 
-export default LoginForm
+    if (fetchErr) {
+      setError("Something went wrong. Please try again.");
+      return;
+    }
+
+    // ── 2. No account ─────────────────────────────────────
+    if (!users || users.length === 0) {
+      setError("No account found with that email.");
+      return;
+    }
+
+    const user = users[0];
+
+    // ── 3. Pending approval ───────────────────────────────
+    if (user.status === "pending") {
+      setError(
+        "Your account is pending approval. You will receive an email once verified.",
+      );
+      return;
+    }
+
+    // ── 4. Verified — check password ──────────────────────
+    if (user.status === "verified") {
+      if (user.password_plain !== password.trim()) {
+        setError("Incorrect password. Check your credentials email.");
+        return;
+      }
+
+      // ── 5. Success — persist session ───────────────────
+      localStorage.setItem(
+        CLIENT_SESSION_KEY,
+        JSON.stringify({
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email,
+          username: user.username,
+          ts: Date.now(),
+        }),
+      );
+
+      // Reload so the app can read the session and redirect
+      window.location.reload();
+      return;
+    }
+
+    // Fallback for any unexpected status value
+    setError("Your account status is unrecognised. Please contact support.");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} noValidate>
+      <div className="input-group-meta position-relative mb-25">
+        <label>Email Address</label>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+          autoComplete="email"
+        />
+      </div>
+
+      <div className="input-group-meta position-relative mb-20">
+        <label>Password</label>
+        <input
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+          autoComplete="current-password"
+        />
+      </div>
+
+      {error && (
+        <div
+          className="mb-20"
+          role="alert"
+          style={{
+            background: "rgba(248,113,113,0.08)",
+            border: "1px solid rgba(248,113,113,0.3)",
+            color: "#f87171",
+            padding: "10px 14px",
+            borderRadius: 8,
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="input-group-meta mb-10">
+        <button
+          type="submit"
+          className="btn-eight fw-500 tran3s d-block mt-10"
+          disabled={loading}
+          style={{ width: "100%", opacity: loading ? 0.7 : 1 }}
+        >
+          {loading ? "Signing in…" : "Sign In →"}
+        </button>
+      </div>
+
+      <p
+        className="text-center color-dark"
+        style={{ fontSize: 12, marginTop: 12 }}
+      >
+        Don't have an account? Switch to the <strong>Signup</strong> tab.
+      </p>
+    </form>
+  );
+};
+
+export default LoginForm;

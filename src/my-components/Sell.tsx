@@ -1,13 +1,19 @@
 // ============================================================
 //  SellPropertyArea.tsx — User-facing "List Your Property" form
+//  Design: DM Serif Display + DM Sans, consistent with
+//  BuyListing / PropertyCompare / Calculator design tokens
 //  Submits to `sell_requests` table in Supabase
-//  Extra fields: contact_phone, contact_email + status = 'pending'
 // ============================================================
 
 import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import FutureHeader from "../layouts/headers/FutureHeader";
+import Wrapper from "../layouts/Wrapper";
+import SEO from "../components/SEO";
+import Brand from "../components/homes/home-four/Brand";
+import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
+import FutureHeader from "../layouts/headers/FutureHeader";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -19,12 +25,9 @@ const STORAGE_BUCKET = "FutureState";
 
 // ─── Types ────────────────────────────────────────────────────
 interface SellFormData {
-  // Contact info (extra fields)
   contact_name: string;
   contact_email: string;
   contact_phone: string;
-
-  // Core listing
   title: string;
   property_type: string;
   status: string;
@@ -36,314 +39,445 @@ interface SellFormData {
   kitchens: string;
   description: string;
   features_description: string;
-
-  // JSON sections
   property_details: Record<string, string>;
   utility_features: Record<string, string>;
   outdoor_features: Record<string, string>;
   whats_nearby: Record<string, string>;
-
-  // Amenities
   amenities: string[];
 }
 
-// ─── Injected styles ─────────────────────────────────────────
+// ─── Design tokens (consistent with rest of site) ─────────────
 const SELL_STYLES = `
-  .sell-page-wrap {
-    min-height: 100vh;
-    background: #f7f7f9;
-    padding: 60px 0 100px;
-  }
-  .sell-hero {
-    background: #1a1a1a;
-    padding: 56px 0 48px;
-    margin-bottom: 48px;
-    position: relative;
-    overflow: hidden;
-  }
-  .sell-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 70% 50%, rgba(232,69,69,0.18) 0%, transparent 65%);
-    pointer-events: none;
-  }
-  .sell-hero h1 {
-    font-size: 36px;
-    font-weight: 900;
-    color: #fff;
-    margin-bottom: 10px;
-    letter-spacing: -0.5px;
-  }
-  .sell-hero p {
-    font-size: 15px;
-    color: rgba(255,255,255,0.5);
-    max-width: 520px;
-  }
-  .sell-hero .step-track {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-top: 32px;
-  }
-  .step-node {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255,255,255,0.35);
-    letter-spacing: 0.4px;
-  }
-  .step-node.active { color: #fff; }
-  .step-node .dot {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px;
-  }
-  .step-node.active .dot { border-color: #e84545; background: #e84545; color: #fff; }
-  .step-node.done .dot { border-color: #4caf50; background: #4caf50; color: #fff; }
-  .step-line {
-    flex: 1;
-    height: 1px;
-    background: rgba(255,255,255,0.12);
-    margin: 0 10px;
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+  :root {
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'DM Sans', system-ui, sans-serif;
+    --c-ink:        #1a1715;
+    --c-ink-2:      #4a4845;
+    --c-ink-3:      #8a8785;
+    --c-rule:       #ede9e4;
+    --c-surface:    #faf9f7;
+    --c-white:      #ffffff;
+    --c-accent:     #c8402a;
+    --c-accent-h:   #a83320;
+    --radius-card:  16px;
+    --radius-sm:    10px;
+    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
+    --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
   }
 
-  /* Form card */
-  .sell-form-card {
-    background: #fff;
-    border-radius: 18px;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    padding: 34px 38px;
-    margin-bottom: 28px;
+  /* ── Base ── */
+  .sell-root, .sell-root * {
+    font-family: var(--font-body);
+    box-sizing: border-box;
   }
-  .sell-form-card .card-section-title {
+
+  /* ── Section wrapper ── */
+  .sell-section {
+    padding-top: 100px;
+    padding-bottom: 120px;
+    background: var(--c-surface);
+  }
+
+  /* ── Two-column layout ── */
+  .sell-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 991px) {
+    .sell-layout { grid-template-columns: 1fr; }
+    .sell-sidebar { display: none; }
+  }
+
+  /* ── Sticky sidebar nav ── */
+  .sell-sidebar {
+    position: sticky;
+    top: 100px;
+  }
+  .sell-sidebar__title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--c-ink-3);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--c-rule);
+  }
+  .sell-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
     font-size: 13px;
+    font-weight: 500;
+    color: var(--c-ink-3);
+    cursor: pointer;
+    transition: all 0.18s;
+    margin-bottom: 2px;
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .sell-nav-item:hover {
+    background: var(--c-white);
+    border-color: var(--c-rule);
+    color: var(--c-ink);
+  }
+  .sell-nav-item.active {
+    background: var(--c-ink);
+    color: var(--c-white);
+    border-color: var(--c-ink);
+  }
+  .sell-nav-item__icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* ── Form cards ── */
+  .sell-card {
+    background: var(--c-white);
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius-card);
+    padding: 32px 36px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-card);
+  }
+  @media (max-width: 600px) {
+    .sell-card { padding: 24px 18px; }
+  }
+  .sell-card__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--c-rule);
+  }
+  .sell-card__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .sell-card__title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--c-ink);
+    letter-spacing: -0.2px;
+  }
+  .sell-card__subtitle {
+    font-size: 12px;
+    color: var(--c-ink-3);
+    margin-top: 1px;
+  }
+
+  /* ── Form elements ── */
+  .sell-label {
+    display: block;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
-    color: #bbb;
-    margin-bottom: 22px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f2f2f2;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .sell-form-card .card-section-title .icon {
-    width: 28px; height: 28px;
-    border-radius: 7px;
-    background: #f4f4f6;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-  }
-
-  /* Inputs */
-  .sell-input, .sell-select, .sell-textarea {
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: 10px;
-    border: 1.5px solid #e8e8e8;
-    font-size: 14px;
-    color: #333;
-    background: #fafafa;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-    font-family: inherit;
-  }
-  .sell-input:focus, .sell-select:focus, .sell-textarea:focus {
-    border-color: #1a1a1a;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(26,26,26,0.06);
-  }
-  .sell-textarea { resize: vertical; min-height: 110px; }
-  .sell-select { cursor: pointer; }
-  .sell-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.4px;
-    color: #888;
-    text-transform: uppercase;
+    color: var(--c-ink-3);
     margin-bottom: 7px;
   }
-  .sell-label .req { color: #e84545; margin-left: 2px; }
-  .input-hint {
+  .sell-label .req { color: var(--c-accent); margin-left: 2px; }
+
+  .sell-input,
+  .sell-select,
+  .sell-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    font-size: 13.5px;
+    font-family: var(--font-body);
+    color: var(--c-ink);
+    background: var(--c-surface);
+    outline: none;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .sell-input:focus,
+  .sell-select:focus,
+  .sell-textarea:focus {
+    border-color: var(--c-ink);
+    background: var(--c-white);
+    box-shadow: 0 0 0 3px rgba(26,23,21,0.06);
+  }
+  .sell-textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.6;
+  }
+  .sell-select { cursor: pointer; }
+  .sell-hint {
     font-size: 11.5px;
-    color: #bbb;
+    color: var(--c-ink-3);
     margin-top: 5px;
   }
 
-  /* KV editor */
+  /* ── KV editor ── */
   .kv-editor { display: flex; flex-direction: column; gap: 8px; }
-  .kv-row { display: grid; grid-template-columns: 1fr 1fr 34px; gap: 8px; align-items: center; }
-  .kv-row input { padding: 9px 12px; border-radius: 8px; border: 1.5px solid #e8e8e8; font-size: 13px; background: #fafafa; outline: none; transition: border-color 0.2s; }
-  .kv-row input:focus { border-color: #1a1a1a; background: #fff; }
-  .kv-remove-btn {
-    width: 34px; height: 34px; border-radius: 8px;
-    border: 1.5px solid #eee; background: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; color: #ccc; cursor: pointer;
-    transition: all 0.2s;
-  }
-  .kv-remove-btn:hover { border-color: #e84545; color: #e84545; background: #fff5f5; }
-  .kv-add-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; border-radius: 8px; border: 1.5px dashed #ddd;
-    background: transparent; color: #888; font-size: 13px;
-    cursor: pointer; transition: all 0.2s; margin-top: 4px;
-  }
-  .kv-add-btn:hover { border-color: #1a1a1a; color: #1a1a1a; background: #f8f8f8; }
-
-  /* Amenities */
-  .amenity-grid-sell {
+  .kv-row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: 1fr 1fr 32px;
+    gap: 8px;
+    align-items: center;
+  }
+  .kv-row input {
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    font-size: 13px;
+    font-family: var(--font-body);
+    color: var(--c-ink);
+    background: var(--c-surface);
+    outline: none;
+    transition: border-color 0.18s, background 0.18s;
+    width: 100%;
+  }
+  .kv-row input:focus {
+    border-color: var(--c-ink);
+    background: var(--c-white);
+  }
+  .kv-remove {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid var(--c-rule);
+    background: var(--c-white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: var(--c-ink-3);
+    cursor: pointer;
+    transition: all 0.18s;
+    flex-shrink: 0;
+  }
+  .kv-remove:hover { border-color: var(--c-accent); color: var(--c-accent); background: #fdf0ee; }
+  .kv-add {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--c-rule);
+    background: transparent;
+    color: var(--c-ink-3);
+    font-size: 12.5px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    margin-top: 4px;
+  }
+  .kv-add:hover { border-color: var(--c-ink); color: var(--c-ink); background: var(--c-surface); }
+
+  /* ── Amenities grid ── */
+  .amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 8px;
   }
-  .amenity-check-label {
+  .amenity-label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 13px;
-    border-radius: 9px;
-    border: 1.5px solid #eee;
-    background: #fafafa;
+    gap: 9px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    background: var(--c-surface);
     cursor: pointer;
     font-size: 13px;
-    color: #555;
-    transition: all 0.2s;
+    color: var(--c-ink-2);
+    font-weight: 500;
+    transition: all 0.18s;
     user-select: none;
   }
-  .amenity-check-label:hover { border-color: #1a1a1a; background: #f5f5f5; }
-  .amenity-check-label input { accent-color: #e84545; cursor: pointer; }
-  .amenity-check-label.checked { border-color: #e84545; background: #fff5f5; color: #1a1a1a; font-weight: 600; }
+  .amenity-label:hover { border-color: var(--c-ink-2); background: var(--c-white); }
+  .amenity-label.checked {
+    border-color: var(--c-ink);
+    background: var(--c-ink);
+    color: var(--c-white);
+  }
+  .amenity-label input { display: none; }
+  .amenity-check-icon {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+    transition: all 0.15s;
+  }
 
-  /* Image upload */
-  .upload-zone-sell {
-    border: 2px dashed #ddd;
-    border-radius: 12px;
-    padding: 30px 20px;
+  /* ── Image uploader ── */
+  .upload-zone {
+    border: 2px dashed var(--c-rule);
+    border-radius: var(--radius-card);
+    padding: 36px 24px;
     text-align: center;
     cursor: pointer;
-    background: #fafafa;
-    transition: all 0.2s;
+    background: var(--c-surface);
+    transition: border-color 0.2s, background 0.2s;
     position: relative;
   }
-  .upload-zone-sell:hover { border-color: #1a1a1a; background: #f5f5f5; }
-  .upload-zone-sell .uz-icon { font-size: 2rem; margin-bottom: 8px; }
-  .upload-zone-sell p { font-size: 14px; font-weight: 600; color: #333; margin: 0 0 4px; }
-  .upload-zone-sell span { font-size: 12px; color: #aaa; }
-  .img-thumb-grid {
+  .upload-zone:hover { border-color: var(--c-ink); background: var(--c-white); }
+  .upload-zone__icon { font-size: 2rem; margin-bottom: 10px; }
+  .upload-zone__title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--c-ink);
+    margin-bottom: 5px;
+  }
+  .upload-zone__sub { font-size: 12.5px; color: var(--c-ink-3); }
+  .img-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 10px;
-    margin-top: 14px;
+    margin-top: 16px;
   }
   .img-thumb {
     position: relative;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
     aspect-ratio: 1;
-    border: 1.5px solid #eee;
+    border: 1.5px solid var(--c-rule);
   }
   .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .img-thumb .remove-thumb {
+  .img-thumb__remove {
     position: absolute; top: 5px; right: 5px;
     width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(0,0,0,0.55); color: #fff;
+    background: rgba(26,23,21,0.55);
+    backdrop-filter: blur(4px);
+    color: #fff; border: none;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; cursor: pointer; border: none;
-    transition: background 0.2s;
+    font-size: 11px; cursor: pointer;
+    transition: background 0.18s;
   }
-  .img-thumb .remove-thumb:hover { background: #e84545; }
+  .img-thumb__remove:hover { background: var(--c-accent); }
 
-  /* Submit */
-  .sell-submit-btn {
+  /* ── Submit button ── */
+  .sell-submit {
     width: 100%;
     padding: 16px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     border: none;
-    background: #1a1a1a;
-    color: #fff;
-    font-size: 15px;
+    background: var(--c-ink);
+    color: var(--c-white);
+    font-size: 14.5px;
     font-weight: 700;
+    font-family: var(--font-body);
     letter-spacing: 0.3px;
     cursor: pointer;
     transition: background 0.2s, transform 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 9px;
+  }
+  .sell-submit:hover { background: var(--c-accent); }
+  .sell-submit:active { transform: scale(0.99); }
+  .sell-submit:disabled { background: var(--c-ink-3); cursor: not-allowed; transform: none; }
+
+  /* ── Error ── */
+  .sell-error {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    background: #fdf0ee;
+    border: 1.5px solid #f5c4bd;
+    color: var(--c-accent);
+    font-size: 13.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
     gap: 8px;
   }
-  .sell-submit-btn:hover { background: #e84545; }
-  .sell-submit-btn:active { transform: scale(0.99); }
-  .sell-submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
-  /* Status badge */
-  .pending-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: 20px;
-    background: #fff8e1;
-    border: 1.5px solid #ffcc02;
-    color: #b38600;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-  }
-  .pending-badge::before { content: "●"; font-size: 8px; }
-
-  /* Success screen */
-  .sell-success-screen {
+  /* ── Success screen ── */
+  .sell-success {
     text-align: center;
     padding: 80px 30px;
   }
-  .sell-success-screen .tick-circle {
-    width: 72px; height: 72px; border-radius: 50%;
-    background: linear-gradient(135deg, #4caf50, #81c784);
+  .sell-success__circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--c-ink);
     display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; margin: 0 auto 24px;
-    box-shadow: 0 8px 24px rgba(76,175,80,0.3);
+    font-size: 1.8rem;
+    margin: 0 auto 28px;
   }
-  .sell-success-screen h2 { font-size: 26px; font-weight: 800; color: #1a1a1a; margin-bottom: 10px; }
-  .sell-success-screen p { font-size: 15px; color: #888; max-width: 440px; margin: 0 auto 28px; line-height: 1.7; }
-  .sell-another-btn {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 12px 28px; border-radius: 10px;
-    background: #1a1a1a; color: #fff;
-    font-weight: 700; font-size: 14px;
-    border: none; cursor: pointer; text-decoration: none;
-    transition: background 0.2s;
+  .sell-success__title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--c-ink);
+    margin-bottom: 12px;
+    letter-spacing: -0.4px;
   }
-  .sell-another-btn:hover { background: #e84545; color: #fff; }
-
-  /* Error */
-  .sell-error-box {
-    padding: 12px 16px;
-    border-radius: 9px;
-    background: #fff5f5;
-    border: 1.5px solid #ffcdd2;
-    color: #c62828;
+  .sell-success__body {
+    font-size: 15px;
+    color: var(--c-ink-3);
+    max-width: 460px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+  .sell-success__badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    color: var(--c-ink-2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .sell-success__badge::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #56b870;
+  }
+  .sell-again-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 30px;
+    border-radius: var(--radius-sm);
+    background: var(--c-ink);
+    color: var(--c-white);
     font-size: 13.5px;
-    margin-bottom: 16px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    border: none; cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
   }
+  .sell-again-btn:hover { background: var(--c-accent); color: var(--c-white); }
 `;
 
 function injectSellStyles() {
   if (
     typeof document !== "undefined" &&
-    !document.getElementById("sell-form-styles")
+    !document.getElementById("sell-area-styles")
   ) {
     const el = document.createElement("style");
-    el.id = "sell-form-styles";
+    el.id = "sell-area-styles";
     el.textContent = SELL_STYLES;
     document.head.appendChild(el);
   }
@@ -377,7 +511,29 @@ const AMENITY_OPTIONS = [
   "Elevator",
 ];
 
-// ─── KV Section Editor ───────────────────────────────────────
+const INITIAL_FORM: SellFormData = {
+  contact_name: "",
+  contact_email: "",
+  contact_phone: "",
+  title: "",
+  property_type: "Apartment",
+  status: "For Sale",
+  price: "",
+  location: "",
+  sqft: "",
+  bedrooms: "",
+  bathrooms: "",
+  kitchens: "",
+  description: "",
+  features_description: "",
+  property_details: { year_built: "", furnishing: "", parking: "", floors: "" },
+  utility_features: { heating: "", cooling: "", water: "", electricity: "" },
+  outdoor_features: { garden: "", balcony: "", garage: "", pool: "" },
+  whats_nearby: { school: "", grocery: "", hospital: "", metro: "" },
+  amenities: [],
+};
+
+// ─── KV Editor ───────────────────────────────────────────────
 function KVEditor({
   data,
   onChange,
@@ -394,22 +550,9 @@ function KVEditor({
     for (const [k, v] of Object.entries(data)) {
       if (k === oldKey) {
         if (newKey.trim()) next[newKey] = value;
-      } else {
-        next[k] = v;
-      }
+      } else next[k] = v;
     }
     onChange(next);
-  };
-
-  const remove = (key: string) => {
-    const next = { ...data };
-    delete next[key];
-    onChange(next);
-  };
-
-  const add = () => {
-    const key = `field_${Date.now()}`;
-    onChange({ ...data, [key]: "" });
   };
 
   return (
@@ -429,78 +572,74 @@ function KVEditor({
             placeholder={placeholder?.v ?? "Value"}
           />
           <button
-            className="kv-remove-btn"
-            onClick={() => remove(k)}
+            className="kv-remove"
             type="button"
+            onClick={() => {
+              const n = { ...data };
+              delete n[k];
+              onChange(n);
+            }}
           >
             ×
           </button>
         </div>
       ))}
-      <button className="kv-add-btn" onClick={add} type="button">
+      <button
+        className="kv-add"
+        type="button"
+        onClick={() => onChange({ ...data, [`field_${Date.now()}`]: "" })}
+      >
         <span>+</span> Add Field
       </button>
     </div>
   );
 }
 
-// ─── Image Upload ─────────────────────────────────────────────
+// ─── Image Uploader ───────────────────────────────────────────
 function ImageUploader({
   label,
+  subtitle,
   files,
   onChange,
   max = 8,
-  hint = "",
 }: {
   label: string;
+  subtitle: string;
   files: File[];
   onChange: (f: File[]) => void;
   max?: number;
-  hint?: string;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(e.target.files ?? []);
-    const merged = [...files, ...selected].slice(0, max);
-    onChange(merged);
-    if (inputRef.current) inputRef.current.value = "";
-  };
-
-  const remove = (i: number) => {
-    const next = files.filter((_, idx) => idx !== i);
-    onChange(next);
-  };
-
+  const ref = useRef<HTMLInputElement>(null);
   return (
     <div>
-      <div
-        className="upload-zone-sell"
-        onClick={() => inputRef.current?.click()}
-      >
-        <div className="uz-icon">📷</div>
-        <p>{label}</p>
-        <span>
-          {files.length}/{max} selected · PNG, JPG · {hint || "Max 10MB each"}
-        </span>
+      <div className="upload-zone" onClick={() => ref.current?.click()}>
+        <div className="upload-zone__icon">📷</div>
+        <div className="upload-zone__title">{label}</div>
+        <div className="upload-zone__sub">
+          {files.length}/{max} selected · {subtitle}
+        </div>
         <input
-          ref={inputRef}
+          ref={ref}
           type="file"
           multiple
           accept="image/*"
           style={{ display: "none" }}
-          onChange={handleSelect}
+          onChange={(e) => {
+            const sel = Array.from(e.target.files ?? []);
+            onChange([...files, ...sel].slice(0, max));
+            if (ref.current) ref.current.value = "";
+          }}
         />
       </div>
       {files.length > 0 && (
-        <div className="img-thumb-grid">
+        <div className="img-grid">
           {files.map((f, i) => (
             <div key={i} className="img-thumb">
               <img src={URL.createObjectURL(f)} alt={f.name} />
               <button
-                className="remove-thumb"
-                onClick={() => remove(i)}
+                className="img-thumb__remove"
                 type="button"
+                onClick={() => onChange(files.filter((_, idx) => idx !== i))}
               >
                 ×
               </button>
@@ -508,6 +647,58 @@ function ImageUploader({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Section Card ─────────────────────────────────────────────
+function SellCard({
+  id,
+  icon,
+  title,
+  subtitle,
+  children,
+}: {
+  id?: string;
+  icon: string;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="sell-card" id={id}>
+      <div className="sell-card__header">
+        <div className="sell-card__icon">{icon}</div>
+        <div>
+          <div className="sell-card__title">{title}</div>
+          {subtitle && <div className="sell-card__subtitle">{subtitle}</div>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─── Field wrapper ────────────────────────────────────────────
+function Field({
+  label,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="sell-label">
+        {label}
+        {required && <span className="req"> *</span>}
+      </label>
+      {children}
+      {hint && <div className="sell-hint">{hint}</div>}
     </div>
   );
 }
@@ -521,31 +712,12 @@ const SellPropertyArea = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [floorFiles, setFloorFiles] = useState<File[]>([]);
-
   const [form, setForm] = useState<SellFormData>({
-    contact_name: "",
-    contact_email: "",
-    contact_phone: "",
-    title: "",
-    property_type: "Apartment",
-    status: "For Sale",
-    price: "",
-    location: "",
-    sqft: "",
-    bedrooms: "",
-    bathrooms: "",
-    kitchens: "",
-    description: "",
-    features_description: "",
-    property_details: {
-      year_built: "",
-      furnishing: "",
-      parking: "",
-      floors: "",
-    },
-    utility_features: { heating: "", cooling: "", water: "", electricity: "" },
-    outdoor_features: { garden: "", balcony: "", garage: "", pool: "" },
-    whats_nearby: { school: "", grocery: "", hospital: "", metro: "" },
+    ...INITIAL_FORM,
+    property_details: { ...INITIAL_FORM.property_details },
+    utility_features: { ...INITIAL_FORM.utility_features },
+    outdoor_features: { ...INITIAL_FORM.outdoor_features },
+    whats_nearby: { ...INITIAL_FORM.whats_nearby },
     amenities: [],
   });
 
@@ -559,7 +731,6 @@ const SellPropertyArea = () => {
     set("amenities", next);
   };
 
-  // Upload image array to Supabase storage, return URLs
   async function uploadImages(
     files: File[],
     folder: string,
@@ -580,8 +751,6 @@ const SellPropertyArea = () => {
 
   const handleSubmit = async () => {
     setError(null);
-
-    // Basic validation
     if (!form.contact_name.trim()) return setError("Please enter your name.");
     if (!form.contact_email.trim()) return setError("Please enter your email.");
     if (!form.contact_phone.trim())
@@ -598,49 +767,39 @@ const SellPropertyArea = () => {
         floorFiles.length > 0
           ? await uploadImages(floorFiles, "floor-plans")
           : [];
-
-      // Clean up empty KV entries
       const cleanKV = (obj: Record<string, string>) =>
         Object.fromEntries(
           Object.entries(obj).filter(([k, v]) => k.trim() && v.trim()),
         );
 
-      const payload = {
-        // Contact (extra fields for seller)
-        contact_name: form.contact_name.trim(),
-        contact_email: form.contact_email.trim(),
-        contact_phone: form.contact_phone.trim(),
-
-        // Listing fields
-        title: form.title.trim(),
-        property_type: form.property_type,
-        status: form.status,
-        price: parseFloat(form.price.replace(/,/g, "")) || 0,
-        location: form.location.trim(),
-        sqft: form.sqft ? parseInt(form.sqft) : null,
-        bedrooms: form.bedrooms ? parseInt(form.bedrooms) : null,
-        bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
-        kitchens: form.kitchens ? parseInt(form.kitchens) : null,
-        description: form.description.trim() || null,
-        features_description: form.features_description.trim() || null,
-        property_details: cleanKV(form.property_details),
-        utility_features: cleanKV(form.utility_features),
-        outdoor_features: cleanKV(form.outdoor_features),
-        whats_nearby: cleanKV(form.whats_nearby),
-        amenities: form.amenities,
-        images: imageUrls,
-        floor_plans: floorUrls,
-
-        // Status flag for admin review
-        review_status: "pending",
-      };
-
-      const { error: dbErr } = await supabase
-        .from("sell_requests")
-        .insert([payload]);
+      const { error: dbErr } = await supabase.from("sell_requests").insert([
+        {
+          contact_name: form.contact_name.trim(),
+          contact_email: form.contact_email.trim(),
+          contact_phone: form.contact_phone.trim(),
+          title: form.title.trim(),
+          property_type: form.property_type,
+          status: form.status,
+          price: parseFloat(form.price.replace(/,/g, "")) || 0,
+          location: form.location.trim(),
+          sqft: form.sqft ? parseInt(form.sqft) : null,
+          bedrooms: form.bedrooms ? parseInt(form.bedrooms) : null,
+          bathrooms: form.bathrooms ? parseInt(form.bathrooms) : null,
+          kitchens: form.kitchens ? parseInt(form.kitchens) : null,
+          description: form.description.trim() || null,
+          features_description: form.features_description.trim() || null,
+          property_details: cleanKV(form.property_details),
+          utility_features: cleanKV(form.utility_features),
+          outdoor_features: cleanKV(form.outdoor_features),
+          whats_nearby: cleanKV(form.whats_nearby),
+          amenities: form.amenities,
+          images: imageUrls,
+          floor_plans: floorUrls,
+          review_status: "pending",
+        },
+      ]);
 
       if (dbErr) throw new Error(dbErr.message);
-
       setStep("success");
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Please try again.");
@@ -649,446 +808,475 @@ const SellPropertyArea = () => {
     }
   };
 
-  if (step === "success") {
-    return (
-      <div className="sell-page-wrap">
-        <div className="container">
-          <div className="sell-form-card">
-            <div className="sell-success-screen">
-              <div className="tick-circle">✓</div>
-              <h2>Listing Submitted!</h2>
-              <p>
-                Thank you! Your property listing has been submitted for review.
-                Our team will contact you at{" "}
-                <strong>{form.contact_email}</strong> or{" "}
-                <strong>{form.contact_phone}</strong> within 24–48 hours.
-              </p>
-              <div className="pending-badge" style={{ marginBottom: "28px" }}>
-                STATUS: PENDING REVIEW
-              </div>
-              <br />
-              <button
-                className="sell-another-btn"
-                onClick={() => {
-                  setStep("form");
-                  setForm({
-                    contact_name: "",
-                    contact_email: "",
-                    contact_phone: "",
-                    title: "",
-                    property_type: "Apartment",
-                    status: "For Sale",
-                    price: "",
-                    location: "",
-                    sqft: "",
-                    bedrooms: "",
-                    bathrooms: "",
-                    kitchens: "",
-                    description: "",
-                    features_description: "",
-                    property_details: {
-                      year_built: "",
-                      furnishing: "",
-                      parking: "",
-                      floors: "",
-                    },
-                    utility_features: {
-                      heating: "",
-                      cooling: "",
-                      water: "",
-                      electricity: "",
-                    },
-                    outdoor_features: {
-                      garden: "",
-                      balcony: "",
-                      garage: "",
-                      pool: "",
-                    },
-                    whats_nearby: {
-                      school: "",
-                      grocery: "",
-                      hospital: "",
-                      metro: "",
-                    },
-                    amenities: [],
-                  });
-                  setImageFiles([]);
-                  setFloorFiles([]);
-                }}
-              >
-                Submit Another Property
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const navItems = [
+    { id: "sec-contact", icon: "👤", label: "Your Details" },
+    { id: "sec-property", icon: "🏠", label: "Property Info" },
+    { id: "sec-details", icon: "📋", label: "Prop. Details" },
+    { id: "sec-utility", icon: "⚡", label: "Utilities" },
+    { id: "sec-outdoor", icon: "🌿", label: "Outdoor" },
+    { id: "sec-nearby", icon: "📍", label: "Nearby" },
+    { id: "sec-amenities", icon: "✨", label: "Amenities" },
+    { id: "sec-images", icon: "🖼", label: "Images" },
+  ];
 
   return (
-    <>
+    <Wrapper>
+      <SEO pageTitle="List Your Property – Sell or Rent" />
       <FutureHeader style_1={true} style_2={false} />
-      <div className="sell-page-wrap">
-        {/* Hero */}
-        <div className="sell-hero">
-          <div className="container">
-            <h1>List Your Property</h1>
-            <p>
-              Fill in the details below and our team will review your listing
-              and get in touch within 24 hours.
-            </p>
-            <div className="step-track">
-              {[
-                { n: 1, label: "Your Details" },
-                { n: 2, label: "Property Info" },
-                { n: 3, label: "Features & Media" },
-                { n: 4, label: "Review" },
-              ].map((s, i, arr) => (
-                <>
-                  <div key={s.n} className="step-node active">
-                    <div className="dot">{s.n}</div>
-                    {s.label}
-                  </div>
-                  {i < arr.length - 1 && <div className="step-line" />}
-                </>
-              ))}
-            </div>
-          </div>
-        </div>
 
-        <div className="container">
-          {/* ── Section 1: Contact Info ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">👤</span>
-              Your Contact Information
-              <span
-                className="pending-badge ms-auto"
-                style={{ fontSize: "11px" }}
-              >
-                UPLOADED BY USER
-              </span>
-            </div>
-            <div className="row g-3">
-              <div className="col-md-4">
-                <label className="sell-label">
-                  Full Name <span className="req">*</span>
-                </label>
-                <input
-                  className="sell-input"
-                  placeholder="e.g. John Smith"
-                  value={form.contact_name}
-                  onChange={(e) => set("contact_name", e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
-                <label className="sell-label">
-                  Email Address <span className="req">*</span>
-                </label>
-                <input
-                  type="email"
-                  className="sell-input"
-                  placeholder="you@example.com"
-                  value={form.contact_email}
-                  onChange={(e) => set("contact_email", e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
-                <label className="sell-label">
-                  Phone Number <span className="req">*</span>
-                </label>
-                <input
-                  type="tel"
-                  className="sell-input"
-                  placeholder="+1 555 000 0000"
-                  value={form.contact_phone}
-                  onChange={(e) => set("contact_phone", e.target.value)}
-                />
-              </div>
-            </div>
+      {/* ── Banner ── */}
+      <div className="inner-banner-three inner-banner text-center z-1 position-relative">
+        <div
+          className="bg-wrapper overflow-hidden position-relative z-1"
+          style={{ backgroundImage: `url(/assets/images/media/img_51.jpg)` }}
+        >
+          <div className="container position-relative z-2">
+            <h2 className="mb-35 xl-mb-20 md-mb-10 pt-15 font-garamond text-white">
+              List Your Property
+            </h2>
+            <ul className="theme-breadcrumb style-none d-inline-flex align-items-center justify-content-center position-relative z-1 bottom-line">
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li>/</li>
+              <li>List Property</li>
+            </ul>
           </div>
-
-          {/* ── Section 2: Core Listing ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">🏠</span>
-              Property Details
-            </div>
-            <div className="row g-3">
-              <div className="col-12">
-                <label className="sell-label">
-                  Property Title <span className="req">*</span>
-                </label>
-                <input
-                  className="sell-input"
-                  placeholder="e.g. Modern 3-Bedroom Apartment in Downtown"
-                  value={form.title}
-                  onChange={(e) => set("title", e.target.value)}
-                />
-              </div>
-              <div className="col-md-4">
-                <label className="sell-label">Property Type</label>
-                <select
-                  className="sell-select"
-                  value={form.property_type}
-                  onChange={(e) => set("property_type", e.target.value)}
-                >
-                  {PROPERTY_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label className="sell-label">Listing Type</label>
-                <select
-                  className="sell-select"
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value)}
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label className="sell-label">
-                  Price (USD) <span className="req">*</span>
-                </label>
-                <input
-                  className="sell-input"
-                  placeholder="e.g. 450000"
-                  value={form.price}
-                  onChange={(e) => set("price", e.target.value)}
-                />
-                <div className="input-hint">
-                  {form.status === "For Rent"
-                    ? "Monthly rent amount"
-                    : "Asking price"}
-                </div>
-              </div>
-              <div className="col-12">
-                <label className="sell-label">
-                  Location / Address <span className="req">*</span>
-                </label>
-                <input
-                  className="sell-input"
-                  placeholder="e.g. 123 Main St, New York, NY 10001"
-                  value={form.location}
-                  onChange={(e) => set("location", e.target.value)}
-                />
-              </div>
-              <div className="col-md-3">
-                <label className="sell-label">Area (sqft)</label>
-                <input
-                  className="sell-input"
-                  placeholder="e.g. 1200"
-                  value={form.sqft}
-                  onChange={(e) => set("sqft", e.target.value)}
-                />
-              </div>
-              <div className="col-md-3">
-                <label className="sell-label">Bedrooms</label>
-                <select
-                  className="sell-select"
-                  value={form.bedrooms}
-                  onChange={(e) => set("bedrooms", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="sell-label">Bathrooms</label>
-                <select
-                  className="sell-select"
-                  value={form.bathrooms}
-                  onChange={(e) => set("bathrooms", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-3">
-                <label className="sell-label">Kitchens</label>
-                <select
-                  className="sell-select"
-                  value={form.kitchens}
-                  onChange={(e) => set("kitchens", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  {[1, 2, 3].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-12">
-                <label className="sell-label">Description</label>
-                <textarea
-                  className="sell-textarea"
-                  placeholder="Describe the property — highlights, condition, unique features…"
-                  value={form.description}
-                  onChange={(e) => set("description", e.target.value)}
-                />
-              </div>
-              <div className="col-12">
-                <label className="sell-label">Features Description</label>
-                <textarea
-                  className="sell-textarea"
-                  rows={3}
-                  placeholder="Briefly describe standout features like layout, views, renovations…"
-                  value={form.features_description}
-                  onChange={(e) => set("features_description", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Section 3: Property Details KV ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">📋</span>
-              Property Details
-            </div>
-            <KVEditor
-              data={form.property_details}
-              onChange={(d) => set("property_details", d)}
-              placeholder={{ k: "e.g. year_built", v: "e.g. 2019" }}
-            />
-          </div>
-
-          {/* ── Section 4: Utility ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">⚡</span>
-              Utility & Home Features
-            </div>
-            <KVEditor
-              data={form.utility_features}
-              onChange={(d) => set("utility_features", d)}
-              placeholder={{ k: "e.g. heating", v: "e.g. Central Gas" }}
-            />
-          </div>
-
-          {/* ── Section 5: Outdoor ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">🌿</span>
-              Outdoor Features
-            </div>
-            <KVEditor
-              data={form.outdoor_features}
-              onChange={(d) => set("outdoor_features", d)}
-              placeholder={{ k: "e.g. garden", v: "e.g. Yes, private" }}
-            />
-          </div>
-
-          {/* ── Section 6: Nearby ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">📍</span>
-              What's Nearby (distances)
-            </div>
-            <div className="input-hint mb-3">
-              Enter distances in km or min walk, e.g. "0.5 km" or "5 min walk"
-            </div>
-            <KVEditor
-              data={form.whats_nearby}
-              onChange={(d) => set("whats_nearby", d)}
-              placeholder={{ k: "e.g. school", v: "e.g. 0.4 km" }}
-            />
-          </div>
-
-          {/* ── Section 7: Amenities ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">✨</span>
-              Amenities
-            </div>
-            <div className="amenity-grid-sell">
-              {AMENITY_OPTIONS.map((a) => (
-                <label
-                  key={a}
-                  className={`amenity-check-label${form.amenities.includes(a) ? " checked" : ""}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.amenities.includes(a)}
-                    onChange={() => toggleAmenity(a)}
-                  />
-                  {a}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Section 8: Images ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">🖼</span>
-              Property Images
-            </div>
-            <ImageUploader
-              label="Upload property photos"
-              files={imageFiles}
-              onChange={setImageFiles}
-              max={8}
-              hint="Up to 8 images · PNG, JPG · Max 10MB each"
-            />
-          </div>
-
-          {/* ── Section 9: Floor Plans ── */}
-          <div className="sell-form-card">
-            <div className="card-section-title">
-              <span className="icon">📐</span>
-              Floor Plans
-            </div>
-            <ImageUploader
-              label="Upload floor plan images"
-              files={floorFiles}
-              onChange={setFloorFiles}
-              max={3}
-              hint="Up to 3 images"
-            />
-          </div>
-
-          {/* Submit */}
-          {error && <div className="sell-error-box">{error}</div>}
-          <button
-            className="sell-submit-btn mb-5"
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>
-                <span
-                  className="spinner-border spinner-border-sm"
-                  role="status"
-                  style={{ width: "16px", height: "16px" }}
-                />
-                Submitting…
-              </>
-            ) : (
-              <>🚀 Submit Property for Review</>
-            )}
-          </button>
+          <img
+            src="/assets/images/shape/shape_35.svg"
+            alt=""
+            className="lazy-img shapes shape_01"
+          />
+          <img
+            src="/assets/images/shape/shape_36.svg"
+            alt=""
+            className="lazy-img shapes shape_02"
+          />
         </div>
       </div>
+
+      {/* ── Form section ── */}
+      <div className="sell-root sell-section">
+        <div className="container">
+          {step === "success" ? (
+            <div className="sell-card">
+              <div className="sell-success">
+                <div className="sell-success__circle">✓</div>
+                <div className="sell-success__title">Listing Submitted!</div>
+                <p className="sell-success__body">
+                  Thank you! Your property has been submitted for review. Our
+                  team will contact you at <strong>{form.contact_email}</strong>{" "}
+                  or <strong>{form.contact_phone}</strong> within 24–48 hours.
+                </p>
+                <div className="sell-success__badge">Pending Review</div>
+                <br />
+                <button
+                  className="sell-again-btn"
+                  onClick={() => {
+                    setStep("form");
+                    setForm({
+                      ...INITIAL_FORM,
+                      property_details: { ...INITIAL_FORM.property_details },
+                      utility_features: { ...INITIAL_FORM.utility_features },
+                      outdoor_features: { ...INITIAL_FORM.outdoor_features },
+                      whats_nearby: { ...INITIAL_FORM.whats_nearby },
+                      amenities: [],
+                    });
+                    setImageFiles([]);
+                    setFloorFiles([]);
+                  }}
+                >
+                  Submit Another Property
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="sell-layout">
+              {/* ── Sidebar nav ── */}
+              <aside className="sell-sidebar">
+                <div className="sell-sidebar__title">Sections</div>
+                {navItems.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    className="sell-nav-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document
+                        .getElementById(item.id)
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                    }}
+                  >
+                    <span className="sell-nav-item__icon">{item.icon}</span>
+                    {item.label}
+                  </a>
+                ))}
+              </aside>
+
+              {/* ── Form ── */}
+              <div>
+                {/* Contact */}
+                <SellCard
+                  id="sec-contact"
+                  icon="👤"
+                  title="Your Contact Information"
+                  subtitle="We'll reach out to you at these details"
+                >
+                  <div className="row g-3">
+                    <div className="col-md-4">
+                      <Field label="Full Name" required>
+                        <input
+                          className="sell-input"
+                          placeholder="e.g. John Smith"
+                          value={form.contact_name}
+                          onChange={(e) => set("contact_name", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-md-4">
+                      <Field label="Email Address" required>
+                        <input
+                          type="email"
+                          className="sell-input"
+                          placeholder="you@example.com"
+                          value={form.contact_email}
+                          onChange={(e) => set("contact_email", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-md-4">
+                      <Field label="Phone Number" required>
+                        <input
+                          type="tel"
+                          className="sell-input"
+                          placeholder="+1 555 000 0000"
+                          value={form.contact_phone}
+                          onChange={(e) => set("contact_phone", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                </SellCard>
+
+                {/* Property Info */}
+                <SellCard
+                  id="sec-property"
+                  icon="🏠"
+                  title="Property Information"
+                  subtitle="Core listing details shown to buyers"
+                >
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <Field label="Property Title" required>
+                        <input
+                          className="sell-input"
+                          placeholder="e.g. Modern 3-Bedroom Apartment in Downtown"
+                          value={form.title}
+                          onChange={(e) => set("title", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-md-4">
+                      <Field label="Property Type">
+                        <select
+                          className="sell-select"
+                          value={form.property_type}
+                          onChange={(e) => set("property_type", e.target.value)}
+                        >
+                          {PROPERTY_TYPES.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                    <div className="col-md-4">
+                      <Field label="Listing Type">
+                        <select
+                          className="sell-select"
+                          value={form.status}
+                          onChange={(e) => set("status", e.target.value)}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                    <div className="col-md-4">
+                      <Field
+                        label="Price (USD)"
+                        required
+                        hint={
+                          form.status === "For Rent"
+                            ? "Monthly rent amount"
+                            : "Asking price"
+                        }
+                      >
+                        <input
+                          className="sell-input"
+                          placeholder="e.g. 450000"
+                          value={form.price}
+                          onChange={(e) => set("price", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-12">
+                      <Field label="Location / Address" required>
+                        <input
+                          className="sell-input"
+                          placeholder="e.g. 123 Main St, New York, NY 10001"
+                          value={form.location}
+                          onChange={(e) => set("location", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-md-3">
+                      <Field label="Area (sqft)">
+                        <input
+                          className="sell-input"
+                          placeholder="e.g. 1200"
+                          value={form.sqft}
+                          onChange={(e) => set("sqft", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-md-3">
+                      <Field label="Bedrooms">
+                        <select
+                          className="sell-select"
+                          value={form.bedrooms}
+                          onChange={(e) => set("bedrooms", e.target.value)}
+                        >
+                          <option value="">Select</option>
+                          {[1, 2, 3, 4, 5, 6].map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                    <div className="col-md-3">
+                      <Field label="Bathrooms">
+                        <select
+                          className="sell-select"
+                          value={form.bathrooms}
+                          onChange={(e) => set("bathrooms", e.target.value)}
+                        >
+                          <option value="">Select</option>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                    <div className="col-md-3">
+                      <Field label="Kitchens">
+                        <select
+                          className="sell-select"
+                          value={form.kitchens}
+                          onChange={(e) => set("kitchens", e.target.value)}
+                        >
+                          <option value="">Select</option>
+                          {[1, 2, 3].map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                    <div className="col-12">
+                      <Field label="Description">
+                        <textarea
+                          className="sell-textarea"
+                          placeholder="Describe the property — highlights, condition, unique features…"
+                          value={form.description}
+                          onChange={(e) => set("description", e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <div className="col-12">
+                      <Field label="Features Description">
+                        <textarea
+                          className="sell-textarea"
+                          style={{ minHeight: "80px" }}
+                          placeholder="Briefly describe standout features like layout, views, renovations…"
+                          value={form.features_description}
+                          onChange={(e) =>
+                            set("features_description", e.target.value)
+                          }
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                </SellCard>
+
+                {/* Property Details KV */}
+                <SellCard
+                  id="sec-details"
+                  icon="📋"
+                  title="Property Details"
+                  subtitle="Year built, furnishing, parking, etc."
+                >
+                  <KVEditor
+                    data={form.property_details}
+                    onChange={(d) => set("property_details", d)}
+                    placeholder={{ k: "e.g. year_built", v: "e.g. 2019" }}
+                  />
+                </SellCard>
+
+                {/* Utility */}
+                <SellCard
+                  id="sec-utility"
+                  icon="⚡"
+                  title="Utility & Home Features"
+                  subtitle="Heating, cooling, water supply, etc."
+                >
+                  <KVEditor
+                    data={form.utility_features}
+                    onChange={(d) => set("utility_features", d)}
+                    placeholder={{ k: "e.g. heating", v: "e.g. Central Gas" }}
+                  />
+                </SellCard>
+
+                {/* Outdoor */}
+                <SellCard
+                  id="sec-outdoor"
+                  icon="🌿"
+                  title="Outdoor Features"
+                  subtitle="Garden, balcony, garage, pool, etc."
+                >
+                  <KVEditor
+                    data={form.outdoor_features}
+                    onChange={(d) => set("outdoor_features", d)}
+                    placeholder={{ k: "e.g. garden", v: "e.g. Yes, private" }}
+                  />
+                </SellCard>
+
+                {/* Nearby */}
+                <SellCard
+                  id="sec-nearby"
+                  icon="📍"
+                  title="What's Nearby"
+                  subtitle='Enter distances, e.g. "0.5 km" or "5 min walk"'
+                >
+                  <KVEditor
+                    data={form.whats_nearby}
+                    onChange={(d) => set("whats_nearby", d)}
+                    placeholder={{ k: "e.g. school", v: "e.g. 0.4 km" }}
+                  />
+                </SellCard>
+
+                {/* Amenities */}
+                <SellCard
+                  id="sec-amenities"
+                  icon="✨"
+                  title="Amenities"
+                  subtitle="Select all that apply"
+                >
+                  <div className="amenities-grid">
+                    {AMENITY_OPTIONS.map((a) => {
+                      const checked = form.amenities.includes(a);
+                      return (
+                        <label
+                          key={a}
+                          className={`amenity-label${checked ? " checked" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAmenity(a)}
+                          />
+                          <span className="amenity-check-icon">
+                            {checked ? "✓" : ""}
+                          </span>
+                          {a}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </SellCard>
+
+                {/* Images */}
+                <SellCard
+                  id="sec-images"
+                  icon="🖼"
+                  title="Property Images"
+                  subtitle="Upload up to 8 high-quality photos"
+                >
+                  <ImageUploader
+                    label="Upload property photos"
+                    subtitle="PNG, JPG · Max 10MB each"
+                    files={imageFiles}
+                    onChange={setImageFiles}
+                    max={8}
+                  />
+                </SellCard>
+
+                {/* Floor Plans */}
+                <SellCard
+                  icon="📐"
+                  title="Floor Plans"
+                  subtitle="Upload floor plan images (optional)"
+                >
+                  <ImageUploader
+                    label="Upload floor plan images"
+                    subtitle="PNG, JPG · Up to 3 images"
+                    files={floorFiles}
+                    onChange={setFloorFiles}
+                    max={3}
+                  />
+                </SellCard>
+
+                {/* Error + Submit */}
+                {error && (
+                  <div className="sell-error">
+                    <span>⚠</span> {error}
+                  </div>
+                )}
+
+                <button
+                  className="sell-submit mb-5"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm"
+                        role="status"
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          borderWidth: "2px",
+                        }}
+                      />
+                      Submitting…
+                    </>
+                  ) : (
+                    <>Submit Property for Review →</>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Brand />
+      <FancyBanner />
       <FutureFooter />
-    </>
+    </Wrapper>
   );
 };
 

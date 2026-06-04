@@ -1,3 +1,8 @@
+// ============================================================
+//  FutureHeroBanner.tsx — Hero with dynamic search dropdown
+//  DropdownOne now reads statuses/locations/prices from Supabase
+// ============================================================
+
 import Slider from "react-slick";
 import DropdownOne from "../../search-dropdown/home-dropdown/DropdownOne";
 
@@ -20,19 +25,19 @@ const FutureHeroBanner = () => {
           <div
             className="hero-img"
             style={{ backgroundImage: `url(/assets/images/media/img_26.jpg)` }}
-          ></div>
+          />
         </div>
         <div className="item m0">
           <div
             className="hero-img"
             style={{ backgroundImage: `url(/assets/images/media/img_27.jpg)` }}
-          ></div>
+          />
         </div>
         <div className="item m0">
           <div
             className="hero-img"
             style={{ backgroundImage: `url(/assets/images/media/img_28.jpg)` }}
-          ></div>
+          />
         </div>
       </Slider>
 
@@ -51,20 +56,23 @@ const FutureHeroBanner = () => {
               <br /> Home for Your Family
             </h1>
             <p className="fs-24 text-white text-center pt-35 md-pt-20 pb-55 lg-pb-40">
-              We’ve more than 745,000 apartments, place & plot.
+              We've more than 745,000 apartments, place &amp; plot.
             </p>
           </div>
         </div>
+
         <div className="row">
           <div className="col-xxl-10 m-auto">
             <div className="search-wrapper-one layout-one position-relative">
               <div className="bg-wrapper">
+                {/* style={true} → renders the hero variant (wide btn, fw-normal selects) */}
                 <DropdownOne style={true} />
               </div>
             </div>
           </div>
         </div>
       </div>
+
       <img
         src="/assets/images/shape/shape_35.svg"
         alt=""

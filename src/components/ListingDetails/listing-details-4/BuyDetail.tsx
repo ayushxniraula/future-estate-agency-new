@@ -4,7 +4,7 @@
 //  consistent with BuyListing design tokens
 // ============================================================
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Slider from "react-slick";

@@ -1,12 +1,12 @@
 // ============================================================
 //  BuyListing.tsx — Supabase-powered property listing
-//  Refined: DM Serif Display + DM Sans, editorial layout,
-//  compact type bar, generous padding, luxury card design
+//  Now reads ?status=&location=&minPrice=&maxPrice= from URL
+//  so the hero search bar pre-filters results on arrival
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
 import ReactPaginate from "react-paginate";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom"; // ← added useSearchParams
 import { createClient } from "@supabase/supabase-js";
 import NiceSelect from "../../../ui/NiceSelect";
 
@@ -116,14 +116,21 @@ function getStatusColor(status: string): { bg: string; text: string } {
   }
 }
 
-function defaultFilters(range: [number, number]): FiltersState {
+// Build initial filters — merges URL params over the defaults
+function buildInitialFilters(
+  priceRange: [number, number],
+  params: URLSearchParams,
+): FiltersState {
+  const minPrice = Number(params.get("minPrice")) || priceRange[0];
+  const maxPrice = Number(params.get("maxPrice")) || priceRange[1];
+
   return {
     keyword: "",
-    location: "",
-    status: "",
+    location: params.get("location") || "",
+    status: params.get("status") || "",
     bedrooms: "",
     bathrooms: "",
-    priceRange: range,
+    priceRange: [minPrice, maxPrice],
     amenities: [],
     minYearBuilt: "",
     sqftMin: "",
@@ -131,12 +138,10 @@ function defaultFilters(range: [number, number]): FiltersState {
   };
 }
 
-// ─── Global styles injected once ─────────────────────────────
+// ─── Global styles (unchanged from original) ─────────────────
 const INJECTED_STYLE = `
-  /* ── Google Fonts ── */
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
-  /* ── Root design tokens ── */
   :root {
     --font-display: 'DM Serif Display', Georgia, serif;
     --font-body:    'DM Sans', system-ui, sans-serif;
@@ -154,457 +159,79 @@ const INJECTED_STYLE = `
     --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
   }
 
-  /* ── Base font ── */
-  .buy-listing-root,
-  .buy-listing-root * {
-    font-family: var(--font-body);
-  }
+  .buy-listing-root, .buy-listing-root * { font-family: var(--font-body); }
 
-  /* ── Outer page padding ── */
-  .buy-listing-root {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-  @media (min-width: 768px) {
-    .buy-listing-root {
-      padding-left: 40px;
-      padding-right: 40px;
-    }
-  }
-  @media (min-width: 1200px) {
-    .buy-listing-root {
-      padding-left: 56px;
-      padding-right: 56px;
-    }
-  }
+  .buy-listing-root { padding-left: 24px; padding-right: 24px; }
+  @media (min-width: 768px)  { .buy-listing-root { padding-left: 40px; padding-right: 40px; } }
+  @media (min-width: 1200px) { .buy-listing-root { padding-left: 56px; padding-right: 56px; } }
 
-  /* ── Type filter bar ── */
-  .type-bar {
-    background: var(--c-white);
-    border-bottom: 1px solid var(--c-rule);
-    padding: 0 32px;
-  }
-  .type-bar-inner {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    padding: 10px 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
+  .type-bar { background: var(--c-white); border-bottom: 1px solid var(--c-rule); padding: 0 32px; }
+  .type-bar-inner { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 0; overflow-x: auto; scrollbar-width: none; }
   .type-bar-inner::-webkit-scrollbar { display: none; }
-  .type-bar-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--c-ink-3);
-    margin-right: 6px;
-    flex-shrink: 0;
-  }
-  .type-pill {
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--c-ink-2);
-    text-decoration: none;
-    border: 1px solid var(--c-rule);
-    transition: all 0.18s ease;
-    white-space: nowrap;
-    background: var(--c-white);
-    letter-spacing: 0.1px;
-    flex-shrink: 0;
-  }
-  .type-pill:hover {
-    border-color: var(--c-ink);
-    color: var(--c-ink);
-    background: var(--c-surface);
-  }
-  .type-pill.active {
-    background: var(--c-ink);
-    border-color: var(--c-ink);
-    color: var(--c-white);
-  }
+  .type-bar-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--c-ink-3); margin-right: 6px; flex-shrink: 0; }
+  .type-pill { padding: 5px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 500; color: var(--c-ink-2); text-decoration: none; border: 1px solid var(--c-rule); transition: all 0.18s ease; white-space: nowrap; background: var(--c-white); letter-spacing: 0.1px; flex-shrink: 0; }
+  .type-pill:hover { border-color: var(--c-ink); color: var(--c-ink); background: var(--c-surface); }
+  .type-pill.active { background: var(--c-ink); border-color: var(--c-ink); color: var(--c-white); }
 
-  /* ── Property card ── */
-  .prop-card {
-    border-radius: var(--radius-card);
-    overflow: hidden;
-    background: var(--c-white);
-    box-shadow: var(--shadow-card);
-    transition: box-shadow 0.28s ease, transform 0.28s ease;
-    border: 1px solid var(--c-rule);
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-  .prop-card:hover {
-    box-shadow: var(--shadow-hover);
-    transform: translateY(-4px);
-  }
-
-  /* image wrap */
-  .prop-card__img-wrap {
-    position: relative;
-    overflow: hidden;
-  }
-  .prop-card__img-wrap img {
-    transition: transform 0.45s ease;
-    display: block;
-  }
-  .prop-card:hover .prop-card__img-wrap img {
-    transform: scale(1.05);
-  }
-
-  /* status badge — compact */
-  .prop-card__badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    z-index: 3;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    line-height: 1.6;
-  }
-
-  /* fav button */
-  .prop-card__fav {
-    position: absolute;
-    top: 11px;
-    right: 11px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 3;
-    color: #aaa;
-    transition: background 0.2s, color 0.2s, transform 0.2s;
-    text-decoration: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  }
-  .prop-card__fav:hover {
-    background: var(--c-accent);
-    color: var(--c-white);
-    transform: scale(1.12);
-  }
-
-  /* card body */
-  .prop-card__body {
-    padding: 20px 22px 14px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* type chip above title */
-  .prop-card__type {
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.9px;
-    text-transform: uppercase;
-    color: var(--c-ink-3);
-    margin-bottom: 5px;
-  }
-
-  .prop-card__title {
-    font-family: var(--font-display);
-    font-size: 17px;
-    font-weight: 400;
-    color: var(--c-ink);
-    text-decoration: none;
-    line-height: 1.25;
-    display: block;
-    margin-bottom: 6px;
-    transition: color 0.2s;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .prop-card { border-radius: var(--radius-card); overflow: hidden; background: var(--c-white); box-shadow: var(--shadow-card); transition: box-shadow 0.28s ease, transform 0.28s ease; border: 1px solid var(--c-rule); display: flex; flex-direction: column; width: 100%; }
+  .prop-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-4px); }
+  .prop-card__img-wrap { position: relative; overflow: hidden; }
+  .prop-card__img-wrap img { transition: transform 0.45s ease; display: block; }
+  .prop-card:hover .prop-card__img-wrap img { transform: scale(1.05); }
+  .prop-card__badge { position: absolute; top: 12px; left: 12px; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; z-index: 3; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); line-height: 1.6; }
+  .prop-card__fav { position: absolute; top: 11px; right: 11px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 3; color: #aaa; transition: background 0.2s, color 0.2s, transform 0.2s; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .prop-card__fav:hover { background: var(--c-accent); color: var(--c-white); transform: scale(1.12); }
+  .prop-card__body { padding: 20px 22px 14px; flex: 1; display: flex; flex-direction: column; }
+  .prop-card__type { font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; text-transform: uppercase; color: var(--c-ink-3); margin-bottom: 5px; }
+  .prop-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 400; color: var(--c-ink); text-decoration: none; line-height: 1.25; display: block; margin-bottom: 6px; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .prop-card__title:hover { color: var(--c-accent); }
-
-  .prop-card__location {
-    font-size: 12.5px;
-    color: var(--c-ink-3);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  /* divider */
-  .prop-card__divider {
-    height: 1px;
-    background: var(--c-rule);
-    margin: 0 -22px 14px;
-  }
-
-  /* feature row */
-  .prop-card__features {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .prop-card__feat {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--c-surface);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 12px;
-    color: var(--c-ink-2);
-    font-weight: 500;
-    border: 1px solid var(--c-rule);
-  }
+  .prop-card__location { font-size: 12.5px; color: var(--c-ink-3); margin-bottom: 16px; display: flex; align-items: center; gap: 4px; }
+  .prop-card__divider { height: 1px; background: var(--c-rule); margin: 0 -22px 14px; }
+  .prop-card__features { display: flex; gap: 6px; flex-wrap: wrap; }
+  .prop-card__feat { display: flex; align-items: center; gap: 5px; background: var(--c-surface); border-radius: 8px; padding: 5px 10px; font-size: 12px; color: var(--c-ink-2); font-weight: 500; border: 1px solid var(--c-rule); }
   .prop-card__feat img { width: 13px; height: 13px; opacity: 0.6; }
+  .prop-card__footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px 18px; margin-top: auto; }
+  .prop-card__price { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--c-ink); letter-spacing: -0.5px; line-height: 1; }
+  .prop-card__price sup { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--c-ink-3); vertical-align: super; margin-right: 1px; }
+  .prop-card__price sub { font-family: var(--font-body); font-size: 11.5px; font-weight: 400; color: var(--c-ink-3); }
+  .prop-card__arrow { width: 36px; height: 36px; border-radius: 50%; background: var(--c-ink); display: flex; align-items: center; justify-content: center; color: var(--c-white); text-decoration: none; transition: background 0.2s, transform 0.25s; font-size: 13px; flex-shrink: 0; }
+  .prop-card__arrow:hover { background: var(--c-accent); transform: rotate(45deg); }
+  .carousel-dot { transition: all 0.22s ease; }
 
-  /* card footer */
-  .prop-card__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 22px 18px;
-    margin-top: auto;
-  }
-  .prop-card__price {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 400;
-    color: var(--c-ink);
-    letter-spacing: -0.5px;
-    line-height: 1;
-  }
-  .prop-card__price sup {
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--c-ink-3);
-    vertical-align: super;
-    margin-right: 1px;
-  }
-  .prop-card__price sub {
-    font-family: var(--font-body);
-    font-size: 11.5px;
-    font-weight: 400;
-    color: var(--c-ink-3);
-  }
-  .prop-card__arrow {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--c-ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--c-white);
-    text-decoration: none;
-    transition: background 0.2s, transform 0.25s;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .prop-card__arrow:hover {
-    background: var(--c-accent);
-    transform: rotate(45deg);
-  }
-
-  /* carousel */
-  .carousel-dot {
-    transition: all 0.22s ease;
-  }
-
-  /* ── Sidebar ── */
-  .sidebar-panel {
-    background: var(--c-white);
-    border-right: 1px solid var(--c-rule);
-    min-height: 100%;
-  }
-  .sidebar-panel__inner {
-    padding: 32px 24px;
-  }
-  .sidebar-panel__heading {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--c-ink);
-    margin-bottom: 28px;
-    letter-spacing: -0.2px;
-  }
-  .sidebar-section {
-    margin-bottom: 22px;
-    padding-bottom: 22px;
-    border-bottom: 1px solid var(--c-rule);
-  }
+  .sidebar-panel { background: var(--c-white); border-right: 1px solid var(--c-rule); min-height: 100%; }
+  .sidebar-panel__inner { padding: 32px 24px; }
+  .sidebar-panel__heading { font-family: var(--font-display); font-size: 20px; font-weight: 400; color: var(--c-ink); margin-bottom: 28px; letter-spacing: -0.2px; }
+  .sidebar-section { margin-bottom: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--c-rule); }
   .sidebar-section:last-of-type { border-bottom: none; }
-  .sidebar-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--c-ink-3);
-    margin-bottom: 9px;
-    display: block;
-  }
-  .sidebar-input {
-    width: 100%;
-    padding: 9px 13px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--c-rule);
-    font-size: 13.5px;
-    font-family: var(--font-body);
-    color: var(--c-ink);
-    background: var(--c-surface);
-    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .sidebar-input:focus {
-    border-color: var(--c-ink);
-    background: var(--c-white);
-    box-shadow: 0 0 0 3px rgba(26,23,21,0.06);
-  }
-  .amenity-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-  }
-  .amenity-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 12.5px;
-    color: var(--c-ink-2);
-    cursor: pointer;
-    padding: 5px 0;
-    font-family: var(--font-body);
-  }
-  .amenity-item input[type="checkbox"] {
-    width: 14px;
-    height: 14px;
-    accent-color: var(--c-accent);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .reset-btn {
-    width: 100%;
-    padding: 11px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--c-ink);
-    background: transparent;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: var(--font-body);
-    color: var(--c-ink);
-    cursor: pointer;
-    letter-spacing: 0.3px;
-    transition: all 0.2s;
-  }
-  .reset-btn:hover {
-    background: var(--c-ink);
-    color: var(--c-white);
-  }
+  .sidebar-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--c-ink-3); margin-bottom: 9px; display: block; }
+  .sidebar-input { width: 100%; padding: 9px 13px; border-radius: var(--radius-sm); border: 1.5px solid var(--c-rule); font-size: 13.5px; font-family: var(--font-body); color: var(--c-ink); background: var(--c-surface); transition: border-color 0.18s, background 0.18s, box-shadow 0.18s; outline: none; appearance: none; -webkit-appearance: none; }
+  .sidebar-input:focus { border-color: var(--c-ink); background: var(--c-white); box-shadow: 0 0 0 3px rgba(26,23,21,0.06); }
+  .amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .amenity-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--c-ink-2); cursor: pointer; padding: 5px 0; font-family: var(--font-body); }
+  .amenity-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--c-accent); cursor: pointer; flex-shrink: 0; }
+  .reset-btn { width: 100%; padding: 11px; border-radius: var(--radius-sm); border: 1.5px solid var(--c-ink); background: transparent; font-size: 13px; font-weight: 600; font-family: var(--font-body); color: var(--c-ink); cursor: pointer; letter-spacing: 0.3px; transition: all 0.2s; }
+  .reset-btn:hover { background: var(--c-ink); color: var(--c-white); }
 
-  /* ── Listing header ── */
-  .listing-header {
-    background: var(--c-surface);
-    border-radius: var(--radius-sm);
-    padding: 12px 18px;
-    border: 1px solid var(--c-rule);
-    margin-bottom: 32px;
-  }
-  .results-count {
-    font-size: 13.5px;
-    color: var(--c-ink-3);
-    font-family: var(--font-body);
-  }
-  .results-count strong {
-    color: var(--c-ink);
-    font-weight: 600;
-  }
-  /* sort row — keep label and select on same baseline */
-  .sort-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .sort-row .nice-select {
-    margin-bottom: 0 !important;
-    margin-top: 0 !important;
-    line-height: 1 !important;
-    height: auto !important;
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-  }
+  /* Active filter pill shown at top of listing */
+  .active-filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .active-filter-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--c-ink); color: #fff; border: none; cursor: pointer; transition: background 0.18s; }
+  .active-filter-pill:hover { background: var(--c-accent); }
+  .active-filter-pill__x { font-size: 11px; opacity: 0.7; }
 
-  /* ── Pagination ── */
-  .pagination-refined {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .pagination-refined li a,
-  .pagination-refined li span {
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 14px;
-    font-family: var(--font-body);
-    font-weight: 500;
-    color: var(--c-ink-2);
-    border: 1.5px solid transparent;
-    transition: all 0.18s;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .pagination-refined li a:hover {
-    border-color: var(--c-ink);
-    color: var(--c-ink);
-    background: var(--c-surface);
-  }
-  .pagination-refined li.selected a {
-    background: var(--c-ink);
-    color: var(--c-white);
-    border-color: var(--c-ink);
-  }
-  .pagination-refined li.disabled span {
-    opacity: 0.3;
-    cursor: default;
-  }
-  /* prev / next arrow buttons */
-  .pagination-refined li.previous a,
-  .pagination-refined li.next a {
-    border: 1.5px solid var(--c-rule);
-    background: var(--c-white);
-    color: var(--c-ink);
-    font-size: 13px;
-  }
-  .pagination-refined li.previous a:hover,
-  .pagination-refined li.next a:hover {
-    border-color: var(--c-ink);
-    background: var(--c-ink);
-    color: var(--c-white);
-  }
-  .pagination-refined li.previous.disabled a,
-  .pagination-refined li.next.disabled a {
-    opacity: 0.3;
-    pointer-events: none;
-  }
+  .listing-header { background: var(--c-surface); border-radius: var(--radius-sm); padding: 12px 18px; border: 1px solid var(--c-rule); margin-bottom: 32px; }
+  .results-count { font-size: 13.5px; color: var(--c-ink-3); font-family: var(--font-body); }
+  .results-count strong { color: var(--c-ink); font-weight: 600; }
+  .sort-row { display: flex; align-items: center; gap: 10px; }
+  .sort-row .nice-select { margin-bottom: 0 !important; margin-top: 0 !important; line-height: 1 !important; height: auto !important; padding-top: 6px !important; padding-bottom: 6px !important; }
+
+  .pagination-refined { display: inline-flex; align-items: center; gap: 6px; list-style: none; padding: 0; margin: 0; }
+  .pagination-refined li a, .pagination-refined li span { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-family: var(--font-body); font-weight: 500; color: var(--c-ink-2); border: 1.5px solid transparent; transition: all 0.18s; text-decoration: none; cursor: pointer; }
+  .pagination-refined li a:hover { border-color: var(--c-ink); color: var(--c-ink); background: var(--c-surface); }
+  .pagination-refined li.selected a { background: var(--c-ink); color: var(--c-white); border-color: var(--c-ink); }
+  .pagination-refined li.disabled span { opacity: 0.3; cursor: default; }
+  .pagination-refined li.previous a, .pagination-refined li.next a { border: 1.5px solid var(--c-rule); background: var(--c-white); color: var(--c-ink); font-size: 13px; }
+  .pagination-refined li.previous a:hover, .pagination-refined li.next a:hover { border-color: var(--c-ink); background: var(--c-ink); color: var(--c-white); }
+  .pagination-refined li.previous.disabled a, .pagination-refined li.next.disabled a { opacity: 0.3; pointer-events: none; }
 `;
 
 function injectStyle() {
@@ -619,7 +246,7 @@ function injectStyle() {
   }
 }
 
-// ─── Image Carousel ───────────────────────────────────────────
+// ─── Image Carousel (unchanged) ───────────────────────────────
 function CarouselOrImage({
   images,
   title,
@@ -628,7 +255,6 @@ function CarouselOrImage({
   title: string;
 }) {
   const [current, setCurrent] = useState(0);
-
   if (!images || images.length === 0) {
     return (
       <div
@@ -646,7 +272,6 @@ function CarouselOrImage({
       </div>
     );
   }
-
   const prev = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -657,7 +282,6 @@ function CarouselOrImage({
     e.stopPropagation();
     setCurrent((c) => (c === images.length - 1 ? 0 : c + 1));
   };
-
   return (
     <div style={{ position: "relative", overflow: "hidden", height: "220px" }}>
       <img
@@ -733,7 +357,7 @@ function carouselBtnStyle(side: "left" | "right"): React.CSSProperties {
   };
 }
 
-// ─── Price Range Slider ───────────────────────────────────────
+// ─── Price Range Slider (unchanged) ──────────────────────────
 function PriceRangeSlider({
   min,
   max,
@@ -748,7 +372,7 @@ function PriceRangeSlider({
   const pct = (v: number) =>
     max === min ? 0 : ((v - min) / (max - min)) * 100;
   const minAtMax = value[0] >= value[1] - 1;
-
+  const fmt = (n: number) => `$${n.toLocaleString()}`;
   return (
     <div>
       <div
@@ -770,7 +394,7 @@ function PriceRangeSlider({
             fontFamily: "var(--font-body)",
           }}
         >
-          ${value[0].toLocaleString()}
+          {fmt(value[0])}
         </span>
         <span
           style={{
@@ -783,7 +407,7 @@ function PriceRangeSlider({
             fontFamily: "var(--font-body)",
           }}
         >
-          ${value[1].toLocaleString()}
+          {fmt(value[1])}
         </span>
       </div>
       <div style={{ position: "relative", height: "20px" }}>
@@ -864,7 +488,7 @@ function PriceRangeSlider({
   );
 }
 
-// ─── Sidebar Filters ─────────────────────────────────────────
+// ─── Sidebar Filters (unchanged) ─────────────────────────────
 function SidebarFilters({
   filters,
   onChange,
@@ -882,12 +506,10 @@ function SidebarFilters({
       : [...filters.amenities, a];
     onChange({ amenities: next });
   };
-
   return (
     <div className="sidebar-panel">
       <div className="sidebar-panel__inner">
         <p className="sidebar-panel__heading">Filters</p>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Listing Type</span>
           <select
@@ -902,7 +524,6 @@ function SidebarFilters({
             <option value="Rented">Rented</option>
           </select>
         </div>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Keyword</span>
           <input
@@ -913,7 +534,6 @@ function SidebarFilters({
             onChange={(e) => onChange({ keyword: e.target.value })}
           />
         </div>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Location</span>
           <input
@@ -924,7 +544,6 @@ function SidebarFilters({
             onChange={(e) => onChange({ location: e.target.value })}
           />
         </div>
-
         <div className="sidebar-section">
           <div
             style={{
@@ -965,7 +584,6 @@ function SidebarFilters({
             </div>
           </div>
         </div>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Amenities</span>
           <div className="amenity-grid">
@@ -981,7 +599,6 @@ function SidebarFilters({
             ))}
           </div>
         </div>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Price Range</span>
           <PriceRangeSlider
@@ -991,7 +608,6 @@ function SidebarFilters({
             onChange={(v) => onChange({ priceRange: v })}
           />
         </div>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Min Year Built</span>
           <select
@@ -1007,7 +623,6 @@ function SidebarFilters({
             ))}
           </select>
         </div>
-
         <div className="sidebar-section">
           <span className="sidebar-label">Square Footage</span>
           <div
@@ -1033,7 +648,6 @@ function SidebarFilters({
             />
           </div>
         </div>
-
         <button className="reset-btn" onClick={onReset}>
           Reset All Filters
         </button>
@@ -1042,7 +656,7 @@ function SidebarFilters({
   );
 }
 
-// ─── Property Card ────────────────────────────────────────────
+// ─── Property Card (unchanged) ────────────────────────────────
 function PropertyCard({ item }: { item: Property }) {
   const badge = getStatusColor(item.status);
   return (
@@ -1061,7 +675,6 @@ function PropertyCard({ item }: { item: Property }) {
           <CarouselOrImage images={item.images || []} title={item.title} />
         </div>
       </div>
-
       <div className="prop-card__body">
         {item.property_type && (
           <div className="prop-card__type">{item.property_type}</div>
@@ -1084,7 +697,6 @@ function PropertyCard({ item }: { item: Property }) {
           </svg>
           {item.location}
         </div>
-
         {(item.sqft || item.bedrooms != null || item.bathrooms != null) && (
           <>
             <div className="prop-card__divider" />
@@ -1111,7 +723,6 @@ function PropertyCard({ item }: { item: Property }) {
           </>
         )}
       </div>
-
       <div className="prop-card__footer">
         <div className="prop-card__price">
           <sup>$</sup>
@@ -1133,6 +744,9 @@ function PropertyCard({ item }: { item: Property }) {
 const BuyListing = () => {
   injectStyle();
 
+  // ── Read URL params written by DropdownOne hero search ──
+  const [searchParams] = useSearchParams();
+
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1142,10 +756,22 @@ const BuyListing = () => {
   const [priceMinMax, setPriceMinMax] = useState<[number, number]>([
     0, 1_000_000,
   ]);
-  const [filters, setFilters] = useState<FiltersState>(
-    defaultFilters([0, 1_000_000]),
-  );
 
+  // Filters start empty; once prices are known we merge in URL params
+  const [filters, setFilters] = useState<FiltersState>({
+    keyword: "",
+    location: "",
+    status: "",
+    bedrooms: "",
+    bathrooms: "",
+    priceRange: [0, 1_000_000],
+    amenities: [],
+    minYearBuilt: "",
+    sqftMin: "",
+    sqftMax: "",
+  });
+
+  // ── Fetch all properties once ──────────────────────────────
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -1155,9 +781,12 @@ const BuyListing = () => {
           .from("properties")
           .select("*")
           .order("created_at", { ascending: false });
+
         if (sbError) throw sbError;
+
         const props: Property[] = data || [];
         setAllProperties(props);
+
         if (props.length > 0) {
           const prices = props.map((p) => p.price || 0);
           const range: [number, number] = [
@@ -1165,7 +794,11 @@ const BuyListing = () => {
             Math.max(...prices),
           ];
           setPriceMinMax(range);
-          setFilters(defaultFilters(range));
+
+          // ── Merge URL params into initial filters ──────────
+          // This is where the hero search "lands" — status, location,
+          // and price range from the URL are pre-applied.
+          setFilters(buildInitialFilters(range, searchParams));
         }
       } catch (err: any) {
         setError(err?.message || "Failed to load properties");
@@ -1173,8 +806,11 @@ const BuyListing = () => {
         setLoading(false);
       }
     })();
+    // searchParams intentionally only read once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Filtering & sorting (unchanged logic) ─────────────────
   const filteredProperties = useCallback(() => {
     let list = [...allProperties];
     if (selectedType !== "All")
@@ -1260,12 +896,44 @@ const BuyListing = () => {
     setItemOffset(selected * ITEMS_PER_PAGE);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
   const handleReset = () => {
-    setFilters(defaultFilters(priceMinMax));
+    setFilters({
+      keyword: "",
+      location: "",
+      status: "",
+      bedrooms: "",
+      bathrooms: "",
+      priceRange: priceMinMax,
+      amenities: [],
+      minYearBuilt: "",
+      sqftMin: "",
+      sqftMax: "",
+    });
     setSelectedType("All");
     setSortBy("newest");
     setItemOffset(0);
   };
+
+  // ── Active filter pills derived from URL params ────────────
+  // These show above the grid so the user knows what was pre-applied
+  const urlStatus = searchParams.get("status");
+  const urlLocation = searchParams.get("location");
+  const urlMin = searchParams.get("minPrice");
+  const urlMax = searchParams.get("maxPrice");
+
+  const activeUrlFilters: { label: string; key: string }[] = [
+    ...(urlStatus ? [{ label: urlStatus, key: "status" }] : []),
+    ...(urlLocation ? [{ label: `📍 ${urlLocation}`, key: "location" }] : []),
+    ...(urlMin || urlMax
+      ? [
+          {
+            label: `$${Number(urlMin || 0).toLocaleString()} – $${Number(urlMax || 0).toLocaleString()}`,
+            key: "price",
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="buy-listing-root property-listing-seven lg-pt-100">
@@ -1308,6 +976,60 @@ const BuyListing = () => {
           {/* ── Main content ── */}
           <div className="col-xxl-9 col-lg-8">
             <div style={{ padding: "36px 28px 120px", maxWidth: "100%" }}>
+              {/* ── Active filter pills from hero search ── */}
+              {activeUrlFilters.length > 0 && (
+                <div className="active-filter-bar">
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.8px",
+                      textTransform: "uppercase",
+                      color: "var(--c-ink-3)",
+                      alignSelf: "center",
+                    }}
+                  >
+                    Searching:
+                  </span>
+                  {activeUrlFilters.map((f) => (
+                    <span key={f.key} className="active-filter-pill">
+                      {f.label}
+                      <span
+                        className="active-filter-pill__x"
+                        onClick={() => {
+                          if (f.key === "status")
+                            setFilters((p) => ({ ...p, status: "" }));
+                          if (f.key === "location")
+                            setFilters((p) => ({ ...p, location: "" }));
+                          if (f.key === "price")
+                            setFilters((p) => ({
+                              ...p,
+                              priceRange: priceMinMax,
+                            }));
+                        }}
+                      >
+                        ✕
+                      </span>
+                    </span>
+                  ))}
+                  <button
+                    onClick={handleReset}
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      color: "var(--c-accent)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontFamily: "var(--font-body)",
+                    }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+
               {/* Header bar */}
               <div className="listing-header d-sm-flex justify-content-between align-items-center">
                 <div className="results-count">
@@ -1344,8 +1066,6 @@ const BuyListing = () => {
                     options={[
                       { value: "newest", text: "Newest" },
                       { value: "oldest", text: "Oldest" },
-                      { value: "best_seller", text: "Best Seller" },
-                      { value: "best_match", text: "Best Match" },
                       { value: "price_low", text: "Price ↑" },
                       { value: "price_high", text: "Price ↓" },
                     ]}
@@ -1442,7 +1162,6 @@ const BuyListing = () => {
                       </div>
                     ))}
                   </div>
-
                   {pageCount > 1 && (
                     <div className="pt-5 text-center">
                       <ReactPaginate
