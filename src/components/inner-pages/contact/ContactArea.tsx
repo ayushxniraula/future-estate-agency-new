@@ -4,6 +4,8 @@
 // ============================================================
 import { useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import FutureHeader from "../../../layouts/headers/FutureHeader";
+import { Link } from "react-router-dom";
 
 // ─── Supabase config (mirror of config.js) ─────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -151,18 +153,33 @@ const ContactArea = ({
   return (
     <div className="contact-us border-top xl-mt-100 pt-80 lg-pt-60">
       {/* ── Header ── */}
-      <div className="container">
-        <div className="row">
-          <div className="col-xxl-9 col-xl-8 col-lg-10 m-auto text-center">
-            <h3 className="contact-heading">
-              Questions? Feel Free to Reach Out
-              <br />
-              <em>Via Message.</em>
-            </h3>
-            <p className="contact-subheading">
-              Our team typically responds within one business day.
-            </p>
+      <div className="inner-banner-three inner-banner text-center z-1 position-relative">
+        <div
+          className="bg-wrapper overflow-hidden position-relative z-1"
+          style={{ backgroundImage: `url(/assets/images/media/img_51.jpg)` }}
+        >
+          <div className="container position-relative z-2">
+            <h2 className="mb-35 xl-mb-20 md-mb-10 pt-15 font-garamond text-white">
+              Calculator
+            </h2>
+            <ul className="theme-breadcrumb style-none d-inline-flex align-items-center justify-content-center position-relative z-1 bottom-line">
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li>/</li>
+              <li>Contact</li>
+            </ul>
           </div>
+          <img
+            src="/assets/images/shape/shape_35.svg"
+            alt=""
+            className="lazy-img shapes shape_01"
+          />
+          <img
+            src="/assets/images/shape/shape_36.svg"
+            alt=""
+            className="lazy-img shapes shape_02"
+          />
         </div>
       </div>
 

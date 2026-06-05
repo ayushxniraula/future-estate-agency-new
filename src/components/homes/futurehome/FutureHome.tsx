@@ -10,13 +10,15 @@ import FutureFeedback from "./FutureFeedback";
 import FutureBrand from "./FutureBrand";
 import FutureBannerTwo from "./FutureBannerTwo";
 import FutureFooter from "../../../layouts/footers/FutureFooter";
+import NavMenu from "../../../layouts/headers/Menu/FutureNavMenu";
 
 const FutureHome = () => {
   return (
     <>
-      <FutureHeader style_1={true} style_2={false} />
+      {/* <NavMenu /> */}
+      <NavMenu />
       <FutureHeroBanner />
-      <FutureCategory style={false} />
+      {/* <FutureCategory style={false} /> */}
       <FutureFeatureOne />
       <FutureBigProperty />
       <FutureListingHero style={false} />

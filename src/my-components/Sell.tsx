@@ -14,6 +14,7 @@ import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
 import FutureHeader from "../layouts/headers/FutureHeader";
+import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -822,7 +823,7 @@ const SellPropertyArea = () => {
   return (
     <Wrapper>
       <SEO pageTitle="List Your Property – Sell or Rent" />
-      <FutureHeader style_1={true} style_2={false} />
+      <NavMenu />
 
       {/* ── Banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">
@@ -902,12 +903,10 @@ const SellPropertyArea = () => {
                     className="sell-nav-item"
                     onClick={(e) => {
                       e.preventDefault();
-                      document
-                        .getElementById(item.id)
-                        ?.scrollIntoView({
-                          behavior: "smooth",
-                          block: "start",
-                        });
+                      document.getElementById(item.id)?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
                     }}
                   >
                     <span className="sell-nav-item__icon">{item.icon}</span>

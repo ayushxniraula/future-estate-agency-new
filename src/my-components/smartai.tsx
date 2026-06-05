@@ -13,6 +13,7 @@ import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
 import FutureHeader from "../layouts/headers/FutureHeader";
+import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -1672,7 +1673,7 @@ const SmartFinder = () => {
   return (
     <Wrapper>
       <SEO pageTitle="Smart Property Finder" />
-      <FutureHeader style_1={true} style_2={false} />
+      <NavMenu />
 
       {/* AI Loading Overlay */}
       {showAILoader && (

@@ -4,15 +4,26 @@ import HeaderSearchbar from "./Menu/HeaderSearchbar";
 import UseSticky from "../../hooks/UseSticky";
 import { Link } from "react-router-dom";
 import LoginModal from "../../modals/LoginModal";
-import { useState } from "react";
+import { useClientSession } from "../../my-components/userclientsession";
+import { useState, useEffect } from "react";
 import MobileMenu from "./Menu/MobileMenu";
 
 const FutureHeader = ({ style_1, style_2 }: any) => {
   const { sticky } = UseSticky();
+  const { session } = useClientSession();
   const [offCanvas, setOffCanvas] = useState<boolean>(false);
   const [isSearch, setIsSearch] = useState<boolean>(false);
   const [loginModal, setLoginModal] = useState<boolean>(false);
   const [isActive, setIsActive] = useState<boolean>(false);
+
+  // Auto-open login modal if flag set after redirect
+  useEffect(() => {
+    const show = localStorage.getItem("showLoginModal");
+    if (show === "true") {
+      setLoginModal(true);
+      localStorage.removeItem("showLoginModal");
+    }
+  }, []);
 
   return (
     <>
@@ -25,12 +36,13 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
               <div className="logo order-lg-0">
                 <Link to="/" className="d-flex align-items-center">
                   <img
+                    style={{ height: "70px" }}
                     src={
                       style_2
-                        ? "/assets/images/logo/logo_06.svg"
+                        ? "/assets/ayu.png"
                         : style_1
-                          ? "/assets/images/logo/logo_04.svg"
-                          : "/assets/images/logo/logo_02.svg"
+                          ? "/assets/ayu.png"
+                          : "/assets/ayu.png"
                     }
                     alt=""
                   />
@@ -45,13 +57,17 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                         className="d-none d-md-inline-block ms-3 ms-xl-4 me-xl-4"
                         style={{ cursor: "pointer" }}
                       >
-                        <a
-                          onClick={() => setLoginModal(true)}
-                          className={style_1 ? "btn-ten" : "btn-two rounded-0"}
-                        >
-                          <span>Login / Sign Up</span>{" "}
-                          <i className="fa-thin fa-arrow-up-right"></i>
-                        </a>
+                        {!session && (
+                          <a
+                            onClick={() => setLoginModal(true)}
+                            className={
+                              style_1 ? "btn-ten" : "btn-two rounded-0"
+                            }
+                          >
+                            <span>Login / Sign Up</span>{" "}
+                            <i className="fa-thin fa-arrow-up-right"></i>
+                          </a>
+                        )}
                       </li>
                       <li className="d-none d-xl-block">
                         <button
@@ -73,15 +89,17 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                         </Link>
                       </li>
                       <li>
-                        <a
-                          onClick={() => setLoginModal(true)}
-                          style={{ cursor: "pointer" }}
-                          data-bs-toggle="modal"
-                          data-bs-target="#loginModal"
-                          className="login-btn-two rounded-circle tran3s d-flex align-items-center justify-content-center"
-                        >
-                          <i className="fa-regular fa-lock"></i>
-                        </a>
+                        {!session && (
+                          <a
+                            onClick={() => setLoginModal(true)}
+                            style={{ cursor: "pointer" }}
+                            data-bs-toggle="modal"
+                            data-bs-target="#loginModal"
+                            className="login-btn-two rounded-circle tran3s d-flex align-items-center justify-content-center"
+                          >
+                            <i className="fa-regular fa-lock"></i>
+                          </a>
+                        )}
                       </li>
                       <li>
                         <a

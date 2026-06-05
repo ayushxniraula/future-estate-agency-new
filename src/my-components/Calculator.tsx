@@ -6,6 +6,7 @@ import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
 import FutureHeader from "../layouts/headers/FutureHeader";
 import { Link } from "react-router-dom";
+import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 
 // ─────────────────────────────────────────────────────────────
 //  Helpers
@@ -574,7 +575,7 @@ const Calculator = () => {
   return (
     <Wrapper>
       <SEO pageTitle="Calculator – EMI & Land Unit" />
-      <FutureHeader style_1={true} style_2={false} />
+      <NavMenu />
 
       {/* ── Banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">

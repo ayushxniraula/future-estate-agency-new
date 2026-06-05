@@ -20,6 +20,7 @@ import FutureFooter from "../layouts/footers/FutureFooter";
 import FutureHeader from "../layouts/headers/FutureHeader";
 import { Link, useSearchParams } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
+import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -1410,7 +1411,7 @@ const PropertyCompare = () => {
   return (
     <Wrapper>
       <SEO pageTitle="Compare Properties" />
-      <FutureHeader style_1={true} style_2={false} />
+      <NavMenu />
 
       {/* ── Page banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">

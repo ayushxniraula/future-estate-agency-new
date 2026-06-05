@@ -71,6 +71,7 @@ import SellPropertyArea from "../my-components/Sell";
 import PropertyCompare from "../my-components/CompareProp";
 import PriceHeatmap from "../my-components/priceheatmap";
 import SmartFinder from "../my-components/smartai";
+import { ProtectedRoute } from "../components/ProtectedRoute";
 
 const AppNavigation = () => {
   return (
@@ -124,7 +125,14 @@ const AppNavigation = () => {
         <Route path="/listing_details_01" element={<ListingDetailsOne />} />
         <Route path="/listing_details_02" element={<ListingDetailsTwo />} />
         <Route path="/listing_details_03" element={<ListingDetailsThree />} />
-        <Route path="/sell" element={<SellPropertyArea />} />
+        <Route
+          path="/sell"
+          element={
+            <ProtectedRoute>
+              <SellPropertyArea />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/buy/:id" element={<FutureBuyDetailPage />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/propcompare" element={<PropertyCompare />} />

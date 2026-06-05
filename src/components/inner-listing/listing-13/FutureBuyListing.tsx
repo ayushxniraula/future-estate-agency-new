@@ -1,12 +1,12 @@
 // ============================================================
-//  BuyListing.tsx — Supabase-powered property listing
-//  Now reads ?status=&location=&minPrice=&maxPrice= from URL
-//  so the hero search bar pre-filters results on arrival
+//  BuyListing.tsx — Future Work branded property listing
+//  Brand colors: #252060 (navy) / #1C94A4 (teal)
+//  Mobile-first responsive design
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
 import ReactPaginate from "react-paginate";
-import { Link, useSearchParams } from "react-router-dom"; // ← added useSearchParams
+import { Link, useSearchParams } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import NiceSelect from "../../../ui/NiceSelect";
 
@@ -101,29 +101,32 @@ function getStatusLabel(status: string): string {
   }
 }
 
+// Brand-toned status colors (distinct per status, within FW palette family)
 function getStatusColor(status: string): { bg: string; text: string } {
   switch (status) {
     case "For Sale":
-      return { bg: "rgba(232,69,69,0.92)", text: "#fff" };
+      // Deep teal – brand accent, active listing
+      return { bg: "rgba(28,148,164,0.92)", text: "#fff" };
     case "For Rent":
-      return { bg: "rgba(33,150,243,0.92)", text: "#fff" };
+      // Mid navy-blue, distinct from teal
+      return { bg: "rgba(37,89,160,0.92)", text: "#fff" };
     case "Sold":
-      return { bg: "rgba(76,175,80,0.92)", text: "#fff" };
+      // Warm olive-green (brand-adjacent earthy success)
+      return { bg: "rgba(45,139,86,0.92)", text: "#fff" };
     case "Rented":
-      return { bg: "rgba(255,152,0,0.92)", text: "#fff" };
+      // Amber-gold, distinct warm contrast
+      return { bg: "rgba(196,130,20,0.92)", text: "#fff" };
     default:
-      return { bg: "rgba(80,80,80,0.88)", text: "#fff" };
+      return { bg: "rgba(37,32,96,0.82)", text: "#fff" };
   }
 }
 
-// Build initial filters — merges URL params over the defaults
 function buildInitialFilters(
   priceRange: [number, number],
   params: URLSearchParams,
 ): FiltersState {
   const minPrice = Number(params.get("minPrice")) || priceRange[0];
   const maxPrice = Number(params.get("maxPrice")) || priceRange[1];
-
   return {
     keyword: "",
     location: params.get("location") || "",
@@ -138,115 +141,704 @@ function buildInitialFilters(
   };
 }
 
-// ─── Global styles (unchanged from original) ─────────────────
+// ─── Future Work Global Styles ────────────────────────────────
 const INJECTED_STYLE = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
 
   :root {
-    --font-display: 'DM Serif Display', Georgia, serif;
-    --font-body:    'DM Sans', system-ui, sans-serif;
-    --c-ink:        #1a1715;
-    --c-ink-2:      #4a4845;
-    --c-ink-3:      #8a8785;
-    --c-rule:       #ede9e4;
-    --c-surface:    #faf9f7;
+    /* Future Work Brand */
+    --fw-navy:        #252060;
+    --fw-navy-dark:   #1a1648;
+    --fw-navy-light:  #2e2a7a;
+    --fw-teal:        #1C94A4;
+    --fw-teal-dark:   #157a88;
+    --fw-teal-light:  #22afc2;
+    --fw-teal-faint:  rgba(28,148,164,0.08);
+    --fw-navy-faint:  rgba(37,32,96,0.06);
+
+    /* Neutral palette */
+    --c-ink:        #0f0e1a;
+    --c-ink-2:      #3a3850;
+    --c-ink-3:      #7a7890;
+    --c-rule:       #e8e6f0;
+    --c-surface:    #f7f6fb;
     --c-white:      #ffffff;
-    --c-accent:     #c8402a;
-    --c-accent-h:   #a83320;
-    --radius-card:  16px;
-    --radius-sm:    10px;
-    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
-    --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
+
+    /* Typography */
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+
+    /* Shape */
+    --radius-card:  14px;
+    --radius-sm:    9px;
+    --radius-pill:  100px;
+
+    /* Shadows */
+    --shadow-card:  0 1px 3px rgba(37,32,96,0.05), 0 4px 18px rgba(37,32,96,0.08);
+    --shadow-hover: 0 6px 12px rgba(37,32,96,0.10), 0 20px 48px rgba(37,32,96,0.14);
+    --shadow-sidebar: 2px 0 24px rgba(37,32,96,0.06);
   }
 
-  .buy-listing-root, .buy-listing-root * { font-family: var(--font-body); }
+  /* ── Base ───────────────────────────────────────────── */
+  .fw-listing-root, .fw-listing-root * {
+    font-family: var(--font-body);
+    box-sizing: border-box;
+  }
 
-  .buy-listing-root { padding-left: 24px; padding-right: 24px; }
-  @media (min-width: 768px)  { .buy-listing-root { padding-left: 40px; padding-right: 40px; } }
-  @media (min-width: 1200px) { .buy-listing-root { padding-left: 56px; padding-right: 56px; } }
+  .fw-listing-root {
+    background: var(--c-surface);
+    min-height: 100vh;
+  }
 
-  .type-bar { background: var(--c-white); border-bottom: 1px solid var(--c-rule); padding: 0 32px; }
-  .type-bar-inner { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 0; overflow-x: auto; scrollbar-width: none; }
-  .type-bar-inner::-webkit-scrollbar { display: none; }
-  .type-bar-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--c-ink-3); margin-right: 6px; flex-shrink: 0; }
-  .type-pill { padding: 5px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 500; color: var(--c-ink-2); text-decoration: none; border: 1px solid var(--c-rule); transition: all 0.18s ease; white-space: nowrap; background: var(--c-white); letter-spacing: 0.1px; flex-shrink: 0; }
-  .type-pill:hover { border-color: var(--c-ink); color: var(--c-ink); background: var(--c-surface); }
-  .type-pill.active { background: var(--c-ink); border-color: var(--c-ink); color: var(--c-white); }
+  /* ── Type Filter Bar ─────────────────────────────── */
+  .fw-type-bar {
+    background: var(--fw-navy);
+    border-bottom: none;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    box-shadow: 0 2px 16px rgba(37,32,96,0.18);
+  }
 
-  .prop-card { border-radius: var(--radius-card); overflow: hidden; background: var(--c-white); box-shadow: var(--shadow-card); transition: box-shadow 0.28s ease, transform 0.28s ease; border: 1px solid var(--c-rule); display: flex; flex-direction: column; width: 100%; }
-  .prop-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-4px); }
-  .prop-card__img-wrap { position: relative; overflow: hidden; }
-  .prop-card__img-wrap img { transition: transform 0.45s ease; display: block; }
-  .prop-card:hover .prop-card__img-wrap img { transform: scale(1.05); }
-  .prop-card__badge { position: absolute; top: 12px; left: 12px; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; z-index: 3; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); line-height: 1.6; }
-  .prop-card__fav { position: absolute; top: 11px; right: 11px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 3; color: #aaa; transition: background 0.2s, color 0.2s, transform 0.2s; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-  .prop-card__fav:hover { background: var(--c-accent); color: var(--c-white); transform: scale(1.12); }
-  .prop-card__body { padding: 20px 22px 14px; flex: 1; display: flex; flex-direction: column; }
-  .prop-card__type { font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; text-transform: uppercase; color: var(--c-ink-3); margin-bottom: 5px; }
-  .prop-card__title { font-family: var(--font-display); font-size: 17px; font-weight: 400; color: var(--c-ink); text-decoration: none; line-height: 1.25; display: block; margin-bottom: 6px; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .prop-card__title:hover { color: var(--c-accent); }
-  .prop-card__location { font-size: 12.5px; color: var(--c-ink-3); margin-bottom: 16px; display: flex; align-items: center; gap: 4px; }
-  .prop-card__divider { height: 1px; background: var(--c-rule); margin: 0 -22px 14px; }
-  .prop-card__features { display: flex; gap: 6px; flex-wrap: wrap; }
-  .prop-card__feat { display: flex; align-items: center; gap: 5px; background: var(--c-surface); border-radius: 8px; padding: 5px 10px; font-size: 12px; color: var(--c-ink-2); font-weight: 500; border: 1px solid var(--c-rule); }
-  .prop-card__feat img { width: 13px; height: 13px; opacity: 0.6; }
-  .prop-card__footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px 18px; margin-top: auto; }
-  .prop-card__price { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--c-ink); letter-spacing: -0.5px; line-height: 1; }
-  .prop-card__price sup { font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--c-ink-3); vertical-align: super; margin-right: 1px; }
-  .prop-card__price sub { font-family: var(--font-body); font-size: 11.5px; font-weight: 400; color: var(--c-ink-3); }
-  .prop-card__arrow { width: 36px; height: 36px; border-radius: 50%; background: var(--c-ink); display: flex; align-items: center; justify-content: center; color: var(--c-white); text-decoration: none; transition: background 0.2s, transform 0.25s; font-size: 13px; flex-shrink: 0; }
-  .prop-card__arrow:hover { background: var(--c-accent); transform: rotate(45deg); }
-  .carousel-dot { transition: all 0.22s ease; }
+  .fw-type-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .fw-type-bar-inner::-webkit-scrollbar { display: none; }
 
-  .sidebar-panel { background: var(--c-white); border-right: 1px solid var(--c-rule); min-height: 100%; }
-  .sidebar-panel__inner { padding: 32px 24px; }
-  .sidebar-panel__heading { font-family: var(--font-display); font-size: 20px; font-weight: 400; color: var(--c-ink); margin-bottom: 28px; letter-spacing: -0.2px; }
-  .sidebar-section { margin-bottom: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--c-rule); }
-  .sidebar-section:last-of-type { border-bottom: none; }
-  .sidebar-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--c-ink-3); margin-bottom: 9px; display: block; }
-  .sidebar-input { width: 100%; padding: 9px 13px; border-radius: var(--radius-sm); border: 1.5px solid var(--c-rule); font-size: 13.5px; font-family: var(--font-body); color: var(--c-ink); background: var(--c-surface); transition: border-color 0.18s, background 0.18s, box-shadow 0.18s; outline: none; appearance: none; -webkit-appearance: none; }
-  .sidebar-input:focus { border-color: var(--c-ink); background: var(--c-white); box-shadow: 0 0 0 3px rgba(26,23,21,0.06); }
-  .amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-  .amenity-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--c-ink-2); cursor: pointer; padding: 5px 0; font-family: var(--font-body); }
-  .amenity-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--c-accent); cursor: pointer; flex-shrink: 0; }
-  .reset-btn { width: 100%; padding: 11px; border-radius: var(--radius-sm); border: 1.5px solid var(--c-ink); background: transparent; font-size: 13px; font-weight: 600; font-family: var(--font-body); color: var(--c-ink); cursor: pointer; letter-spacing: 0.3px; transition: all 0.2s; }
-  .reset-btn:hover { background: var(--c-ink); color: var(--c-white); }
+  .fw-type-bar-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-right: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 
-  /* Active filter pill shown at top of listing */
-  .active-filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-  .active-filter-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--c-ink); color: #fff; border: none; cursor: pointer; transition: background 0.18s; }
-  .active-filter-pill:hover { background: var(--c-accent); }
-  .active-filter-pill__x { font-size: 11px; opacity: 0.7; }
+  .fw-type-pill {
+    padding: 5px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    text-decoration: none;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    background: transparent;
+    letter-spacing: 0.2px;
+    flex-shrink: 0;
+  }
+  .fw-type-pill:hover {
+    border-color: var(--fw-teal);
+    color: var(--fw-teal-light);
+    background: rgba(28,148,164,0.10);
+  }
+  .fw-type-pill.active {
+    background: var(--fw-teal);
+    border-color: var(--fw-teal);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(28,148,164,0.35);
+  }
 
-  .listing-header { background: var(--c-surface); border-radius: var(--radius-sm); padding: 12px 18px; border: 1px solid var(--c-rule); margin-bottom: 32px; }
-  .results-count { font-size: 13.5px; color: var(--c-ink-3); font-family: var(--font-body); }
-  .results-count strong { color: var(--c-ink); font-weight: 600; }
-  .sort-row { display: flex; align-items: center; gap: 10px; }
-  .sort-row .nice-select { margin-bottom: 0 !important; margin-top: 0 !important; line-height: 1 !important; height: auto !important; padding-top: 6px !important; padding-bottom: 6px !important; }
+  /* ── Layout ──────────────────────────────────────── */
+  .fw-layout {
+    display: flex;
+    min-height: calc(100vh - 50px);
+    position: relative;
+  }
 
-  .pagination-refined { display: inline-flex; align-items: center; gap: 6px; list-style: none; padding: 0; margin: 0; }
-  .pagination-refined li a, .pagination-refined li span { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px; font-family: var(--font-body); font-weight: 500; color: var(--c-ink-2); border: 1.5px solid transparent; transition: all 0.18s; text-decoration: none; cursor: pointer; }
-  .pagination-refined li a:hover { border-color: var(--c-ink); color: var(--c-ink); background: var(--c-surface); }
-  .pagination-refined li.selected a { background: var(--c-ink); color: var(--c-white); border-color: var(--c-ink); }
-  .pagination-refined li.disabled span { opacity: 0.3; cursor: default; }
-  .pagination-refined li.previous a, .pagination-refined li.next a { border: 1.5px solid var(--c-rule); background: var(--c-white); color: var(--c-ink); font-size: 13px; }
-  .pagination-refined li.previous a:hover, .pagination-refined li.next a:hover { border-color: var(--c-ink); background: var(--c-ink); color: var(--c-white); }
-  .pagination-refined li.previous.disabled a, .pagination-refined li.next.disabled a { opacity: 0.3; pointer-events: none; }
+  /* ── Mobile sidebar overlay ─────────────────────── */
+  .fw-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,14,26,0.55);
+    z-index: 100;
+    backdrop-filter: blur(3px);
+  }
+  .fw-sidebar-overlay.open { display: block; }
+
+  /* ── Sidebar ─────────────────────────────────────── */
+  .fw-sidebar {
+    width: 288px;
+    flex-shrink: 0;
+    background: var(--c-white);
+    border-right: 1px solid var(--c-rule);
+    box-shadow: var(--shadow-sidebar);
+    position: sticky;
+    top: 50px;
+    height: calc(100vh - 50px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-rule) transparent;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    z-index: 50;
+  }
+  .fw-sidebar::-webkit-scrollbar { width: 4px; }
+  .fw-sidebar::-webkit-scrollbar-track { background: transparent; }
+  .fw-sidebar::-webkit-scrollbar-thumb { background: var(--c-rule); border-radius: 4px; }
+
+  /* Mobile sidebar — off-canvas */
+  @media (max-width: 991px) {
+    .fw-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      transform: translateX(-100%);
+      z-index: 110;
+    }
+    .fw-sidebar.mobile-open { transform: translateX(0); }
+    .fw-layout { display: block; }
+  }
+
+  .fw-sidebar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 22px 0;
+    margin-bottom: 20px;
+  }
+  .fw-sidebar__title {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--fw-navy);
+    letter-spacing: -0.2px;
+  }
+  .fw-sidebar__close {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--c-ink-3);
+    padding: 2px;
+    line-height: 1;
+  }
+  @media (max-width: 991px) { .fw-sidebar__close { display: flex; align-items: center; } }
+
+  .fw-sidebar-body { padding: 0 22px 32px; }
+
+  .fw-sidebar-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--c-rule);
+  }
+  .fw-sidebar-section:last-of-type { border-bottom: none; }
+
+  .fw-sidebar-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--fw-teal);
+    margin-bottom: 9px;
+    display: block;
+  }
+
+  .fw-sidebar-input {
+    width: 100%;
+    padding: 9px 13px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    font-size: 13px;
+    font-family: var(--font-body);
+    color: var(--c-ink);
+    background: var(--c-surface);
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .fw-sidebar-input:focus {
+    border-color: var(--fw-teal);
+    background: var(--c-white);
+    box-shadow: 0 0 0 3px rgba(28,148,164,0.12);
+  }
+
+  .fw-amenity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  .fw-amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--c-ink-2);
+    cursor: pointer;
+    padding: 5px 0;
+    font-family: var(--font-body);
+    transition: color 0.15s;
+  }
+  .fw-amenity-item:hover { color: var(--fw-teal); }
+  .fw-amenity-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--fw-teal);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .fw-reset-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--fw-navy);
+    background: transparent;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    color: var(--fw-navy);
+    cursor: pointer;
+    letter-spacing: 0.4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .fw-reset-btn:hover {
+    background: var(--fw-navy);
+    color: #fff;
+  }
+
+  /* ── Mobile filter toggle btn ────────────────────── */
+  .fw-filter-toggle {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--fw-navy);
+    background: var(--c-white);
+    color: var(--fw-navy);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: all 0.18s;
+    flex-shrink: 0;
+  }
+  .fw-filter-toggle:hover { background: var(--fw-navy); color: #fff; }
+  @media (max-width: 991px) { .fw-filter-toggle { display: flex; } }
+
+  /* ── Main content area ───────────────────────────── */
+  .fw-main {
+    flex: 1;
+    min-width: 0;
+    padding: 28px 24px 100px;
+  }
+  @media (max-width: 767px) { .fw-main { padding: 20px 16px 80px; } }
+
+  /* ── Active filter pills ─────────────────────────── */
+  .fw-active-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .fw-active-bar-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--c-ink-3);
+  }
+  .fw-active-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: var(--radius-pill);
+    font-size: 11.5px;
+    font-weight: 700;
+    background: var(--fw-navy);
+    color: #fff;
+    border: none;
+    cursor: default;
+    letter-spacing: 0.1px;
+  }
+  .fw-active-pill__x {
+    font-size: 11px;
+    opacity: 0.6;
+    cursor: pointer;
+    line-height: 1;
+    transition: opacity 0.15s;
+  }
+  .fw-active-pill__x:hover { opacity: 1; }
+  .fw-clear-all {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--fw-teal);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    transition: color 0.18s;
+  }
+  .fw-clear-all:hover { color: var(--fw-teal-dark); }
+
+  /* ── Listing header bar ──────────────────────────── */
+  .fw-listing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--c-white);
+    border-radius: var(--radius-card);
+    padding: 12px 18px;
+    border: 1.5px solid var(--c-rule);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 576px) {
+    .fw-listing-header { padding: 10px 14px; gap: 8px; }
+  }
+
+  .fw-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .fw-results-count {
+    font-size: 13px;
+    color: var(--c-ink-3);
+    font-family: var(--font-body);
+  }
+  .fw-results-count strong { color: var(--fw-navy); font-weight: 700; }
+
+  .fw-sort-row { display: flex; align-items: center; gap: 8px; }
+  .fw-sort-label {
+    font-size: 11.5px;
+    color: var(--c-ink-3);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ── Property card ───────────────────────────────── */
+  .fw-prop-card {
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--c-white);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.28s ease, transform 0.28s ease;
+    border: 1.5px solid var(--c-rule);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+  .fw-prop-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-5px);
+  }
+
+  /* Image wrap */
+  .fw-prop-card__img-wrap { position: relative; overflow: hidden; }
+  .fw-prop-card__img-wrap img { transition: transform 0.45s ease; display: block; }
+  .fw-prop-card:hover .fw-prop-card__img-wrap img { transform: scale(1.05); }
+
+  /* Status badge */
+  .fw-prop-card__badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    z-index: 3;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    line-height: 1.6;
+  }
+
+  /* Fav button */
+  .fw-prop-card__fav {
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    color: #aaa;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    text-decoration: none;
+    box-shadow: 0 2px 10px rgba(37,32,96,0.14);
+  }
+  .fw-prop-card__fav:hover {
+    background: var(--fw-teal);
+    color: #fff;
+    transform: scale(1.12);
+  }
+
+  /* Card body */
+  .fw-prop-card__body {
+    padding: 18px 20px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .fw-prop-card__type {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--fw-teal);
+    margin-bottom: 5px;
+  }
+  .fw-prop-card__title {
+    font-family: var(--font-display);
+    font-size: 16.5px;
+    font-weight: 400;
+    color: var(--c-ink);
+    text-decoration: none;
+    line-height: 1.25;
+    display: block;
+    margin-bottom: 6px;
+    transition: color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fw-prop-card__title:hover { color: var(--fw-teal); }
+
+  .fw-prop-card__location {
+    font-size: 12px;
+    color: var(--c-ink-3);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .fw-prop-card__divider {
+    height: 1px;
+    background: var(--c-rule);
+    margin: 0 -20px 12px;
+  }
+
+  .fw-prop-card__features { display: flex; gap: 5px; flex-wrap: wrap; }
+  .fw-prop-card__feat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--fw-teal-faint);
+    border-radius: 7px;
+    padding: 4px 9px;
+    font-size: 11.5px;
+    color: var(--fw-navy);
+    font-weight: 600;
+    border: 1px solid rgba(28,148,164,0.15);
+  }
+  .fw-prop-card__feat img { width: 12px; height: 12px; opacity: 0.55; }
+
+  /* Card footer */
+  .fw-prop-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 16px;
+    margin-top: auto;
+    border-top: 1px solid var(--c-rule);
+  }
+  .fw-prop-card__price {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 400;
+    color: var(--fw-navy);
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .fw-prop-card__price sup {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fw-teal);
+    vertical-align: super;
+    margin-right: 1px;
+  }
+  .fw-prop-card__price sub {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--c-ink-3);
+  }
+
+  .fw-prop-card__arrow {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--fw-navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.25s;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .fw-prop-card__arrow:hover {
+    background: var(--fw-teal);
+    transform: rotate(45deg);
+  }
+
+  /* ── Carousel dot ────────────────────────────────── */
+  .fw-carousel-dot { transition: all 0.22s ease; }
+
+  /* ── Price Range Slider ──────────────────────────── */
+  .fw-slider-wrap input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .fw-slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--fw-navy);
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(37,32,96,0.25);
+  }
+  .fw-slider-wrap input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--fw-navy);
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 6px rgba(37,32,96,0.25);
+  }
+
+  /* ── Pagination ──────────────────────────────────── */
+  .fw-pagination {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .fw-pagination li a,
+  .fw-pagination li span {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 13px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    color: var(--c-ink-2);
+    border: 1.5px solid transparent;
+    transition: all 0.18s;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .fw-pagination li a:hover {
+    border-color: var(--fw-navy);
+    color: var(--fw-navy);
+    background: var(--fw-navy-faint);
+  }
+  .fw-pagination li.selected a {
+    background: var(--fw-navy);
+    color: #fff;
+    border-color: var(--fw-navy);
+  }
+  .fw-pagination li.disabled span { opacity: 0.3; cursor: default; }
+  .fw-pagination li.previous a,
+  .fw-pagination li.next a {
+    border: 1.5px solid var(--c-rule);
+    background: var(--c-white);
+    color: var(--fw-navy);
+  }
+  .fw-pagination li.previous a:hover,
+  .fw-pagination li.next a:hover {
+    border-color: var(--fw-teal);
+    background: var(--fw-teal);
+    color: #fff;
+  }
+  .fw-pagination li.previous.disabled a,
+  .fw-pagination li.next.disabled a { opacity: 0.3; pointer-events: none; }
+
+  /* ── Empty / Error states ────────────────────────── */
+  .fw-state-box {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .fw-state-icon { font-size: 3rem; margin-bottom: 14px; }
+  .fw-state-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--fw-navy);
+    margin-bottom: 8px;
+  }
+  .fw-state-sub { color: var(--c-ink-3); font-size: 13.5px; }
+
+  /* ── Card grid ───────────────────────────────────── */
+  .fw-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 1280px) { .fw-card-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { .fw-card-grid { grid-template-columns: 1fr; } }
+
+  /* ── Loading spinner ─────────────────────────────── */
+  .fw-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--c-rule);
+    border-top-color: var(--fw-teal);
+    border-radius: 50%;
+    animation: fw-spin 0.8s linear infinite;
+    margin: 0 auto 14px;
+  }
+  @keyframes fw-spin { to { transform: rotate(360deg); } }
+
+  /* ── Responsive padding for listing root ─────────── */
+  @media (max-width: 767px) {
+    .fw-type-bar { padding: 0 14px; }
+    .fw-type-bar-label { display: none; }
+  }
 `;
 
 function injectStyle() {
   if (
     typeof document !== "undefined" &&
-    !document.getElementById("buy-listing-refined-styles")
+    !document.getElementById("fw-listing-styles")
   ) {
     const el = document.createElement("style");
-    el.id = "buy-listing-refined-styles";
+    el.id = "fw-listing-styles";
     el.textContent = INJECTED_STYLE;
     document.head.appendChild(el);
   }
 }
 
-// ─── Image Carousel (unchanged) ───────────────────────────────
+// ─── Image Carousel ───────────────────────────────────────────
 function CarouselOrImage({
   images,
   title,
@@ -260,8 +852,8 @@ function CarouselOrImage({
       <div
         style={{
           width: "100%",
-          height: "220px",
-          background: "#f0ede8",
+          height: "210px",
+          background: "linear-gradient(135deg, #f0eef8 0%, #e8f5f7 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -283,13 +875,13 @@ function CarouselOrImage({
     setCurrent((c) => (c === images.length - 1 ? 0 : c + 1));
   };
   return (
-    <div style={{ position: "relative", overflow: "hidden", height: "220px" }}>
+    <div style={{ position: "relative", overflow: "hidden", height: "210px" }}>
       <img
         src={images[current]}
         alt={title}
         style={{
           width: "100%",
-          height: "220px",
+          height: "210px",
           objectFit: "cover",
           display: "block",
         }}
@@ -316,7 +908,7 @@ function CarouselOrImage({
             {images.map((_, i) => (
               <span
                 key={i}
-                className="carousel-dot"
+                className="fw-carousel-dot"
                 style={{
                   width: i === current ? "18px" : "6px",
                   height: "5px",
@@ -339,7 +931,7 @@ function carouselBtnStyle(side: "left" | "right"): React.CSSProperties {
     top: "50%",
     [side]: "10px",
     transform: "translateY(-50%)",
-    background: "rgba(26,23,21,0.38)",
+    background: "rgba(37,32,96,0.45)",
     backdropFilter: "blur(6px)",
     color: "#fff",
     border: "none",
@@ -357,7 +949,7 @@ function carouselBtnStyle(side: "left" | "right"): React.CSSProperties {
   };
 }
 
-// ─── Price Range Slider (unchanged) ──────────────────────────
+// ─── Price Range Slider ───────────────────────────────────────
 function PriceRangeSlider({
   min,
   max,
@@ -374,7 +966,7 @@ function PriceRangeSlider({
   const minAtMax = value[0] >= value[1] - 1;
   const fmt = (n: number) => `$${n.toLocaleString()}`;
   return (
-    <div>
+    <div className="fw-slider-wrap">
       <div
         style={{
           display: "flex",
@@ -385,12 +977,12 @@ function PriceRangeSlider({
       >
         <span
           style={{
-            background: "var(--c-surface)",
+            background: "var(--fw-teal-faint)",
             padding: "3px 9px",
             borderRadius: "8px",
-            color: "var(--c-ink)",
-            fontWeight: 600,
-            border: "1px solid var(--c-rule)",
+            color: "var(--fw-navy)",
+            fontWeight: 700,
+            border: "1px solid rgba(28,148,164,0.2)",
             fontFamily: "var(--font-body)",
           }}
         >
@@ -398,12 +990,12 @@ function PriceRangeSlider({
         </span>
         <span
           style={{
-            background: "var(--c-surface)",
+            background: "var(--fw-teal-faint)",
             padding: "3px 9px",
             borderRadius: "8px",
-            color: "var(--c-ink)",
-            fontWeight: 600,
-            border: "1px solid var(--c-rule)",
+            color: "var(--fw-navy)",
+            fontWeight: 700,
+            border: "1px solid rgba(28,148,164,0.2)",
             fontFamily: "var(--font-body)",
           }}
         >
@@ -430,7 +1022,7 @@ function PriceRangeSlider({
             left: `${pct(value[0])}%`,
             right: `${100 - pct(value[1])}%`,
             height: "3px",
-            background: "var(--c-ink)",
+            background: "var(--fw-teal)",
             borderRadius: "2px",
             pointerEvents: "none",
           }}
@@ -488,17 +1080,19 @@ function PriceRangeSlider({
   );
 }
 
-// ─── Sidebar Filters (unchanged) ─────────────────────────────
+// ─── Sidebar Filters ──────────────────────────────────────────
 function SidebarFilters({
   filters,
   onChange,
   onReset,
   priceMinMax,
+  onClose,
 }: {
   filters: FiltersState;
   onChange: (p: Partial<FiltersState>) => void;
   onReset: () => void;
   priceMinMax: [number, number];
+  onClose?: () => void;
 }) {
   const toggleAmenity = (a: string) => {
     const next = filters.amenities.includes(a)
@@ -506,14 +1100,24 @@ function SidebarFilters({
       : [...filters.amenities, a];
     onChange({ amenities: next });
   };
+
   return (
-    <div className="sidebar-panel">
-      <div className="sidebar-panel__inner">
-        <p className="sidebar-panel__heading">Filters</p>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Listing Type</span>
+    <>
+      <div className="fw-sidebar__header">
+        <span className="fw-sidebar__title">Filters</span>
+        <button
+          className="fw-sidebar__close"
+          onClick={onClose}
+          aria-label="Close filters"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="fw-sidebar-body">
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Listing Type</span>
           <select
-            className="sidebar-input"
+            className="fw-sidebar-input"
             value={filters.status}
             onChange={(e) => onChange({ status: e.target.value })}
           >
@@ -524,27 +1128,30 @@ function SidebarFilters({
             <option value="Rented">Rented</option>
           </select>
         </div>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Keyword</span>
+
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Keyword</span>
           <input
             type="text"
-            className="sidebar-input"
+            className="fw-sidebar-input"
             placeholder="e.g. home, villa…"
             value={filters.keyword}
             onChange={(e) => onChange({ keyword: e.target.value })}
           />
         </div>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Location</span>
+
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Location</span>
           <input
             type="text"
-            className="sidebar-input"
+            className="fw-sidebar-input"
             placeholder="City or address…"
             value={filters.location}
             onChange={(e) => onChange({ location: e.target.value })}
           />
         </div>
-        <div className="sidebar-section">
+
+        <div className="fw-sidebar-section">
           <div
             style={{
               display: "grid",
@@ -553,9 +1160,9 @@ function SidebarFilters({
             }}
           >
             <div>
-              <span className="sidebar-label">Bedrooms</span>
+              <span className="fw-sidebar-label">Bedrooms</span>
               <select
-                className="sidebar-input"
+                className="fw-sidebar-input"
                 value={filters.bedrooms}
                 onChange={(e) => onChange({ bedrooms: e.target.value })}
               >
@@ -568,9 +1175,9 @@ function SidebarFilters({
               </select>
             </div>
             <div>
-              <span className="sidebar-label">Bathrooms</span>
+              <span className="fw-sidebar-label">Bathrooms</span>
               <select
-                className="sidebar-input"
+                className="fw-sidebar-input"
                 value={filters.bathrooms}
                 onChange={(e) => onChange({ bathrooms: e.target.value })}
               >
@@ -584,11 +1191,12 @@ function SidebarFilters({
             </div>
           </div>
         </div>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Amenities</span>
-          <div className="amenity-grid">
+
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Amenities</span>
+          <div className="fw-amenity-grid">
             {AMENITY_OPTIONS.map((a) => (
-              <label key={a} className="amenity-item">
+              <label key={a} className="fw-amenity-item">
                 <input
                   type="checkbox"
                   checked={filters.amenities.includes(a)}
@@ -599,8 +1207,9 @@ function SidebarFilters({
             ))}
           </div>
         </div>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Price Range</span>
+
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Price Range</span>
           <PriceRangeSlider
             min={priceMinMax[0]}
             max={priceMinMax[1]}
@@ -608,10 +1217,11 @@ function SidebarFilters({
             onChange={(v) => onChange({ priceRange: v })}
           />
         </div>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Min Year Built</span>
+
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Min Year Built</span>
           <select
-            className="sidebar-input"
+            className="fw-sidebar-input"
             value={filters.minYearBuilt}
             onChange={(e) => onChange({ minYearBuilt: e.target.value })}
           >
@@ -623,8 +1233,9 @@ function SidebarFilters({
             ))}
           </select>
         </div>
-        <div className="sidebar-section">
-          <span className="sidebar-label">Square Footage</span>
+
+        <div className="fw-sidebar-section">
+          <span className="fw-sidebar-label">Square Footage</span>
           <div
             style={{
               display: "grid",
@@ -635,60 +1246,61 @@ function SidebarFilters({
             <input
               type="number"
               placeholder="Min sqft"
-              className="sidebar-input"
+              className="fw-sidebar-input"
               value={filters.sqftMin}
               onChange={(e) => onChange({ sqftMin: e.target.value })}
             />
             <input
               type="number"
               placeholder="Max sqft"
-              className="sidebar-input"
+              className="fw-sidebar-input"
               value={filters.sqftMax}
               onChange={(e) => onChange({ sqftMax: e.target.value })}
             />
           </div>
         </div>
-        <button className="reset-btn" onClick={onReset}>
+
+        <button className="fw-reset-btn" onClick={onReset}>
           Reset All Filters
         </button>
       </div>
-    </div>
+    </>
   );
 }
 
-// ─── Property Card (unchanged) ────────────────────────────────
+// ─── Property Card ────────────────────────────────────────────
 function PropertyCard({ item }: { item: Property }) {
   const badge = getStatusColor(item.status);
   return (
-    <div className="prop-card">
-      <div className="prop-card__img-wrap">
+    <div className="fw-prop-card">
+      <div className="fw-prop-card__img-wrap">
         <div style={{ position: "relative" }}>
           <span
-            className="prop-card__badge"
+            className="fw-prop-card__badge"
             style={{ background: badge.bg, color: badge.text }}
           >
             {getStatusLabel(item.status)}
           </span>
-          <Link to="#" className="prop-card__fav">
+          <Link to="#" className="fw-prop-card__fav">
             <i className="fa-light fa-heart" style={{ fontSize: "13px" }} />
           </Link>
           <CarouselOrImage images={item.images || []} title={item.title} />
         </div>
       </div>
-      <div className="prop-card__body">
+      <div className="fw-prop-card__body">
         {item.property_type && (
-          <div className="prop-card__type">{item.property_type}</div>
+          <div className="fw-prop-card__type">{item.property_type}</div>
         )}
-        <Link to={`/buy/${item.id}`} className="prop-card__title">
+        <Link to={`/buy/${item.id}`} className="fw-prop-card__title">
           {item.title}
         </Link>
-        <div className="prop-card__location">
+        <div className="fw-prop-card__location">
           <svg
-            width="11"
-            height="13"
+            width="10"
+            height="12"
             viewBox="0 0 11 13"
             fill="none"
-            style={{ flexShrink: 0, marginTop: "1px" }}
+            style={{ flexShrink: 0, color: "var(--fw-teal)" }}
           >
             <path
               d="M5.5 0C3.015 0 1 2.015 1 4.5c0 3.375 4.5 8.5 4.5 8.5S10 7.875 10 4.5C10 2.015 7.985 0 5.5 0zm0 6.25A1.75 1.75 0 1 1 5.5 2.75a1.75 1.75 0 0 1 0 3.5z"
@@ -699,22 +1311,22 @@ function PropertyCard({ item }: { item: Property }) {
         </div>
         {(item.sqft || item.bedrooms != null || item.bathrooms != null) && (
           <>
-            <div className="prop-card__divider" />
-            <div className="prop-card__features">
+            <div className="fw-prop-card__divider" />
+            <div className="fw-prop-card__features">
               {item.sqft && (
-                <div className="prop-card__feat">
+                <div className="fw-prop-card__feat">
                   <img src="/assets/images/icon/icon_32.svg" alt="" />
                   <span>{item.sqft.toLocaleString()} ft²</span>
                 </div>
               )}
               {item.bedrooms != null && (
-                <div className="prop-card__feat">
+                <div className="fw-prop-card__feat">
                   <img src="/assets/images/icon/icon_33.svg" alt="" />
                   <span>{item.bedrooms} bed</span>
                 </div>
               )}
               {item.bathrooms != null && (
-                <div className="prop-card__feat">
+                <div className="fw-prop-card__feat">
                   <img src="/assets/images/icon/icon_34.svg" alt="" />
                   <span>{item.bathrooms} bath</span>
                 </div>
@@ -723,8 +1335,8 @@ function PropertyCard({ item }: { item: Property }) {
           </>
         )}
       </div>
-      <div className="prop-card__footer">
-        <div className="prop-card__price">
+      <div className="fw-prop-card__footer">
+        <div className="fw-prop-card__price">
           <sup>$</sup>
           {item.price.toLocaleString(undefined, {
             minimumFractionDigits: 0,
@@ -732,7 +1344,7 @@ function PropertyCard({ item }: { item: Property }) {
           })}
           {item.status === "For Rent" && <sub> / mo</sub>}
         </div>
-        <Link to={`/buy/${item.id}`} className="prop-card__arrow">
+        <Link to={`/buy/${item.id}`} className="fw-prop-card__arrow">
           <i className="bi bi-arrow-up-right" />
         </Link>
       </div>
@@ -744,9 +1356,7 @@ function PropertyCard({ item }: { item: Property }) {
 const BuyListing = () => {
   injectStyle();
 
-  // ── Read URL params written by DropdownOne hero search ──
   const [searchParams] = useSearchParams();
-
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -756,8 +1366,8 @@ const BuyListing = () => {
   const [priceMinMax, setPriceMinMax] = useState<[number, number]>([
     0, 1_000_000,
   ]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Filters start empty; once prices are known we merge in URL params
   const [filters, setFilters] = useState<FiltersState>({
     keyword: "",
     location: "",
@@ -771,7 +1381,23 @@ const BuyListing = () => {
     sqftMax: "",
   });
 
-  // ── Fetch all properties once ──────────────────────────────
+  // Close sidebar on resize to desktop
+  useEffect(() => {
+    const handler = () => {
+      if (window.innerWidth >= 992) setSidebarOpen(false);
+    };
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -781,12 +1407,9 @@ const BuyListing = () => {
           .from("properties")
           .select("*")
           .order("created_at", { ascending: false });
-
         if (sbError) throw sbError;
-
         const props: Property[] = data || [];
         setAllProperties(props);
-
         if (props.length > 0) {
           const prices = props.map((p) => p.price || 0);
           const range: [number, number] = [
@@ -794,10 +1417,6 @@ const BuyListing = () => {
             Math.max(...prices),
           ];
           setPriceMinMax(range);
-
-          // ── Merge URL params into initial filters ──────────
-          // This is where the hero search "lands" — status, location,
-          // and price range from the URL are pre-applied.
           setFilters(buildInitialFilters(range, searchParams));
         }
       } catch (err: any) {
@@ -806,11 +1425,9 @@ const BuyListing = () => {
         setLoading(false);
       }
     })();
-    // searchParams intentionally only read once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Filtering & sorting (unchanged logic) ─────────────────
   const filteredProperties = useCallback(() => {
     let list = [...allProperties];
     if (selectedType !== "All")
@@ -913,15 +1530,14 @@ const BuyListing = () => {
     setSelectedType("All");
     setSortBy("newest");
     setItemOffset(0);
+    setSidebarOpen(false);
   };
 
-  // ── Active filter pills derived from URL params ────────────
-  // These show above the grid so the user knows what was pre-applied
+  // URL-sourced active filter pills
   const urlStatus = searchParams.get("status");
   const urlLocation = searchParams.get("location");
   const urlMin = searchParams.get("minPrice");
   const urlMax = searchParams.get("maxPrice");
-
   const activeUrlFilters: { label: string; key: string }[] = [
     ...(urlStatus ? [{ label: urlStatus, key: "status" }] : []),
     ...(urlLocation ? [{ label: `📍 ${urlLocation}`, key: "location" }] : []),
@@ -936,17 +1552,17 @@ const BuyListing = () => {
   ];
 
   return (
-    <div className="buy-listing-root property-listing-seven lg-pt-100">
-      {/* ── Type filter bar ── */}
-      <div className="type-bar">
+    <div className="fw-listing-root property-listing-seven lg-pt-100">
+      {/* ── Type Bar ── */}
+      <div className="fw-type-bar">
         <div className="wrapper">
-          <div className="type-bar-inner">
-            <span className="type-bar-label">Type</span>
+          <div className="fw-type-bar-inner">
+            <span className="fw-type-bar-label">Type</span>
             {PROPERTY_TYPES.map((type, i) => (
               <a
                 key={i}
                 href="#"
-                className={`type-pill${selectedType === type ? " active" : ""}`}
+                className={`fw-type-pill${selectedType === type ? " active" : ""}`}
                 onClick={(e) => {
                   e.preventDefault();
                   setSelectedType(type);
@@ -959,232 +1575,232 @@ const BuyListing = () => {
         </div>
       </div>
 
-      <div className="wrapper">
-        <div className="row gx-0">
-          {/* ── Sidebar ── */}
-          <div className="col-xxl-3 col-lg-4 order-lg-first">
-            <SidebarFilters
-              filters={filters}
-              onChange={(partial) =>
-                setFilters((prev) => ({ ...prev, ...partial }))
-              }
-              onReset={handleReset}
-              priceMinMax={priceMinMax}
-            />
-          </div>
+      {/* ── Mobile overlay ── */}
+      <div
+        className={`fw-sidebar-overlay${sidebarOpen ? " open" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+      />
 
-          {/* ── Main content ── */}
-          <div className="col-xxl-9 col-lg-8">
-            <div style={{ padding: "36px 28px 120px", maxWidth: "100%" }}>
-              {/* ── Active filter pills from hero search ── */}
-              {activeUrlFilters.length > 0 && (
-                <div className="active-filter-bar">
+      {/* ── Layout ── */}
+      <div className="fw-layout wrapper">
+        {/* Sidebar */}
+        <aside className={`fw-sidebar${sidebarOpen ? " mobile-open" : ""}`}>
+          <SidebarFilters
+            filters={filters}
+            onChange={(partial) =>
+              setFilters((prev) => ({ ...prev, ...partial }))
+            }
+            onReset={handleReset}
+            priceMinMax={priceMinMax}
+            onClose={() => setSidebarOpen(false)}
+          />
+        </aside>
+
+        {/* Main */}
+        <main className="fw-main">
+          {/* Active filter pills */}
+          {activeUrlFilters.length > 0 && (
+            <div className="fw-active-filter-bar">
+              <span className="fw-active-bar-label">Searching:</span>
+              {activeUrlFilters.map((f) => (
+                <span key={f.key} className="fw-active-pill">
+                  {f.label}
+                  <span
+                    className="fw-active-pill__x"
+                    onClick={() => {
+                      if (f.key === "status")
+                        setFilters((p) => ({ ...p, status: "" }));
+                      if (f.key === "location")
+                        setFilters((p) => ({ ...p, location: "" }));
+                      if (f.key === "price")
+                        setFilters((p) => ({ ...p, priceRange: priceMinMax }));
+                    }}
+                  >
+                    ✕
+                  </span>
+                </span>
+              ))}
+              <button onClick={handleReset} className="fw-clear-all">
+                Clear all
+              </button>
+            </div>
+          )}
+
+          {/* Header bar */}
+          <div className="fw-listing-header">
+            <div className="fw-header-left">
+              {/* Mobile filter toggle */}
+              <button
+                className="fw-filter-toggle"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+                  <path
+                    d="M0 1h14M3 6h8M5 11h4"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Filters
+                {(filters.amenities.length > 0 ||
+                  filters.status ||
+                  filters.keyword ||
+                  filters.location ||
+                  filters.bedrooms ||
+                  filters.bathrooms) && (
                   <span
                     style={{
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      letterSpacing: "0.8px",
-                      textTransform: "uppercase",
-                      color: "var(--c-ink-3)",
-                      alignSelf: "center",
+                      background: "var(--fw-teal)",
+                      color: "#fff",
+                      borderRadius: "50%",
+                      width: "16px",
+                      height: "16px",
+                      fontSize: "9px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 800,
                     }}
                   >
-                    Searching:
-                  </span>
-                  {activeUrlFilters.map((f) => (
-                    <span key={f.key} className="active-filter-pill">
-                      {f.label}
-                      <span
-                        className="active-filter-pill__x"
-                        onClick={() => {
-                          if (f.key === "status")
-                            setFilters((p) => ({ ...p, status: "" }));
-                          if (f.key === "location")
-                            setFilters((p) => ({ ...p, location: "" }));
-                          if (f.key === "price")
-                            setFilters((p) => ({
-                              ...p,
-                              priceRange: priceMinMax,
-                            }));
-                        }}
-                      >
-                        ✕
-                      </span>
-                    </span>
-                  ))}
-                  <button
-                    onClick={handleReset}
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      color: "var(--c-accent)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      fontFamily: "var(--font-body)",
-                    }}
-                  >
-                    Clear all
-                  </button>
-                </div>
-              )}
-
-              {/* Header bar */}
-              <div className="listing-header d-sm-flex justify-content-between align-items-center">
-                <div className="results-count">
-                  {loading ? (
-                    <span style={{ color: "var(--c-ink-3)" }}>Loading…</span>
-                  ) : error ? (
-                    <span style={{ color: "var(--c-accent)" }}>
-                      Error: {error}
-                    </span>
-                  ) : (
-                    <>
-                      Showing{" "}
-                      <strong>
-                        {sortedProperties.length === 0 ? 0 : itemOffset + 1}–
-                        {itemOffset + currentItems.length}
-                      </strong>{" "}
-                      of <strong>{sortedProperties.length}</strong> properties
-                    </>
-                  )}
-                </div>
-                <div className="sort-row xs-mt-20">
-                  <span
-                    style={{
-                      fontSize: "12.5px",
-                      color: "var(--c-ink-3)",
-                      fontWeight: 500,
-                      lineHeight: 1,
-                    }}
-                  >
-                    Sort by
-                  </span>
-                  <NiceSelect
-                    className="nice-select rounded-0"
-                    options={[
-                      { value: "newest", text: "Newest" },
-                      { value: "oldest", text: "Oldest" },
-                      { value: "price_low", text: "Price ↑" },
-                      { value: "price_high", text: "Price ↓" },
-                    ]}
-                    defaultCurrent={0}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setSortBy(e.target.value)
+                    {
+                      [
+                        filters.amenities.length > 0,
+                        filters.status,
+                        filters.keyword,
+                        filters.location,
+                        filters.bedrooms,
+                        filters.bathrooms,
+                      ].filter(Boolean).length
                     }
-                    name="sort"
-                    placeholder=""
-                  />
-                </div>
+                  </span>
+                )}
+              </button>
+              <div className="fw-results-count">
+                {loading ? (
+                  <span style={{ color: "var(--c-ink-3)" }}>Loading…</span>
+                ) : error ? (
+                  <span style={{ color: "#c8402a" }}>Error: {error}</span>
+                ) : (
+                  <>
+                    Showing{" "}
+                    <strong>
+                      {sortedProperties.length === 0 ? 0 : itemOffset + 1}–
+                      {itemOffset + currentItems.length}
+                    </strong>{" "}
+                    of <strong>{sortedProperties.length}</strong> properties
+                  </>
+                )}
               </div>
-
-              {/* Loading */}
-              {loading && (
-                <div className="text-center py-5">
-                  <div
-                    className="spinner-border"
-                    role="status"
-                    style={{
-                      width: "2.2rem",
-                      height: "2.2rem",
-                      color: "var(--c-accent)",
-                      borderWidth: "2px",
-                    }}
-                  />
-                  <p
-                    className="mt-3"
-                    style={{ color: "var(--c-ink-3)", fontSize: "14px" }}
-                  >
-                    Loading properties…
-                  </p>
-                </div>
-              )}
-
-              {/* Error */}
-              {!loading && error && (
-                <div className="text-center py-5">
-                  <p style={{ color: "var(--c-accent)" }}>⚠ {error}</p>
-                  <button
-                    className="btn-four mt-3"
-                    onClick={() => window.location.reload()}
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
-
-              {/* Empty */}
-              {!loading && !error && sortedProperties.length === 0 && (
-                <div className="text-center py-5">
-                  <div style={{ fontSize: "2.8rem", marginBottom: "12px" }}>
-                    🏠
-                  </div>
-                  <p
-                    style={{
-                      fontSize: "17px",
-                      fontFamily: "var(--font-display)",
-                      fontWeight: 400,
-                      color: "var(--c-ink)",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    No properties found
-                  </p>
-                  <p style={{ color: "var(--c-ink-3)", fontSize: "13.5px" }}>
-                    Try adjusting your filters or{" "}
-                    <button
-                      onClick={handleReset}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                        color: "var(--c-accent)",
-                        fontFamily: "var(--font-body)",
-                        fontSize: "13.5px",
-                      }}
-                    >
-                      reset all
-                    </button>
-                  </p>
-                </div>
-              )}
-
-              {/* Grid */}
-              {!loading && !error && sortedProperties.length > 0 && (
-                <>
-                  <div className="row gx-3 gy-4">
-                    {currentItems.map((item) => (
-                      <div key={item.id} className="col-xxl-4 col-md-6 d-flex">
-                        <PropertyCard item={item} />
-                      </div>
-                    ))}
-                  </div>
-                  {pageCount > 1 && (
-                    <div className="pt-5 text-center">
-                      <ReactPaginate
-                        breakLabel="…"
-                        nextLabel={
-                          <i className="fa-regular fa-chevron-right" />
-                        }
-                        onPageChange={handlePageClick}
-                        pageRangeDisplayed={5}
-                        pageCount={pageCount}
-                        previousLabel={
-                          <i className="fa-regular fa-chevron-left" />
-                        }
-                        renderOnZeroPageCount={null}
-                        className="pagination-refined"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
+            </div>
+            <div className="fw-sort-row">
+              <span className="fw-sort-label">Sort by</span>
+              <NiceSelect
+                className="nice-select rounded-0"
+                options={[
+                  { value: "newest", text: "Newest" },
+                  { value: "oldest", text: "Oldest" },
+                  { value: "price_low", text: "Price ↑" },
+                  { value: "price_high", text: "Price ↓" },
+                ]}
+                defaultCurrent={0}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setSortBy(e.target.value)
+                }
+                name="sort"
+                placeholder=""
+              />
             </div>
           </div>
-        </div>
+
+          {/* Loading */}
+          {loading && (
+            <div className="fw-state-box">
+              <div className="fw-spinner" />
+              <p style={{ color: "var(--c-ink-3)", fontSize: "13.5px" }}>
+                Loading properties…
+              </p>
+            </div>
+          )}
+
+          {/* Error */}
+          {!loading && error && (
+            <div className="fw-state-box">
+              <div className="fw-state-icon">⚠️</div>
+              <p className="fw-state-title">Something went wrong</p>
+              <p className="fw-state-sub">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  marginTop: "16px",
+                  padding: "9px 22px",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--fw-navy)",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  fontFamily: "var(--font-body)",
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Empty */}
+          {!loading && !error && sortedProperties.length === 0 && (
+            <div className="fw-state-box">
+              <div className="fw-state-icon">🏠</div>
+              <p className="fw-state-title">No properties found</p>
+              <p className="fw-state-sub">
+                Try adjusting your filters or{" "}
+                <button
+                  onClick={handleReset}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    color: "var(--fw-teal)",
+                    fontFamily: "var(--font-body)",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                  }}
+                >
+                  reset all
+                </button>
+              </p>
+            </div>
+          )}
+
+          {/* Grid */}
+          {!loading && !error && sortedProperties.length > 0 && (
+            <>
+              <div className="fw-card-grid">
+                {currentItems.map((item) => (
+                  <PropertyCard key={item.id} item={item} />
+                ))}
+              </div>
+              {pageCount > 1 && (
+                <div style={{ paddingTop: "40px", textAlign: "center" }}>
+                  <ReactPaginate
+                    breakLabel="…"
+                    nextLabel={<i className="fa-regular fa-chevron-right" />}
+                    onPageChange={handlePageClick}
+                    pageRangeDisplayed={5}
+                    pageCount={pageCount}
+                    previousLabel={<i className="fa-regular fa-chevron-left" />}
+                    renderOnZeroPageCount={null}
+                    className="fw-pagination"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </main>
       </div>
     </div>
   );

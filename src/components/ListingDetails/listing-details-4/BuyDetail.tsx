@@ -1,7 +1,8 @@
 // ============================================================
-//  BuyDetails.tsx — Dynamic property detail page
-//  Design: DM Serif Display + DM Sans, editorial luxury,
-//  consistent with BuyListing design tokens
+//  BuyDetails.tsx — Future Work branded property detail page
+//  Brand: #252060 navy / #1C94A4 teal
+//  Font:  Plus Jakarta Sans + DM Serif Display
+//  Fully mobile-responsive, consistent with BuyListing tokens
 // ============================================================
 
 import { useState, useEffect } from "react";
@@ -42,145 +43,189 @@ interface Property {
   created_at: string;
 }
 
-// ─── Design tokens (shared with BuyListing) ───────────────────
+// ─── Design tokens ────────────────────────────────────────────
 const DETAIL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
 
   :root {
-    --font-display: 'DM Serif Display', Georgia, serif;
-    --font-body:    'DM Sans', system-ui, sans-serif;
-    --c-ink:        #1a1715;
-    --c-ink-2:      #4a4845;
-    --c-ink-3:      #8a8785;
-    --c-rule:       #ede9e4;
-    --c-surface:    #faf9f7;
+    /* Future Work Brand */
+    --fw-navy:        #252060;
+    --fw-navy-dark:   #1a1648;
+    --fw-navy-light:  #2e2a7a;
+    --fw-teal:        #1C94A4;
+    --fw-teal-dark:   #157a88;
+    --fw-teal-light:  #22afc2;
+    --fw-teal-faint:  rgba(28,148,164,0.08);
+    --fw-navy-faint:  rgba(37,32,96,0.06);
+    --fw-navy-faint2: rgba(37,32,96,0.10);
+
+    /* Neutrals */
+    --c-ink:        #0f0e1a;
+    --c-ink-2:      #3a3850;
+    --c-ink-3:      #7a7890;
+    --c-rule:       #e8e6f0;
+    --c-surface:    #f7f6fb;
     --c-white:      #ffffff;
-    --c-accent:     #c8402a;
-    --c-accent-h:   #a83320;
-    --radius-card:  16px;
-    --radius-sm:    10px;
-    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
-    --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
+
+    /* Typography */
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+
+    /* Shape */
+    --radius-card:  14px;
+    --radius-sm:    9px;
+    --radius-pill:  100px;
+
+    /* Shadows */
+    --shadow-card:  0 1px 3px rgba(37,32,96,0.05), 0 4px 18px rgba(37,32,96,0.08);
+    --shadow-hover: 0 6px 12px rgba(37,32,96,0.10), 0 20px 48px rgba(37,32,96,0.14);
   }
 
-  .bd-root, .bd-root * { font-family: var(--font-body); }
+  /* ── Base ─────────────────────────────────────────────── */
+  .fwd-root, .fwd-root * {
+    font-family: var(--font-body);
+    box-sizing: border-box;
+  }
+  .fwd-root {
+    background: var(--c-surface);
+  }
 
-  /* ── Page breadcrumb ── */
-  .bd-breadcrumb {
+  /* ── Breadcrumb ───────────────────────────────────────── */
+  .fwd-breadcrumb {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12.5px;
+    font-size: 12px;
     color: var(--c-ink-3);
-    margin-bottom: 24px;
+    margin-bottom: 22px;
     flex-wrap: wrap;
   }
-  .bd-breadcrumb a {
+  .fwd-breadcrumb a {
     color: var(--c-ink-3);
     text-decoration: none;
     transition: color 0.18s;
+    font-weight: 500;
   }
-  .bd-breadcrumb a:hover { color: var(--c-ink); }
-  .bd-breadcrumb .sep { opacity: 0.4; }
-  .bd-breadcrumb .current { color: var(--c-ink); font-weight: 500; }
+  .fwd-breadcrumb a:hover { color: var(--fw-teal); }
+  .fwd-breadcrumb .sep { opacity: 0.35; }
+  .fwd-breadcrumb .current {
+    color: var(--fw-navy);
+    font-weight: 700;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-  /* ── Banner ── */
-  .bd-banner {
-    padding: 28px 0 24px;
-    border-bottom: 1px solid var(--c-rule);
-    margin-bottom: 28px;
+  /* ── Banner ───────────────────────────────────────────── */
+  .fwd-banner {
+    padding: 24px 0 20px;
+    border-bottom: 1.5px solid var(--c-rule);
+    margin-bottom: 24px;
   }
-  .bd-banner__title {
+  .fwd-banner__title {
     font-family: var(--font-display);
-    font-size: 32px;
+    font-size: clamp(22px, 4vw, 32px);
     font-weight: 400;
-    color: var(--c-ink);
+    color: var(--fw-navy);
     line-height: 1.2;
     margin-bottom: 12px;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.4px;
   }
-  .bd-banner__meta {
+  .fwd-banner__meta {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 7px;
   }
-  .bd-status-pill {
+  .fwd-status-pill {
     display: inline-flex;
     align-items: center;
     padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
+    border-radius: var(--radius-pill);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
     color: #fff;
+    line-height: 1.6;
   }
-  .bd-meta-chip {
+  .fwd-meta-chip {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 13px;
+    font-size: 12.5px;
+    font-weight: 500;
     color: var(--c-ink-3);
-    background: var(--c-surface);
-    border: 1px solid var(--c-rule);
+    background: var(--c-white);
+    border: 1.5px solid var(--c-rule);
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
   }
-  .bd-banner__price-col { text-align: right; }
-  .bd-banner__price {
+  .fwd-banner__price-col { text-align: right; }
+  @media (max-width: 767px) { .fwd-banner__price-col { text-align: left; margin-top: 16px; } }
+
+  .fwd-banner__price {
     font-family: var(--font-display);
-    font-size: 34px;
+    font-size: clamp(26px, 4vw, 34px);
     font-weight: 400;
-    color: var(--c-ink);
+    color: var(--fw-navy);
     letter-spacing: -0.8px;
     line-height: 1;
   }
-  .bd-banner__price sup {
+  .fwd-banner__price sup {
     font-family: var(--font-body);
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--c-ink-3);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fw-teal);
     vertical-align: super;
     margin-right: 2px;
   }
-  .bd-banner__price sub {
+  .fwd-banner__price sub {
     font-family: var(--font-body);
     font-size: 14px;
     font-weight: 400;
     color: var(--c-ink-3);
   }
-  .bd-banner__est {
-    font-size: 13px;
+  .fwd-banner__est {
+    font-size: 12.5px;
     color: var(--c-ink-3);
     margin-top: 5px;
   }
-  .bd-banner__est strong { color: var(--c-ink-2); font-weight: 600; }
+  .fwd-banner__est strong { color: var(--fw-teal-dark); font-weight: 700; }
 
   /* Action row */
-  .bd-actions {
+  .fwd-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 16px;
+    margin-top: 14px;
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
-  .bd-action-share {
+  @media (max-width: 767px) { .fwd-actions { justify-content: flex-start; } }
+
+  .fwd-action-share {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--c-ink-2);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--fw-navy);
     padding: 7px 16px;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     border: 1.5px solid var(--c-rule);
     background: var(--c-white);
     text-decoration: none;
     transition: all 0.18s;
     margin-right: auto;
+    letter-spacing: 0.2px;
   }
-  .bd-action-share:hover { border-color: var(--c-ink); color: var(--c-ink); }
-  .bd-action-icon {
+  .fwd-action-share:hover {
+    border-color: var(--fw-teal);
+    color: var(--fw-teal);
+  }
+  .fwd-action-icon {
     width: 36px; height: 36px;
     border-radius: 50%;
     border: 1.5px solid var(--c-rule);
@@ -191,375 +236,523 @@ const DETAIL_STYLES = `
     transition: all 0.18s;
     font-size: 14px;
     flex-shrink: 0;
+    cursor: pointer;
   }
-  .bd-action-icon:hover { border-color: var(--c-ink); color: var(--c-ink); }
-  .bd-action-icon.active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+  .fwd-action-icon:hover { border-color: var(--fw-teal); color: var(--fw-teal); }
+  .fwd-action-icon.active { background: var(--fw-teal); border-color: var(--fw-teal); color: #fff; }
 
-  /* ── Gallery ── */
-  .bd-gallery {
+  /* ── Gallery ──────────────────────────────────────────── */
+  .fwd-gallery {
     border-radius: var(--radius-card);
     overflow: hidden;
     position: relative;
     box-shadow: var(--shadow-hover);
     background: var(--c-surface);
-    margin-bottom: 28px;
+    margin-bottom: 24px;
+    border: 1.5px solid var(--c-rule);
   }
-  .bd-gallery__main-img {
+  .fwd-gallery__main-wrap {
+    overflow: hidden;
+    position: relative;
+  }
+  .fwd-gallery__main-img {
     width: 100%;
-    height: 500px;
+    height: clamp(280px, 45vw, 500px);
     object-fit: cover;
     display: block;
     cursor: zoom-in;
     transition: transform 0.4s ease;
   }
-  .bd-gallery:hover .bd-gallery__main-img { transform: scale(1.015); }
-  .bd-gallery__placeholder {
-    width: 100%; height: 500px;
+  .fwd-gallery:hover .fwd-gallery__main-img { transform: scale(1.015); }
+  .fwd-gallery__placeholder {
+    width: 100%;
+    height: clamp(280px, 45vw, 500px);
     display: flex; align-items: center; justify-content: center;
-    font-size: 4rem; background: var(--c-surface);
+    font-size: 4rem;
+    background: linear-gradient(135deg, #f0eef8 0%, #e8f5f7 100%);
   }
-  .bd-gallery__arrow {
+  .fwd-gallery__arrow {
     position: absolute; top: 50%; transform: translateY(-50%);
-    width: 42px; height: 42px; border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: rgba(255,255,255,0.95);
-    border: none; box-shadow: 0 2px 14px rgba(26,23,21,0.14);
+    border: none; box-shadow: 0 2px 14px rgba(37,32,96,0.16);
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: var(--c-ink);
+    font-size: 15px; color: var(--fw-navy);
     cursor: pointer; z-index: 5;
     transition: all 0.2s;
   }
-  .bd-gallery__arrow:hover { box-shadow: 0 4px 20px rgba(26,23,21,0.2); transform: translateY(-50%) scale(1.06); }
-  .bd-gallery__arrow--prev { left: 14px; }
-  .bd-gallery__arrow--next { right: 14px; }
-  .bd-gallery__counter {
-    position: absolute; bottom: 14px; right: 14px;
-    background: rgba(26,23,21,0.55); backdrop-filter: blur(6px);
-    color: #fff; font-size: 11.5px; font-weight: 600;
-    padding: 4px 11px; border-radius: 12px; z-index: 5;
-    letter-spacing: 0.3px;
+  .fwd-gallery__arrow:hover {
+    background: var(--fw-teal);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(28,148,164,0.35);
+    transform: translateY(-50%) scale(1.06);
   }
-  .bd-gallery__thumbs {
+  .fwd-gallery__arrow--prev { left: 14px; }
+  .fwd-gallery__arrow--next { right: 14px; }
+  .fwd-gallery__counter {
+    position: absolute; bottom: 14px; right: 14px;
+    background: rgba(37,32,96,0.6); backdrop-filter: blur(6px);
+    color: #fff; font-size: 11px; font-weight: 700;
+    padding: 4px 11px; border-radius: 10px; z-index: 5;
+    letter-spacing: 0.4px;
+  }
+  .fwd-gallery__thumbs {
     display: flex; gap: 6px; padding: 10px;
-    background: var(--c-surface); border-top: 1px solid var(--c-rule);
+    background: var(--c-surface); border-top: 1.5px solid var(--c-rule);
     overflow-x: auto; scrollbar-width: none;
   }
-  .bd-gallery__thumbs::-webkit-scrollbar { display: none; }
-  .bd-gallery__thumb {
-    flex-shrink: 0; width: 70px; height: 52px;
-    border-radius: 8px; overflow: hidden;
+  .fwd-gallery__thumbs::-webkit-scrollbar { display: none; }
+  .fwd-gallery__thumb {
+    flex-shrink: 0; width: 68px; height: 50px;
+    border-radius: 7px; overflow: hidden;
     border: 2px solid transparent;
-    cursor: pointer; transition: border-color 0.18s, opacity 0.18s;
-    opacity: 0.6;
+    cursor: pointer;
+    transition: border-color 0.18s, opacity 0.18s;
+    opacity: 0.55;
   }
-  .bd-gallery__thumb.active { border-color: var(--c-ink); opacity: 1; }
-  .bd-gallery__thumb:hover { opacity: 0.85; }
-  .bd-gallery__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fwd-gallery__thumb.active { border-color: var(--fw-teal); opacity: 1; }
+  .fwd-gallery__thumb:hover { opacity: 0.85; }
+  .fwd-gallery__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  /* ── Overview bar ── */
-  .bd-overview {
+  /* ── Overview bar ─────────────────────────────────────── */
+  .fwd-overview {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    background: var(--c-ink);
+    background: var(--fw-navy);
     border-radius: var(--radius-card);
     overflow: hidden;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 24px rgba(37,32,96,0.18);
   }
-  @media (max-width: 576px) { .bd-overview { grid-template-columns: repeat(2, 1fr); } }
-  .bd-ov-item {
+  @media (max-width: 576px) { .fwd-overview { grid-template-columns: repeat(2, 1fr); } }
+  .fwd-ov-item {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: 22px 12px;
-    border-right: 1px solid rgba(255,255,255,0.07);
+    padding: 20px 12px;
+    border-right: 1px solid rgba(255,255,255,0.08);
     text-align: center;
+    position: relative;
   }
-  .bd-ov-item:last-child { border-right: none; }
-  .bd-ov-icon { font-size: 20px; margin-bottom: 6px; opacity: 0.7; }
-  .bd-ov-label {
-    font-size: 10px; color: rgba(255,255,255,0.4);
-    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;
+  .fwd-ov-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 0; height: 2px;
+    background: var(--fw-teal);
+    transition: width 0.3s ease;
   }
-  .bd-ov-value {
+  .fwd-ov-item:hover::after { width: 60%; }
+  .fwd-ov-item:last-child { border-right: none; }
+  .fwd-ov-icon { font-size: 18px; margin-bottom: 5px; opacity: 0.65; }
+  .fwd-ov-label {
+    font-size: 9px; color: rgba(255,255,255,0.38);
+    text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 3px;
+    font-weight: 700;
+  }
+  .fwd-ov-value {
     font-family: var(--font-display); font-size: 18px;
     font-weight: 400; color: #fff; line-height: 1;
   }
 
-  /* ── Section ── */
-  .bd-section {
-    padding-bottom: 40px;
-    margin-bottom: 40px;
-    border-bottom: 1px solid var(--c-rule);
+  /* ── Sections ─────────────────────────────────────────── */
+  .fwd-section {
+    padding-bottom: 36px;
+    margin-bottom: 36px;
+    border-bottom: 1.5px solid var(--c-rule);
   }
-  .bd-section:last-child { border-bottom: none; margin-bottom: 0; }
-  .bd-section__heading {
+  .fwd-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+  .fwd-section__heading {
     font-family: var(--font-display);
-    font-size: 22px; font-weight: 400;
-    color: var(--c-ink); margin-bottom: 18px;
+    font-size: 20px; font-weight: 400;
+    color: var(--fw-navy); margin-bottom: 16px;
     letter-spacing: -0.2px;
-    display: flex; align-items: center; gap: 14px;
+    display: flex; align-items: center; gap: 12px;
   }
-  .bd-section__heading::after {
-    content: ""; flex: 1; height: 1px; background: var(--c-rule);
-  }
-  .bd-body-text {
-    font-size: 15px; line-height: 1.8; color: var(--c-ink-2);
+  .fwd-section__heading::after {
+    content: ""; flex: 1; height: 1.5px;
+    background: linear-gradient(90deg, var(--c-rule) 0%, transparent 100%);
   }
 
-  /* ── Accordion ── */
-  .bd-accordion { display: flex; flex-direction: column; gap: 8px; }
-  .bd-accordion__item {
+  .fwd-body-text {
+    font-size: 14.5px; line-height: 1.85; color: var(--c-ink-2);
+  }
+
+  /* ── Accordion ────────────────────────────────────────── */
+  .fwd-accordion { display: flex; flex-direction: column; gap: 7px; }
+  .fwd-accordion__item {
     border: 1.5px solid var(--c-rule);
     border-radius: var(--radius-sm);
     overflow: hidden;
     background: var(--c-white);
+    transition: border-color 0.18s;
   }
-  .bd-accordion__btn {
+  .fwd-accordion__item:has(.open) { border-color: var(--fw-teal); }
+
+  .fwd-accordion__btn {
     width: 100%; text-align: left;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 18px;
-    font-size: 14.5px; font-weight: 600; font-family: var(--font-body);
-    color: var(--c-ink); background: var(--c-surface);
+    padding: 13px 16px;
+    font-size: 13.5px; font-weight: 700; font-family: var(--font-body);
+    color: var(--fw-navy); background: var(--c-surface);
     border: none; cursor: pointer;
-    transition: background 0.18s;
+    transition: background 0.18s, color 0.18s;
+    letter-spacing: 0.1px;
   }
-  .bd-accordion__btn:hover { background: #f4f1ec; }
-  .bd-accordion__btn.open { background: var(--c-white); color: var(--c-accent); }
-  .bd-accordion__btn .chevron {
-    font-size: 12px; transition: transform 0.22s; color: var(--c-ink-3);
+  .fwd-accordion__btn:hover { background: var(--fw-navy-faint); }
+  .fwd-accordion__btn.open { background: var(--fw-teal-faint); color: var(--fw-teal-dark); }
+  .fwd-accordion__chevron {
+    font-size: 11px; transition: transform 0.22s; color: var(--c-ink-3);
+    width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
-  .bd-accordion__btn.open .chevron { transform: rotate(180deg); }
-  .bd-accordion__body { padding: 16px 18px; }
-  .bd-feat-grid {
+  .fwd-accordion__btn.open .fwd-accordion__chevron { transform: rotate(180deg); color: var(--fw-teal); }
+  .fwd-accordion__body { padding: 14px 16px; }
+
+  .fwd-feat-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;
   }
-  .bd-feat-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 0; border-bottom: 1px solid var(--c-rule);
-    font-size: 13.5px;
-  }
-  .bd-feat-row:last-child { border-bottom: none; }
-  .bd-feat-key { color: var(--c-ink-3); }
-  .bd-feat-val { font-weight: 600; color: var(--c-ink); }
+  @media (max-width: 480px) { .fwd-feat-grid { grid-template-columns: 1fr; } }
 
-  /* ── Amenities ── */
-  .bd-amenity-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
-  .bd-amenity {
+  .fwd-feat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--c-rule);
+    font-size: 13px;
+  }
+  .fwd-feat-row:last-child { border-bottom: none; }
+  .fwd-feat-key { color: var(--c-ink-3); font-weight: 500; }
+  .fwd-feat-val { font-weight: 700; color: var(--fw-navy); }
+
+  /* ── Amenities ────────────────────────────────────────── */
+  .fwd-amenity-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+  .fwd-amenity {
     display: inline-flex; align-items: center; gap: 7px;
-    background: var(--c-surface); border: 1.5px solid var(--c-rule);
-    border-radius: var(--radius-sm); padding: 7px 14px;
-    font-size: 13px; font-weight: 500; color: var(--c-ink-2);
+    background: var(--fw-teal-faint);
+    border: 1.5px solid rgba(28,148,164,0.18);
+    border-radius: var(--radius-sm);
+    padding: 7px 13px;
+    font-size: 12.5px; font-weight: 600; color: var(--fw-navy);
     transition: all 0.18s;
   }
-  .bd-amenity:hover { border-color: var(--c-ink); background: #f4f1ec; }
-  .bd-amenity__check { font-size: 10px; color: var(--c-accent); font-weight: 800; }
+  .fwd-amenity:hover {
+    border-color: var(--fw-teal);
+    background: rgba(28,148,164,0.13);
+    color: var(--fw-teal-dark);
+  }
+  .fwd-amenity__check { font-size: 9px; color: var(--fw-teal); font-weight: 900; }
 
-  /* ── Floor plan ── */
-  .bd-floorplan {
+  /* ── Floor plan ───────────────────────────────────────── */
+  .fwd-floorplan {
     border-radius: var(--radius-card); overflow: hidden;
     border: 1.5px solid var(--c-rule); background: var(--c-surface);
   }
-  .bd-floorplan img { width: 100%; display: block; }
+  .fwd-floorplan img { width: 100%; display: block; }
+  .fwd-floorplan-empty {
+    padding: 40px; text-align: center;
+    color: var(--c-ink-3); font-size: 13.5px;
+  }
 
-  /* ── Nearby ── */
-  .bd-nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .bd-nearby-item {
+  /* ── Nearby ───────────────────────────────────────────── */
+  .fwd-nearby-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 7px;
+  }
+  @media (max-width: 480px) { .fwd-nearby-grid { grid-template-columns: 1fr; } }
+
+  .fwd-nearby-item {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 11px 14px; background: var(--c-surface);
-    border-radius: var(--radius-sm); border: 1px solid var(--c-rule);
-    font-size: 13.5px; transition: border-color 0.18s;
+    padding: 10px 13px;
+    background: var(--c-white);
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    font-size: 13px;
+    transition: border-color 0.18s, background 0.18s;
   }
-  .bd-nearby-item:hover { border-color: var(--c-ink-3); }
-  .bd-nearby-key { color: var(--c-ink-3); }
-  .bd-nearby-val { font-weight: 600; color: var(--c-ink); }
+  .fwd-nearby-item:hover { border-color: var(--fw-teal); background: var(--fw-teal-faint); }
+  .fwd-nearby-key { color: var(--c-ink-3); font-weight: 500; }
+  .fwd-nearby-val { font-weight: 700; color: var(--fw-navy); }
 
-  /* ── Walk score ── */
-  .bd-ws-item {
-    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  /* ── Walk score ───────────────────────────────────────── */
+  .fwd-ws-item {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
   }
-  .bd-ws-icon {
-    width: 42px; height: 42px; border-radius: 10px;
-    background: var(--c-surface); border: 1px solid var(--c-rule);
+  .fwd-ws-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--fw-teal-faint);
+    border: 1.5px solid rgba(28,148,164,0.18);
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 18px;
+    flex-shrink: 0; font-size: 17px;
   }
-  .bd-ws-info { flex: 1; }
-  .bd-ws-label { font-size: 13px; font-weight: 600; color: var(--c-ink); margin-bottom: 5px; }
-  .bd-ws-tag { font-size: 11.5px; color: var(--c-ink-3); font-weight: 400; margin-left: 4px; }
-  .bd-ws-track { height: 5px; background: var(--c-rule); border-radius: 3px; overflow: hidden; }
-  .bd-ws-fill {
+  .fwd-ws-info { flex: 1; }
+  .fwd-ws-label { font-size: 12.5px; font-weight: 700; color: var(--fw-navy); margin-bottom: 5px; }
+  .fwd-ws-tag { font-size: 11px; color: var(--c-ink-3); font-weight: 500; margin-left: 4px; }
+  .fwd-ws-track {
+    height: 5px; background: var(--c-rule); border-radius: 3px; overflow: hidden;
+  }
+  .fwd-ws-fill {
     height: 100%; border-radius: 3px;
-    background: linear-gradient(90deg, var(--c-accent), #e87c5a);
+    background: linear-gradient(90deg, var(--fw-teal) 0%, var(--fw-teal-light) 100%);
     transition: width 0.9s cubic-bezier(.22,.9,.36,1);
   }
-  .bd-ws-num { font-size: 13px; font-weight: 700; color: var(--c-ink); min-width: 32px; text-align: right; }
+  .fwd-ws-num { font-size: 13px; font-weight: 800; color: var(--fw-navy); min-width: 32px; text-align: right; }
 
-  /* ── Map ── */
-  .bd-map { border-radius: var(--radius-card); overflow: hidden; border: 1.5px solid var(--c-rule); }
-  .bd-map iframe { display: block; width: 100%; }
-  .bd-map-footer {
+  /* ── Map ──────────────────────────────────────────────── */
+  .fwd-map { border-radius: var(--radius-card); overflow: hidden; border: 1.5px solid var(--c-rule); }
+  .fwd-map iframe { display: block; width: 100%; }
+  .fwd-map-footer {
     display: flex; align-items: center; gap: 6px;
-    padding: 12px 16px; background: var(--c-surface);
-    font-size: 13px; color: var(--c-ink-3);
-    border-top: 1px solid var(--c-rule);
+    padding: 11px 15px;
+    background: var(--c-white);
+    font-size: 12.5px; color: var(--c-ink-3);
+    border-top: 1.5px solid var(--c-rule);
   }
-  .bd-map-footer a { color: var(--c-ink); font-weight: 600; text-decoration: none; transition: color 0.18s; }
-  .bd-map-footer a:hover { color: var(--c-accent); }
+  .fwd-map-footer a {
+    color: var(--fw-teal); font-weight: 700; text-decoration: none;
+    transition: color 0.18s;
+  }
+  .fwd-map-footer a:hover { color: var(--fw-teal-dark); }
 
-  /* ── Similar cards ── */
-  .bd-similar-card {
+  /* ── Similar cards ────────────────────────────────────── */
+  .fwd-similar-card {
     border-radius: var(--radius-card); overflow: hidden;
     border: 1.5px solid var(--c-rule); background: var(--c-white);
     box-shadow: var(--shadow-card);
     transition: box-shadow 0.25s, transform 0.25s;
     margin: 0 8px 8px;
   }
-  .bd-similar-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
-  .bd-similar-card img { width: 100%; height: 185px; object-fit: cover; display: block; }
-  .bd-similar-card__body { padding: 14px 16px 10px; }
-  .bd-similar-card__price {
-    font-family: var(--font-display); font-size: 17px;
-    color: var(--c-ink); margin-bottom: 4px;
+  .fwd-similar-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
+  .fwd-similar-card img { width: 100%; height: 175px; object-fit: cover; display: block; }
+  .fwd-similar-card__body { padding: 13px 15px 9px; }
+  .fwd-similar-card__price {
+    font-family: var(--font-display); font-size: 16px;
+    color: var(--fw-navy); margin-bottom: 4px;
   }
-  .bd-similar-card__loc { font-size: 12.5px; color: var(--c-ink-3); margin-bottom: 5px; display: flex; align-items: center; gap: 3px; }
-  .bd-similar-card__meta { font-size: 12px; color: var(--c-ink-3); }
-  .bd-similar-card__footer {
+  .fwd-similar-card__price sup {
+    font-family: var(--font-body); font-size: 11px;
+    color: var(--fw-teal); font-weight: 600; vertical-align: super;
+  }
+  .fwd-similar-card__price sub {
+    font-family: var(--font-body); font-size: 11px; color: var(--c-ink-3);
+  }
+  .fwd-similar-card__loc {
+    font-size: 12px; color: var(--c-ink-3); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .fwd-similar-card__meta { font-size: 11.5px; color: var(--c-ink-3); font-weight: 500; }
+  .fwd-similar-card__footer {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 16px 14px;
+    padding: 9px 15px 13px;
+    border-top: 1px solid var(--c-rule);
   }
-  .bd-similar-badge {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
-    color: #fff; padding: 3px 10px; border-radius: 12px;
+  .fwd-similar-badge {
+    font-size: 9.5px; font-weight: 800; letter-spacing: 0.6px;
+    color: #fff; padding: 3px 10px; border-radius: var(--radius-pill);
+    text-transform: uppercase;
   }
-  .bd-similar-arrow {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--c-ink); color: #fff;
+  .fwd-similar-arrow {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--fw-navy); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    text-decoration: none; font-size: 13px;
+    text-decoration: none; font-size: 12px;
     transition: background 0.2s, transform 0.22s;
   }
-  .bd-similar-arrow:hover { background: var(--c-accent); transform: rotate(45deg); }
+  .fwd-similar-arrow:hover { background: var(--fw-teal); transform: rotate(45deg); }
 
-  /* ── Sidebar ── */
-  .bd-sidebar-card {
+  /* ── Sidebar cards ────────────────────────────────────── */
+  .fwd-sidebar-card {
     background: var(--c-white);
     border-radius: var(--radius-card);
     border: 1.5px solid var(--c-rule);
     box-shadow: var(--shadow-card);
-    padding: 24px;
-    margin-bottom: 18px;
+    padding: 22px;
+    margin-bottom: 16px;
   }
-  .bd-sidebar-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--c-ink-3); margin-bottom: 16px; display: block;
+  .fwd-sidebar-label {
+    font-size: 9px; font-weight: 800; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--fw-teal);
+    margin-bottom: 14px; display: block;
   }
-  .bd-sidebar-price {
-    font-family: var(--font-display); font-size: 30px;
-    font-weight: 400; color: var(--c-ink);
+
+  /* Price sidebar */
+  .fwd-sidebar-price {
+    font-family: var(--font-display); font-size: 28px;
+    font-weight: 400; color: var(--fw-navy);
     letter-spacing: -0.8px; line-height: 1; margin-bottom: 4px;
   }
-  .bd-sidebar-price sup {
-    font-family: var(--font-body); font-size: 15px;
-    font-weight: 500; color: var(--c-ink-3); vertical-align: super; margin-right: 2px;
+  .fwd-sidebar-price sup {
+    font-family: var(--font-body); font-size: 14px;
+    font-weight: 600; color: var(--fw-teal); vertical-align: super; margin-right: 2px;
   }
-  .bd-sidebar-price sub {
-    font-family: var(--font-body); font-size: 13px;
+  .fwd-sidebar-price sub {
+    font-family: var(--font-body); font-size: 12.5px;
     font-weight: 400; color: var(--c-ink-3);
   }
-  .bd-sidebar-est { font-size: 12.5px; color: var(--c-ink-3); margin-bottom: 20px; }
-  .bd-sidebar-est strong { color: var(--c-ink-2); font-weight: 600; }
-  .bd-facts-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 0; border-bottom: 1px solid var(--c-rule);
-    font-size: 13.5px;
-  }
-  .bd-facts-row:last-child { border-bottom: none; }
-  .bd-facts-key { color: var(--c-ink-3); }
-  .bd-facts-val { font-weight: 600; color: var(--c-ink); }
+  .fwd-sidebar-est { font-size: 12px; color: var(--c-ink-3); margin-bottom: 18px; }
+  .fwd-sidebar-est strong { color: var(--fw-teal-dark); font-weight: 700; }
 
-  /* Agent */
-  .bd-agent-avatar {
-    width: 52px; height: 52px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-ink) 100%);
+  .fwd-facts-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--c-rule);
+    font-size: 13px;
+  }
+  .fwd-facts-row:last-child { border-bottom: none; }
+  .fwd-facts-key { color: var(--c-ink-3); font-weight: 500; }
+  .fwd-facts-val { font-weight: 700; color: var(--fw-navy); }
+
+  /* Agent sidebar */
+  .fwd-agent-avatar {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--fw-teal) 0%, var(--fw-navy) 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; color: #fff; flex-shrink: 0;
-    font-family: var(--font-display);
+    font-size: 1.25rem; color: #fff; flex-shrink: 0;
+    font-family: var(--font-display); font-weight: 400;
   }
-  .bd-agent-name { font-size: 15px; font-weight: 600; color: var(--c-ink); }
-  .bd-agent-role { font-size: 12px; color: var(--c-ink-3); }
-  .bd-agent-row {
+  .fwd-agent-name { font-size: 14.5px; font-weight: 700; color: var(--fw-navy); }
+  .fwd-agent-role { font-size: 11.5px; color: var(--fw-teal); font-weight: 600; }
+  .fwd-agent-row {
     display: flex; align-items: center; gap: 9px;
-    font-size: 13.5px; color: var(--c-ink-2); padding: 6px 0;
+    font-size: 13px; color: var(--c-ink-2); padding: 5px 0;
+    font-weight: 500;
   }
-  .bd-agent-row a { color: var(--c-ink-2); text-decoration: none; transition: color 0.18s; }
-  .bd-agent-row a:hover { color: var(--c-accent); }
-  .bd-agent-row i { color: var(--c-ink-3); width: 16px; }
-  .bd-agent-cta {
-    display: block; margin-top: 16px; text-align: center;
+  .fwd-agent-row a { color: var(--c-ink-2); text-decoration: none; transition: color 0.18s; }
+  .fwd-agent-row a:hover { color: var(--fw-teal); }
+  .fwd-agent-row i { color: var(--fw-teal); width: 16px; flex-shrink: 0; }
+  .fwd-agent-cta {
+    display: block; margin-top: 14px; text-align: center;
     padding: 11px; border-radius: var(--radius-sm);
-    background: var(--c-ink); color: #fff;
-    font-weight: 600; font-size: 14px; font-family: var(--font-body);
+    background: var(--fw-navy); color: #fff;
+    font-weight: 700; font-size: 13.5px; font-family: var(--font-body);
     text-decoration: none; transition: background 0.2s;
     border: none; cursor: pointer; width: 100%;
+    letter-spacing: 0.2px;
   }
-  .bd-agent-cta:hover { background: var(--c-accent); }
+  .fwd-agent-cta:hover { background: var(--fw-teal); }
 
   /* Contact form */
-  .bd-input {
-    width: 100%; padding: 10px 13px;
+  .fwd-input {
+    width: 100%; padding: 9px 13px;
     border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule);
-    font-size: 13.5px; font-family: var(--font-body);
+    font-size: 13px; font-family: var(--font-body);
     color: var(--c-ink); background: var(--c-surface);
-    outline: none; transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-    margin-bottom: 10px; appearance: none;
+    outline: none;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    margin-bottom: 9px; appearance: none;
   }
-  .bd-input:focus { border-color: var(--c-ink); background: var(--c-white); box-shadow: 0 0 0 3px rgba(26,23,21,0.06); }
-  .bd-textarea {
-    width: 100%; padding: 10px 13px;
+  .fwd-input:focus {
+    border-color: var(--fw-teal);
+    background: var(--c-white);
+    box-shadow: 0 0 0 3px rgba(28,148,164,0.12);
+  }
+  .fwd-textarea {
+    width: 100%; padding: 9px 13px;
     border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule);
-    font-size: 13.5px; font-family: var(--font-body);
+    font-size: 13px; font-family: var(--font-body);
     color: var(--c-ink); background: var(--c-surface);
-    outline: none; transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-    resize: none; margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    resize: none; margin-bottom: 11px;
   }
-  .bd-textarea:focus { border-color: var(--c-ink); background: var(--c-white); box-shadow: 0 0 0 3px rgba(26,23,21,0.06); }
-  .bd-send-btn {
-    width: 100%; padding: 12px; border-radius: var(--radius-sm);
-    border: none; background: var(--c-ink);
-    color: #fff; font-size: 14px; font-weight: 600;
+  .fwd-textarea:focus {
+    border-color: var(--fw-teal);
+    background: var(--c-white);
+    box-shadow: 0 0 0 3px rgba(28,148,164,0.12);
+  }
+  .fwd-send-btn {
+    width: 100%; padding: 11px;
+    border-radius: var(--radius-sm);
+    border: none; background: var(--fw-teal);
+    color: #fff; font-size: 13.5px; font-weight: 700;
     font-family: var(--font-body); cursor: pointer;
     letter-spacing: 0.3px; transition: background 0.2s;
+    text-transform: uppercase;
   }
-  .bd-send-btn:hover { background: var(--c-accent); }
+  .fwd-send-btn:hover { background: var(--fw-teal-dark); }
 
-  /* Skeleton */
-  @keyframes bd-shimmer {
+  /* ── Skeleton shimmer ─────────────────────────────────── */
+  @keyframes fwd-shimmer {
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
-  .bd-skeleton {
-    background: linear-gradient(90deg, #f0ede8 25%, #e8e4df 50%, #f0ede8 75%);
+  .fwd-skeleton {
+    background: linear-gradient(90deg, #eeedf6 25%, #e4e3f0 50%, #eeedf6 75%);
     background-size: 200% 100%;
-    animation: bd-shimmer 1.5s infinite;
+    animation: fwd-shimmer 1.4s infinite;
     border-radius: 8px;
   }
 
-  /* Slick dots override */
-  .bd-root .slick-dots li button:before {
-    font-size: 7px; color: var(--c-ink-3);
+  /* ── Slick dots ───────────────────────────────────────── */
+  .fwd-root .slick-dots li button:before {
+    font-size: 7px; color: var(--fw-navy); opacity: 0.25;
   }
-  .bd-root .slick-dots li.slick-active button:before {
-    color: var(--c-ink);
+  .fwd-root .slick-dots li.slick-active button:before {
+    color: var(--fw-teal); opacity: 1;
   }
+
+  /* ── Mobile sticky CTA bar ────────────────────────────── */
+  .fwd-mobile-cta {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--fw-navy);
+    padding: 12px 20px;
+    z-index: 90;
+    box-shadow: 0 -4px 24px rgba(37,32,96,0.18);
+    align-items: center;
+    gap: 12px;
+  }
+  @media (max-width: 1199px) { .fwd-mobile-cta { display: flex; } }
+  .fwd-mobile-cta__price {
+    font-family: var(--font-display);
+    font-size: 20px; color: #fff; font-weight: 400; letter-spacing: -0.5px;
+    line-height: 1; flex: 1;
+  }
+  .fwd-mobile-cta__price sup {
+    font-family: var(--font-body); font-size: 11px;
+    color: rgba(255,255,255,0.6); vertical-align: super; margin-right: 1px;
+  }
+  .fwd-mobile-cta__btn {
+    background: var(--fw-teal); color: #fff;
+    border: none; cursor: pointer;
+    padding: 10px 20px; border-radius: var(--radius-sm);
+    font-weight: 700; font-size: 13px; font-family: var(--font-body);
+    letter-spacing: 0.3px; transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .fwd-mobile-cta__btn:hover { background: var(--fw-teal-light); }
+
+  /* ── Bottom padding on mobile for sticky CTA ─────────── */
+  @media (max-width: 1199px) {
+    .fwd-root { padding-bottom: 70px; }
+  }
+
+  /* ── Error state ──────────────────────────────────────── */
+  .fwd-error-box {
+    text-align: center; padding: 80px 20px;
+  }
+  .fwd-error-icon { font-size: 3.5rem; margin-bottom: 16px; }
+  .fwd-error-title {
+    font-family: var(--font-display); font-size: 22px;
+    color: var(--fw-navy); margin-bottom: 8px; font-weight: 400;
+  }
+  .fwd-error-sub { font-size: 13.5px; color: var(--c-ink-3); margin-bottom: 24px; }
+  .fwd-back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 22px; background: var(--fw-navy); color: #fff;
+    border-radius: var(--radius-sm); text-decoration: none;
+    font-weight: 700; font-size: 13.5px; font-family: var(--font-body);
+    transition: background 0.2s; border: none; cursor: pointer;
+  }
+  .fwd-back-btn:hover { background: var(--fw-teal); }
 `;
 
 function injectDetailStyles() {
   if (
     typeof document !== "undefined" &&
-    !document.getElementById("bd-styles")
+    !document.getElementById("fwd-styles")
   ) {
     const el = document.createElement("style");
-    el.id = "bd-styles";
+    el.id = "fwd-styles";
     el.textContent = DETAIL_STYLES;
     document.head.appendChild(el);
   }
@@ -581,18 +774,19 @@ function getStatusLabel(status: string): string {
   }
 }
 
+// Brand-toned status colors — same as BuyListing
 function getStatusColor(status: string): string {
   switch (status) {
     case "For Sale":
-      return "rgba(200,64,42,0.92)";
+      return "rgba(28,148,164,0.92)";
     case "For Rent":
-      return "rgba(33,130,215,0.92)";
+      return "rgba(37,89,160,0.92)";
     case "Sold":
-      return "rgba(56,161,105,0.92)";
+      return "rgba(45,139,86,0.92)";
     case "Rented":
-      return "rgba(214,132,0,0.92)";
+      return "rgba(196,130,20,0.92)";
     default:
-      return "rgba(80,76,72,0.88)";
+      return "rgba(37,32,96,0.88)";
   }
 }
 
@@ -600,15 +794,15 @@ function formatKey(k: string): string {
   return k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// ─── Gallery (custom, no slick needed for single image) ───────
+// ─── Gallery ──────────────────────────────────────────────────
 function Gallery({ images, title }: { images: string[]; title: string }) {
   const [active, setActive] = useState(0);
   const imgs = images && images.length > 0 ? images : [];
 
   if (imgs.length === 0) {
     return (
-      <div className="bd-gallery">
-        <div className="bd-gallery__placeholder">🏠</div>
+      <div className="fwd-gallery">
+        <div className="fwd-gallery__placeholder">🏠</div>
       </div>
     );
   }
@@ -617,39 +811,41 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
   const next = () => setActive((i) => (i === imgs.length - 1 ? 0 : i + 1));
 
   return (
-    <div className="bd-gallery">
-      <div style={{ overflow: "hidden", position: "relative" }}>
+    <div className="fwd-gallery">
+      <div className="fwd-gallery__main-wrap">
         <img
           src={imgs[active]}
           alt={`${title} — ${active + 1}`}
-          className="bd-gallery__main-img"
+          className="fwd-gallery__main-img"
         />
         {imgs.length > 1 && (
           <>
             <button
-              className="bd-gallery__arrow bd-gallery__arrow--prev"
+              className="fwd-gallery__arrow fwd-gallery__arrow--prev"
               onClick={prev}
+              aria-label="Previous image"
             >
               <i className="bi bi-arrow-left" />
             </button>
             <button
-              className="bd-gallery__arrow bd-gallery__arrow--next"
+              className="fwd-gallery__arrow fwd-gallery__arrow--next"
               onClick={next}
+              aria-label="Next image"
             >
               <i className="bi bi-arrow-right" />
             </button>
-            <div className="bd-gallery__counter">
+            <div className="fwd-gallery__counter">
               {active + 1} / {imgs.length}
             </div>
           </>
         )}
       </div>
       {imgs.length > 1 && (
-        <div className="bd-gallery__thumbs">
+        <div className="fwd-gallery__thumbs">
           {imgs.map((src, i) => (
             <div
               key={i}
-              className={`bd-gallery__thumb${i === active ? " active" : ""}`}
+              className={`fwd-gallery__thumb${i === active ? " active" : ""}`}
               onClick={() => setActive(i)}
             >
               <img src={src} alt={`Thumb ${i + 1}`} />
@@ -670,19 +866,25 @@ function Banner({ property }: { property: Property }) {
       : Math.round(property.price * 0.005);
 
   return (
-    <div className="bd-banner">
+    <div className="fwd-banner">
       <div className="row align-items-start">
-        <div className="col-lg-7">
-          <h1 className="bd-banner__title">{property.title}</h1>
-          <div className="bd-banner__meta">
+        <div className="col-md-7">
+          <h1 className="fwd-banner__title">{property.title}</h1>
+          <div className="fwd-banner__meta">
             <span
-              className="bd-status-pill"
+              className="fwd-status-pill"
               style={{ background: getStatusColor(property.status) }}
             >
               {getStatusLabel(property.status)}
             </span>
-            <span className="bd-meta-chip">
-              <svg width="10" height="12" viewBox="0 0 11 13" fill="none">
+            <span className="fwd-meta-chip">
+              <svg
+                width="10"
+                height="12"
+                viewBox="0 0 11 13"
+                fill="none"
+                style={{ color: "var(--fw-teal)" }}
+              >
                 <path
                   d="M5.5 0C3.015 0 1 2.015 1 4.5c0 3.375 4.5 8.5 4.5 8.5S10 7.875 10 4.5C10 2.015 7.985 0 5.5 0zm0 6.25A1.75 1.75 0 1 1 5.5 2.75a1.75 1.75 0 0 1 0 3.5z"
                   fill="currentColor"
@@ -691,13 +893,13 @@ function Banner({ property }: { property: Property }) {
               {property.location}
             </span>
             {property.property_type && (
-              <span className="bd-meta-chip">{property.property_type}</span>
+              <span className="fwd-meta-chip">{property.property_type}</span>
             )}
           </div>
         </div>
 
-        <div className="col-lg-5 bd-banner__price-col mt-3 mt-lg-0">
-          <div className="bd-banner__price">
+        <div className="col-md-5 fwd-banner__price-col">
+          <div className="fwd-banner__price">
             <sup>$</sup>
             {property.price.toLocaleString(undefined, {
               minimumFractionDigits: 0,
@@ -706,29 +908,28 @@ function Banner({ property }: { property: Property }) {
             {property.status === "For Rent" && <sub> / mo</sub>}
           </div>
           {property.status !== "For Rent" && (
-            <div className="bd-banner__est">
+            <div className="fwd-banner__est">
               Est. mortgage <strong>${monthly.toLocaleString()}/mo</strong>
             </div>
           )}
-          <div className="bd-actions">
-            <a href="#" className="bd-action-share">
+          <div className="fwd-actions">
+            <a href="#" className="fwd-action-share">
               <i className="fa-sharp fa-regular fa-share-nodes" />
               Share
             </a>
             <button
-              className={`bd-action-icon${saved ? " active" : ""}`}
-              style={{ border: "none", cursor: "pointer" }}
+              className={`fwd-action-icon${saved ? " active" : ""}`}
               onClick={() => setSaved((s) => !s)}
-              title="Save"
+              title={saved ? "Saved" : "Save"}
             >
               <i
                 className={saved ? "fa-solid fa-heart" : "fa-light fa-heart"}
               />
             </button>
-            <a href="#" className="bd-action-icon" title="Bookmark">
+            <a href="#" className="fwd-action-icon" title="Bookmark">
               <i className="fa-light fa-bookmark" />
             </a>
-            <a href="#" className="bd-action-icon" title="Compare">
+            <a href="#" className="fwd-action-icon" title="Compare">
               <i className="fa-light fa-circle-plus" />
             </a>
           </div>
@@ -750,32 +951,29 @@ function OverviewBar({ property }: { property: Property }) {
     { icon: "🚿", label: "Bathrooms", value: property.bathrooms ?? "—" },
     { icon: "🍳", label: "Kitchens", value: property.kitchens ?? "—" },
   ];
-
   return (
-    <div className="bd-overview">
+    <div className="fwd-overview">
       {items.map((item, i) => (
-        <div key={i} className="bd-ov-item">
-          <div className="bd-ov-icon">{item.icon}</div>
-          <div className="bd-ov-label">{item.label}</div>
-          <div className="bd-ov-value">{item.value}</div>
+        <div key={i} className="fwd-ov-item">
+          <div className="fwd-ov-icon">{item.icon}</div>
+          <div className="fwd-ov-label">{item.label}</div>
+          <div className="fwd-ov-value">{item.value}</div>
         </div>
       ))}
     </div>
   );
 }
 
-// ─── Feature accordion ────────────────────────────────────────
+// ─── Feature Accordion ────────────────────────────────────────
 function FeatureAccordion({ property }: { property: Property }) {
   const [open, setOpen] = useState<number>(0);
-
   const sections = [
     { title: "Property Details", data: property.property_details ?? {} },
     { title: "Utility & Home Features", data: property.utility_features ?? {} },
     { title: "Outdoor Features", data: property.outdoor_features ?? {} },
   ];
-
   return (
-    <div className="bd-accordion">
+    <div className="fwd-accordion">
       {sections.map((section, idx) => {
         const entries = Object.entries(section.data).filter(
           ([, v]) => v && String(v).trim() !== "",
@@ -783,21 +981,23 @@ function FeatureAccordion({ property }: { property: Property }) {
         if (entries.length === 0) return null;
         const isOpen = open === idx;
         return (
-          <div key={idx} className="bd-accordion__item">
+          <div key={idx} className="fwd-accordion__item">
             <button
-              className={`bd-accordion__btn${isOpen ? " open" : ""}`}
+              className={`fwd-accordion__btn${isOpen ? " open" : ""}`}
               onClick={() => setOpen(isOpen ? -1 : idx)}
             >
               <span>{section.title}</span>
-              <i className={`bi bi-chevron-down chevron`} />
+              <span className="fwd-accordion__chevron">
+                <i className="bi bi-chevron-down" />
+              </span>
             </button>
             {isOpen && (
-              <div className="bd-accordion__body">
-                <div className="bd-feat-grid">
+              <div className="fwd-accordion__body">
+                <div className="fwd-feat-grid">
                   {entries.map(([k, v]) => (
-                    <div key={k} className="bd-feat-row">
-                      <span className="bd-feat-key">{formatKey(k)}</span>
-                      <span className="bd-feat-val">{v}</span>
+                    <div key={k} className="fwd-feat-row">
+                      <span className="fwd-feat-key">{formatKey(k)}</span>
+                      <span className="fwd-feat-val">{v}</span>
                     </div>
                   ))}
                 </div>
@@ -814,10 +1014,10 @@ function FeatureAccordion({ property }: { property: Property }) {
 function Amenities({ amenities }: { amenities: string[] }) {
   if (!amenities || amenities.length === 0) return null;
   return (
-    <div className="bd-amenity-wrap">
+    <div className="fwd-amenity-wrap">
       {amenities.map((a, i) => (
-        <span key={i} className="bd-amenity">
-          <span className="bd-amenity__check">✓</span>
+        <span key={i} className="fwd-amenity">
+          <span className="fwd-amenity__check">✓</span>
           {a}
         </span>
       ))}
@@ -825,24 +1025,18 @@ function Amenities({ amenities }: { amenities: string[] }) {
   );
 }
 
-// ─── Floor plan ───────────────────────────────────────────────
+// ─── Floor Plan ───────────────────────────────────────────────
 function FloorPlan({ floorPlans }: { floorPlans: string[] }) {
   const imgs = floorPlans && floorPlans.length > 0 ? floorPlans : null;
-  if (!imgs)
+  if (!imgs) {
     return (
-      <div
-        className="bd-floorplan"
-        style={{
-          padding: "40px",
-          textAlign: "center",
-          color: "var(--c-ink-3)",
-          fontSize: "14px",
-        }}
-      >
-        No floor plans available
+      <div className="fwd-floorplan">
+        <div className="fwd-floorplan-empty">
+          No floor plans available for this property
+        </div>
       </div>
     );
-
+  }
   const settings = {
     dots: true,
     infinite: true,
@@ -852,9 +1046,8 @@ function FloorPlan({ floorPlans }: { floorPlans: string[] }) {
     autoplay: false,
     arrows: false,
   };
-
   return (
-    <div className="bd-floorplan">
+    <div className="fwd-floorplan">
       <Slider {...settings}>
         {imgs.map((src, i) => (
           <div key={i}>
@@ -890,23 +1083,21 @@ function NearbyList({ nearby }: { nearby: Record<string, string> | null }) {
     ([, v]) => v && String(v).trim() !== "",
   );
   if (entries.length === 0) return null;
-
   return (
-    <div className="bd-nearby-grid">
+    <div className="fwd-nearby-grid">
       {entries.map(([k, v]) => (
-        <div key={k} className="bd-nearby-item">
-          <span className="bd-nearby-key">{labelMap[k] ?? formatKey(k)}</span>
-          <span className="bd-nearby-val">{v}</span>
+        <div key={k} className="fwd-nearby-item">
+          <span className="fwd-nearby-key">{labelMap[k] ?? formatKey(k)}</span>
+          <span className="fwd-nearby-val">{v}</span>
         </div>
       ))}
     </div>
   );
 }
 
-// ─── Walk score ───────────────────────────────────────────────
+// ─── Walk Score ───────────────────────────────────────────────
 function WalkScore({ nearby }: { nearby: Record<string, string> | null }) {
   if (!nearby) return null;
-
   function distScore(km: string): number {
     const d = parseFloat(km);
     if (isNaN(d)) return 0;
@@ -927,7 +1118,6 @@ function WalkScore({ nearby }: { nearby: Record<string, string> | null }) {
     if (s >= 30) return "Fair";
     return "Limited";
   }
-
   const scores = [
     {
       icon: "🚌",
@@ -962,25 +1152,27 @@ function WalkScore({ nearby }: { nearby: Record<string, string> | null }) {
       ),
     },
   ];
-
   return (
     <>
-      <p className="bd-body-text" style={{ marginBottom: "22px" }}>
+      <p className="fwd-body-text" style={{ marginBottom: "20px" }}>
         Scores are calculated from walking distance to nearby amenities.
       </p>
       {scores.map((item, i) => (
-        <div key={i} className="bd-ws-item">
-          <div className="bd-ws-icon">{item.icon}</div>
-          <div className="bd-ws-info">
-            <div className="bd-ws-label">
+        <div key={i} className="fwd-ws-item">
+          <div className="fwd-ws-icon">{item.icon}</div>
+          <div className="fwd-ws-info">
+            <div className="fwd-ws-label">
               {item.label}
-              <span className="bd-ws-tag">— {tag(item.value)}</span>
+              <span className="fwd-ws-tag">— {tag(item.value)}</span>
             </div>
-            <div className="bd-ws-track">
-              <div className="bd-ws-fill" style={{ width: `${item.value}%` }} />
+            <div className="fwd-ws-track">
+              <div
+                className="fwd-ws-fill"
+                style={{ width: `${item.value}%` }}
+              />
             </div>
           </div>
-          <div className="bd-ws-num">{item.value}</div>
+          <div className="fwd-ws-num">{item.value}</div>
         </div>
       ))}
     </>
@@ -991,18 +1183,18 @@ function WalkScore({ nearby }: { nearby: Record<string, string> | null }) {
 function PropertyMap({ location }: { location: string }) {
   const q = encodeURIComponent(location);
   return (
-    <div className="bd-map">
+    <div className="fwd-map">
       <iframe
         title={`Map: ${location}`}
         src={`https://www.openstreetmap.org/export/embed.html?layer=mapnik&query=${q}`}
-        height="400"
+        height="380"
         style={{ border: 0, width: "100%" }}
         allowFullScreen
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
       />
-      <div className="bd-map-footer">
-        <i className="bi bi-geo-alt" />
+      <div className="fwd-map-footer">
+        <i className="bi bi-geo-alt" style={{ color: "var(--fw-teal)" }} />
         {location} —{" "}
         <a
           href={`https://www.openstreetmap.org/search?query=${q}`}
@@ -1016,7 +1208,7 @@ function PropertyMap({ location }: { location: string }) {
   );
 }
 
-// ─── Similar properties ───────────────────────────────────────
+// ─── Similar Properties ───────────────────────────────────────
 function SimilarProperties({
   currentId,
   propertyType,
@@ -1065,14 +1257,15 @@ function SimilarProperties({
     <Slider {...settings}>
       {similar.map((item) => (
         <div key={item.id}>
-          <div className="bd-similar-card">
+          <div className="fwd-similar-card">
             {item.images?.[0] ? (
               <img src={item.images[0]} alt={item.title} />
             ) : (
               <div
                 style={{
-                  height: 185,
-                  background: "var(--c-surface)",
+                  height: 175,
+                  background:
+                    "linear-gradient(135deg, #f0eef8 0%, #e8f5f7 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1082,37 +1275,23 @@ function SimilarProperties({
                 🏠
               </div>
             )}
-            <div className="bd-similar-card__body">
-              <div className="bd-similar-card__price">
-                <sup
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: "12px",
-                    color: "var(--c-ink-3)",
-                    verticalAlign: "super",
-                  }}
-                >
-                  $
-                </sup>
+            <div className="fwd-similar-card__body">
+              <div className="fwd-similar-card__price">
+                <sup>$</sup>
                 {item.price.toLocaleString(undefined, {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
                 })}
-                {item.status === "For Rent" && (
-                  <sub
-                    style={{
-                      fontFamily: "var(--font-body)",
-                      fontSize: "12px",
-                      color: "var(--c-ink-3)",
-                    }}
-                  >
-                    {" "}
-                    /mo
-                  </sub>
-                )}
+                {item.status === "For Rent" && <sub> /mo</sub>}
               </div>
-              <div className="bd-similar-card__loc">
-                <svg width="9" height="11" viewBox="0 0 11 13" fill="none">
+              <div className="fwd-similar-card__loc">
+                <svg
+                  width="9"
+                  height="11"
+                  viewBox="0 0 11 13"
+                  fill="none"
+                  style={{ color: "var(--fw-teal)", flexShrink: 0 }}
+                >
                   <path
                     d="M5.5 0C3.015 0 1 2.015 1 4.5c0 3.375 4.5 8.5 4.5 8.5S10 7.875 10 4.5C10 2.015 7.985 0 5.5 0zm0 6.25A1.75 1.75 0 1 1 5.5 2.75a1.75 1.75 0 0 1 0 3.5z"
                     fill="currentColor"
@@ -1120,20 +1299,20 @@ function SimilarProperties({
                 </svg>
                 {item.location}
               </div>
-              <div className="bd-similar-card__meta">
+              <div className="fwd-similar-card__meta">
                 {item.bedrooms != null && `${item.bedrooms} bed`}
                 {item.bathrooms != null && ` · ${item.bathrooms} bath`}
                 {item.sqft != null && ` · ${item.sqft.toLocaleString()} ft²`}
               </div>
             </div>
-            <div className="bd-similar-card__footer">
+            <div className="fwd-similar-card__footer">
               <span
-                className="bd-similar-badge"
+                className="fwd-similar-badge"
                 style={{ background: getStatusColor(item.status) }}
               >
                 {getStatusLabel(item.status)}
               </span>
-              <Link to={`/buy/${item.id}`} className="bd-similar-arrow">
+              <Link to={`/buy/${item.id}`} className="fwd-similar-arrow">
                 <i className="bi bi-arrow-up-right" />
               </Link>
             </div>
@@ -1144,7 +1323,7 @@ function SimilarProperties({
   );
 }
 
-// ─── Price sidebar ────────────────────────────────────────────
+// ─── Price Sidebar ────────────────────────────────────────────
 function PriceSidebar({ property }: { property: Property }) {
   const monthly =
     property.status === "For Rent"
@@ -1172,9 +1351,9 @@ function PriceSidebar({ property }: { property: Property }) {
   ];
 
   return (
-    <div className="bd-sidebar-card">
-      <span className="bd-sidebar-label">Pricing</span>
-      <div className="bd-sidebar-price">
+    <div className="fwd-sidebar-card">
+      <span className="fwd-sidebar-label">Pricing</span>
+      <div className="fwd-sidebar-price">
         <sup>$</sup>
         {property.price.toLocaleString(undefined, {
           minimumFractionDigits: 0,
@@ -1183,15 +1362,15 @@ function PriceSidebar({ property }: { property: Property }) {
         {property.status === "For Rent" && <sub> / mo</sub>}
       </div>
       {property.status !== "For Rent" && (
-        <div className="bd-sidebar-est">
+        <div className="fwd-sidebar-est">
           Est. mortgage <strong>${monthly.toLocaleString()}/mo</strong>
         </div>
       )}
       <div style={{ marginTop: "16px" }}>
         {facts.map((f) => (
-          <div key={f.k} className="bd-facts-row">
-            <span className="bd-facts-key">{f.k}</span>
-            <span className="bd-facts-val">{f.v}</span>
+          <div key={f.k} className="fwd-facts-row">
+            <span className="fwd-facts-key">{f.k}</span>
+            <span className="fwd-facts-val">{f.v}</span>
           </div>
         ))}
       </div>
@@ -1199,7 +1378,7 @@ function PriceSidebar({ property }: { property: Property }) {
   );
 }
 
-// ─── Agent sidebar ────────────────────────────────────────────
+// ─── Agent Sidebar ────────────────────────────────────────────
 function AgentSidebar({
   agent,
 }: {
@@ -1207,44 +1386,46 @@ function AgentSidebar({
 }) {
   if (!agent) return null;
   return (
-    <div className="bd-sidebar-card">
-      <span className="bd-sidebar-label">Listed By</span>
+    <div className="fwd-sidebar-card">
+      <span className="fwd-sidebar-label">Listed By</span>
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "14px",
-          marginBottom: "16px",
+          gap: "13px",
+          marginBottom: "14px",
         }}
       >
-        <div className="bd-agent-avatar">
+        <div className="fwd-agent-avatar">
           {agent.name ? agent.name[0].toUpperCase() : "A"}
         </div>
         <div>
-          <div className="bd-agent-name">{agent.name}</div>
-          <div className="bd-agent-role">{agent.title || "Property Agent"}</div>
+          <div className="fwd-agent-name">{agent.name}</div>
+          <div className="fwd-agent-role">
+            {agent.title || "Property Agent"}
+          </div>
         </div>
       </div>
       {agent.phone && (
-        <div className="bd-agent-row">
+        <div className="fwd-agent-row">
           <i className="bi bi-telephone" />
           <a href={`tel:${agent.phone}`}>{agent.phone}</a>
         </div>
       )}
       {agent.email && (
-        <div className="bd-agent-row">
+        <div className="fwd-agent-row">
           <i className="bi bi-envelope" />
           <a href={`mailto:${agent.email}`}>{agent.email}</a>
         </div>
       )}
       {agent.location && (
-        <div className="bd-agent-row">
+        <div className="fwd-agent-row">
           <i className="bi bi-geo-alt" />
           <span>{agent.location}</span>
         </div>
       )}
       {agent.email && (
-        <a href={`mailto:${agent.email}`} className="bd-agent-cta">
+        <a href={`mailto:${agent.email}`} className="fwd-agent-cta">
           Contact Agent
         </a>
       )}
@@ -1252,7 +1433,7 @@ function AgentSidebar({
   );
 }
 
-// ─── Contact form ─────────────────────────────────────────────
+// ─── Contact Form ─────────────────────────────────────────────
 function ContactForm({
   property,
   agentEmail,
@@ -1274,93 +1455,93 @@ function ContactForm({
   };
 
   return (
-    <div className="bd-sidebar-card">
-      <span className="bd-sidebar-label">Send a Message</span>
+    <div className="fwd-sidebar-card">
+      <span className="fwd-sidebar-label">Send a Message</span>
       <input
-        className="bd-input"
+        className="fwd-input"
         placeholder="Your Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
       <input
-        className="bd-input"
+        className="fwd-input"
         type="email"
         placeholder="Your Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
       <input
-        className="bd-input"
+        className="fwd-input"
         type="tel"
         placeholder="Phone (optional)"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
       <textarea
-        className="bd-textarea"
+        className="fwd-textarea"
         rows={4}
         value={msg}
         onChange={(e) => setMsg(e.target.value)}
       />
-      <button className="bd-send-btn" onClick={handleSend}>
+      <button className="fwd-send-btn" onClick={handleSend}>
         Send Message
       </button>
     </div>
   );
 }
 
-// ─── Loading skeleton ─────────────────────────────────────────
+// ─── Loading Skeleton ─────────────────────────────────────────
 function LoadingSkeleton() {
   return (
-    <div style={{ padding: "40px 0" }}>
+    <div style={{ padding: "36px 0" }}>
       <div
-        className="bd-skeleton"
-        style={{ height: 36, width: "55%", marginBottom: 16 }}
+        className="fwd-skeleton"
+        style={{ height: 32, width: "55%", marginBottom: 14 }}
       />
       <div
-        className="bd-skeleton"
-        style={{ height: 20, width: "35%", marginBottom: 32 }}
+        className="fwd-skeleton"
+        style={{ height: 18, width: "30%", marginBottom: 28 }}
       />
       <div
-        className="bd-skeleton"
-        style={{ height: 460, borderRadius: 16, marginBottom: 24 }}
+        className="fwd-skeleton"
+        style={{
+          height: "clamp(280px,45vw,500px)",
+          borderRadius: 14,
+          marginBottom: 22,
+        }}
       />
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4,1fr)",
           gap: 0,
-          borderRadius: 16,
+          borderRadius: 14,
           overflow: "hidden",
-          marginBottom: 48,
+          marginBottom: 40,
         }}
       >
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="bd-skeleton" style={{ height: 86 }} />
+          <div key={i} className="fwd-skeleton" style={{ height: 82 }} />
         ))}
       </div>
       <div className="row">
         <div className="col-xl-8">
-          <div
-            className="bd-skeleton"
-            style={{ height: 18, width: "30%", marginBottom: 12 }}
-          />
-          {[120, 90, 60].map((h, i) => (
+          {[150, 100, 70, 120, 90].map((h, i) => (
             <div
               key={i}
-              className="bd-skeleton"
-              style={{ height: h, marginBottom: 10 }}
+              className="fwd-skeleton"
+              style={{ height: h, marginBottom: 12 }}
             />
           ))}
         </div>
         <div className="col-xl-4">
           <div
-            className="bd-skeleton"
-            style={{ height: 220, borderRadius: 16, marginBottom: 16 }}
+            className="fwd-skeleton"
+            style={{ height: 210, borderRadius: 14, marginBottom: 14 }}
           />
           <div
-            className="bd-skeleton"
-            style={{ height: 180, borderRadius: 16 }}
+            className="fwd-skeleton"
+            style={{ height: 170, borderRadius: 14 }}
           />
         </div>
       </div>
@@ -1398,53 +1579,21 @@ const BuyDetails = () => {
     })();
   }, [id]);
 
-  // Error state
+  // Error / not found
   if (!loading && (error || !property)) {
     return (
-      <div className="bd-root listing-details-one border-top lg-mt-100 pt-50 pb-150 xl-pb-120">
-        <div
-          className="container"
-          style={{ textAlign: "center", paddingTop: "80px" }}
-        >
-          <div style={{ fontSize: "3rem", marginBottom: "16px" }}>⚠️</div>
-          <p
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "22px",
-              color: "var(--c-ink)",
-              marginBottom: "8px",
-            }}
-          >
-            {error || "Property not found"}
-          </p>
-          <p
-            style={{
-              fontSize: "14px",
-              color: "var(--c-ink-3)",
-              marginBottom: "24px",
-            }}
-          >
-            This listing may have been removed or the link is incorrect.
-          </p>
-          <Link
-            to="/listing_13"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "11px 24px",
-              background: "var(--c-ink)",
-              color: "#fff",
-              borderRadius: "var(--radius-sm)",
-              textDecoration: "none",
-              fontWeight: 600,
-              fontSize: "14px",
-              fontFamily: "var(--font-body)",
-              transition: "background 0.2s",
-            }}
-          >
-            <i className="bi bi-arrow-left" /> Back to Listings
-          </Link>
+      <div className="fwd-root listing-details-one border-top lg-mt-100 pt-50 pb-150 xl-pb-120">
+        <div className="container">
+          <div className="fwd-error-box">
+            <div className="fwd-error-icon">⚠️</div>
+            <p className="fwd-error-title">{error || "Property not found"}</p>
+            <p className="fwd-error-sub">
+              This listing may have been removed or the link is incorrect.
+            </p>
+            <Link to="/listing_13" className="fwd-back-btn">
+              <i className="bi bi-arrow-left" /> Back to Listings
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -1453,7 +1602,7 @@ const BuyDetails = () => {
   const agent = property?.agent ?? property?.agent_info ?? null;
 
   return (
-    <div className="bd-root listing-details-one border-top lg-mt-100 pt-50 pb-150 xl-pb-120">
+    <div className="fwd-root listing-details-one border-top lg-mt-100 pt-50 pb-150 xl-pb-120">
       <div className="container">
         {/* Loading */}
         {loading && <LoadingSkeleton />}
@@ -1461,7 +1610,7 @@ const BuyDetails = () => {
         {!loading && property && (
           <>
             {/* Breadcrumb */}
-            <div className="bd-breadcrumb">
+            <div className="fwd-breadcrumb">
               <Link to="/">Home</Link>
               <span className="sep">›</span>
               <Link to="/listing_13">Listings</Link>
@@ -1481,21 +1630,21 @@ const BuyDetails = () => {
             <div className="row">
               {/* ── Left column ── */}
               <div className="col-xl-8">
-                {/* Overview / Description */}
+                {/* Description */}
                 {property.description && (
-                  <div className="bd-section">
-                    <h4 className="bd-section__heading">Overview</h4>
-                    <p className="bd-body-text">{property.description}</p>
+                  <div className="fwd-section">
+                    <h4 className="fwd-section__heading">Overview</h4>
+                    <p className="fwd-body-text">{property.description}</p>
                   </div>
                 )}
 
                 {/* Property Features */}
-                <div className="bd-section">
-                  <h4 className="bd-section__heading">Property Features</h4>
+                <div className="fwd-section">
+                  <h4 className="fwd-section__heading">Property Features</h4>
                   {property.features_description && (
                     <p
-                      className="bd-body-text"
-                      style={{ marginBottom: "18px" }}
+                      className="fwd-body-text"
+                      style={{ marginBottom: "16px" }}
                     >
                       {property.features_description}
                     </p>
@@ -1505,11 +1654,11 @@ const BuyDetails = () => {
 
                 {/* Amenities */}
                 {property.amenities && property.amenities.length > 0 && (
-                  <div className="bd-section">
-                    <h4 className="bd-section__heading">Amenities</h4>
+                  <div className="fwd-section">
+                    <h4 className="fwd-section__heading">Amenities</h4>
                     <p
-                      className="bd-body-text"
-                      style={{ marginBottom: "16px" }}
+                      className="fwd-body-text"
+                      style={{ marginBottom: "14px" }}
                     >
                       This property comes with the following amenities.
                     </p>
@@ -1518,18 +1667,18 @@ const BuyDetails = () => {
                 )}
 
                 {/* Floor Plans */}
-                <div className="bd-section">
-                  <h4 className="bd-section__heading">Floor Plans</h4>
+                <div className="fwd-section">
+                  <h4 className="fwd-section__heading">Floor Plans</h4>
                   <FloorPlan floorPlans={property.floor_plans || []} />
                 </div>
 
                 {/* What's Nearby */}
                 {property.whats_nearby && (
-                  <div className="bd-section">
-                    <h4 className="bd-section__heading">What's Nearby</h4>
+                  <div className="fwd-section">
+                    <h4 className="fwd-section__heading">What's Nearby</h4>
                     <p
-                      className="bd-body-text"
-                      style={{ marginBottom: "16px" }}
+                      className="fwd-body-text"
+                      style={{ marginBottom: "14px" }}
                     >
                       Distances from this property to key local amenities.
                     </p>
@@ -1538,8 +1687,8 @@ const BuyDetails = () => {
                 )}
 
                 {/* Similar Properties */}
-                <div className="bd-section">
-                  <h4 className="bd-section__heading">Similar Homes</h4>
+                <div className="fwd-section">
+                  <h4 className="fwd-section__heading">Similar Homes</h4>
                   <SimilarProperties
                     currentId={property.id}
                     propertyType={property.property_type}
@@ -1548,22 +1697,22 @@ const BuyDetails = () => {
 
                 {/* Walk Score */}
                 {property.whats_nearby && (
-                  <div className="bd-section">
-                    <h4 className="bd-section__heading">Walk Score</h4>
+                  <div className="fwd-section">
+                    <h4 className="fwd-section__heading">Walk Score</h4>
                     <WalkScore nearby={property.whats_nearby} />
                   </div>
                 )}
 
-                {/* Location */}
-                <div className="bd-section">
-                  <h4 className="bd-section__heading">Location</h4>
+                {/* Location / Map */}
+                <div className="fwd-section">
+                  <h4 className="fwd-section__heading">Location</h4>
                   <PropertyMap location={property.location} />
                 </div>
               </div>
 
               {/* ── Right sidebar ── */}
               <div className="col-xl-4">
-                <div style={{ position: "sticky", top: "100px" }}>
+                <div style={{ position: "sticky", top: "90px" }}>
                   <PriceSidebar property={property} />
                   <AgentSidebar
                     agent={agent as Record<string, string> | null}
@@ -1571,6 +1720,58 @@ const BuyDetails = () => {
                   <ContactForm property={property} agentEmail={agent?.email} />
                 </div>
               </div>
+            </div>
+
+            {/* ── Mobile sticky CTA ── */}
+            <div className="fwd-mobile-cta">
+              <div className="fwd-mobile-cta__price">
+                <sup>$</sup>
+                {property.price.toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+                {property.status === "For Rent" && (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "11px",
+                      color: "rgba(255,255,255,0.55)",
+                      marginLeft: "3px",
+                    }}
+                  >
+                    /mo
+                  </span>
+                )}
+              </div>
+              <button
+                className="fwd-mobile-cta__btn"
+                onClick={() => {
+                  const el = document.querySelector(".fwd-sidebar-card");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Contact Agent
+              </button>
+              {agent?.email && (
+                <a
+                  href={`mailto:${agent.email}?subject=${encodeURIComponent(`Enquiry: ${property.title}`)}`}
+                  style={{
+                    background: "rgba(255,255,255,0.12)",
+                    color: "#fff",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "10px 16px",
+                    borderRadius: "var(--radius-sm)",
+                    fontWeight: 700,
+                    fontSize: "13px",
+                    fontFamily: "var(--font-body)",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Email
+                </a>
+              )}
             </div>
           </>
         )}
