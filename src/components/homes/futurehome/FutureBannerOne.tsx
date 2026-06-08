@@ -5,84 +5,9 @@
 //  Structure, layout, and className identical to original
 // ============================================================
 
-import { Link } from "react-router-dom";
-
 // ─── Nepal city pins ──────────────────────────────────────────
 // Uses flag images that already exist in /assets/images/logo/
 // Positions are approximate % offsets on the Nepal SVG map
-interface LocationPin {
-  id: number;
-  flag: string;
-  title: string;
-  desc: string;
-}
-
-const location_data: LocationPin[] = [
-  {
-    id: 1,
-    flag: "/assets/images/logo/flag_01.png",
-    title: "Kathmandu",
-    desc: "Baneshwor, Thamel & Baluwatar",
-  },
-  {
-    id: 2,
-    flag: "/assets/images/logo/flag_02.png",
-    title: "Pokhara",
-    desc: "Lakeside, Birauta & Newroad",
-  },
-  {
-    id: 3,
-    flag: "/assets/images/logo/flag_03.png",
-    title: "Lalitpur",
-    desc: "Patan, Sanepa & Ekantakuna",
-  },
-  {
-    id: 4,
-    flag: "/assets/images/logo/flag_04.png",
-    title: "Bhaktapur",
-    desc: "Suryabinayak, Thimi & Nagarkot Road",
-  },
-  {
-    id: 5,
-    flag: "/assets/images/logo/flag_05.png",
-    title: "Chitwan",
-    desc: "Bharatpur, Narayangadh & Sauraha",
-  },
-  {
-    id: 6,
-    flag: "/assets/images/logo/flag_06.png",
-    title: "Biratnagar",
-    desc: "Morang, Urlabari & Itahari Road",
-  },
-];
-
-// ─── Nepal province & city grid ───────────────────────────────
-interface RegionData {
-  title: string;
-  class_name?: string;
-  country: string[];
-}
-
-const region_data: RegionData[] = [
-  {
-    title: "Bagmati Province",
-    class_name: "d-flex flex-wrap",
-    country: ["Kathmandu", "Lalitpur", "Bhaktapur", "Kirtipur", "Dhulikhel"],
-  },
-  {
-    title: "Gandaki Province",
-    country: ["Pokhara", "Besisahar", "Baglung", "Waling"],
-  },
-  {
-    title: "Lumbini Province",
-    class_name: "d-flex flex-wrap",
-    country: ["Butwal", "Bhairahawa", "Tulsipur", "Nepalgunj", "Tansen"],
-  },
-  {
-    title: "Province No. 1",
-    country: ["Biratnagar", "Dharan", "Itahari", "Damak"],
-  },
-];
 
 // ─── Brand styles injected once ───────────────────────────────
 const BANNER_ONE_STYLES = `
@@ -283,47 +208,6 @@ const FutureBannerOne = () => {
                 </h2>
               </div>
             </div>
-          </div>
-
-          {/* Nepal map */}
-          <div className="map-wrapper position-relative me-auto ms-auto mt-100 xl-mt-50 mb-50">
-            <img
-              src="/assets/images/assets/map_01.svg"
-              alt="Nepal map"
-              className="lazy-img w-100"
-            />
-
-            {/* City pins */}
-            {location_data.map((item) => (
-              <div key={item.id} className="location-pin">
-                <div className="dot-marker rounded-circle" />
-                <div className="map-info tran3s d-flex">
-                  <img
-                    src={item.flag}
-                    alt={item.title}
-                    className="lazy-img flag"
-                  />
-                  <div className="info">
-                    <h6>{item.title}</h6>
-                    <span>{item.desc}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Nepal province grid */}
-          <div className="country-list d-flex flex-wrap">
-            {region_data.map((region, i) => (
-              <div key={i} className="list-block">
-                <div className="title">{region.title}</div>
-                <ul className="style-none d-flex flex-wrap">
-                  {region.country.map((city, idx) => (
-                    <li key={idx}>{city}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
           </div>
 
           {/* Marquee strip — Nepal focused */}

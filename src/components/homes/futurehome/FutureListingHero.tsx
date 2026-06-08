@@ -532,23 +532,6 @@ const FutureListingHero = ({ style }: { style?: boolean }) => {
                           <div className="fw-nlc__price-sub">per month</div>
                         )}
                       </div>
-                      <ul className="fw-nlc__actions">
-                        <li>
-                          <Link to="#">
-                            <i className="fa-light fa-heart" />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <i className="fa-light fa-bookmark" />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <i className="fa-light fa-circle-plus" />
-                          </Link>
-                        </li>
-                      </ul>
                     </div>
                   </div>
                 </div>

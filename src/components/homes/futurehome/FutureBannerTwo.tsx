@@ -206,18 +206,6 @@ const FutureBannerTwo = () => {
               </div>
             </div>
           </div>
-
-          {/* Decorative shapes (unchanged paths from original) */}
-          <img
-            src="/assets/images/shape/shape_44.svg"
-            alt=""
-            className="lazy-img shapes shape_01"
-          />
-          <img
-            src="/assets/images/shape/shape_44.svg"
-            alt=""
-            className="lazy-img shapes shape_02"
-          />
         </div>
       </div>
     </div>

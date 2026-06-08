@@ -37,13 +37,7 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                 <Link to="/" className="d-flex align-items-center">
                   <img
                     style={{ height: "70px" }}
-                    src={
-                      style_2
-                        ? "/assets/ayu.png"
-                        : style_1
-                          ? "/assets/ayu.png"
-                          : "/assets/ayu.png"
-                    }
+                    src="/assets/ayu.png"
                     alt=""
                   />
                 </Link>
@@ -58,15 +52,24 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                         style={{ cursor: "pointer" }}
                       >
                         {!session && (
-                          <a
-                            onClick={() => setLoginModal(true)}
+                          <button
+                            type="button"
+                            onClick={() => { console.log('Login button clicked'); setLoginModal(true); }}
                             className={
                               style_1 ? "btn-ten" : "btn-two rounded-0"
                             }
                           >
                             <span>Login / Sign Up</span>{" "}
-                            <i className="fa-thin fa-arrow-up-right"></i>
-                          </a>
+                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                              <path
+                                d="M1 10L10 1M10 1H3M10 1V8"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
                         )}
                       </li>
                       <li className="d-none d-xl-block">
@@ -90,15 +93,13 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                       </li>
                       <li>
                         {!session && (
-                          <a
+                          <button
                             onClick={() => setLoginModal(true)}
                             style={{ cursor: "pointer" }}
-                            data-bs-toggle="modal"
-                            data-bs-target="#loginModal"
                             className="login-btn-two rounded-circle tran3s d-flex align-items-center justify-content-center"
                           >
-                            <i className="fa-regular fa-lock"></i>
-                          </a>
+                            <i className="fa-regular fa-lock" />
+                          </button>
                         )}
                       </li>
                       <li>
@@ -127,7 +128,11 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                   className={`collapse navbar-collapse ${style_2 ? "ms-xl-5" : ""}`}
                   id="navbarNav"
                 >
-                  <NavMenu />
+                  {/* ✅ Pass onLoginClick and session into NavMenu */}
+                  <NavMenu
+                    onLoginClick={() => setLoginModal(true)}
+                    session={session}
+                  />
                 </div>
               </nav>
             </div>

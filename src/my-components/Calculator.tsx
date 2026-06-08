@@ -4,9 +4,10 @@ import SEO from "../components/SEO";
 import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
-import FutureHeader from "../layouts/headers/FutureHeader";
 import { Link } from "react-router-dom";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
+import { useClientSession } from "./userclientsession";
+import LoginModal from "../modals/LoginModal";
 
 // ─────────────────────────────────────────────────────────────
 //  Helpers
@@ -571,11 +572,14 @@ function UnitCalculator() {
 
 const Calculator = () => {
   const [tab, setTab] = useState<"emi" | "unit">("emi");
+  const [loginModal, setLoginModal] = useState(false);
+  const { session } = useClientSession();
 
   return (
     <Wrapper>
       <SEO pageTitle="Calculator – EMI & Land Unit" />
-      <NavMenu />
+      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
+      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
       {/* ── Banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">
@@ -609,10 +613,10 @@ const Calculator = () => {
       </div>
 
       {/* ── Calculator section ── */}
-      <div className="calculator-section mt-150 xl-mt-110 mb-150 xl-mb-110">
+      <div className="calculator-section mt-20 xl-mt-110 mb-150 xl-mb-110">
         <div className="container">
           {/* Tab switcher */}
-          <div className="calc-tab-bar mb-60">
+          <div className="calc-tab-bar mb-20">
             <button
               className={`calc-tab-btn${tab === "emi" ? " active" : ""}`}
               onClick={() => setTab("emi")}
@@ -663,36 +667,41 @@ const Calculator = () => {
       <FutureFooter />
 
       <style>{`
-        /* ─── Design tokens ─── */
+        /* ─── FutureWork Design Tokens ─── */
         :root {
-          --c-ink:       #1a1715;
-          --c-ink-2:     #4a4845;
-          --c-ink-3:     #8a8785;
-          --c-rule:      #ede9e4;
-          --c-surface:   #faf9f7;
-          --c-interest:  #c8402a;
+          --c-ink:       #252060;
+          --c-ink-2:     #3d3880;
+          --c-ink-3:     #8a88a8;
+          --c-rule:      #e8e7f0;
+          --c-surface:   #f5f5fb;
+          --c-interest:  #1C94A4;
+          --c-teal:      #1C94A4;
+          --c-teal-light:#e8f7f9;
           --radius-md:   10px;
           --radius-lg:   16px;
-          --shadow-card: 0 1px 3px rgba(26,23,21,.06), 0 4px 16px rgba(26,23,21,.07);
+          --shadow-card: 0 1px 3px rgba(37,32,96,.06), 0 4px 16px rgba(37,32,96,.08);
         }
 
         /* ─── Tab bar ─── */
         .calc-tab-bar {
           display: flex;
           gap: 0;
-          border-bottom: 1px solid var(--c-rule);
+          border-bottom: 2px solid var(--c-rule);
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
         }
         .calc-tab-btn {
           background: none;
           border: none;
-          border-bottom: 2px solid transparent;
+          border-bottom: 3px solid transparent;
           padding: 12px 28px;
           font-size: 15px;
           font-weight: 600;
           color: var(--c-ink-3);
           cursor: pointer;
-          margin-bottom: -1px;
+          margin-bottom: -2px;
           transition: color .2s, border-color .2s;
+          white-space: nowrap;
         }
         .calc-tab-btn.active {
           color: var(--c-ink);
@@ -716,7 +725,7 @@ const Calculator = () => {
           gap: 2.5rem;
           align-items: start;
         }
-        @media (max-width: 767px) { .emi-cols { grid-template-columns: 1fr; } }
+        @media (max-width: 991px) { .emi-cols { grid-template-columns: 1fr; } }
 
         /* ─── Slider fields ─── */
         .calc-field { margin-bottom: 1.5rem; }
@@ -725,6 +734,8 @@ const Calculator = () => {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 10px;
+          flex-wrap: wrap;
+          gap: 8px;
         }
         .calc-label { font-size: 14px; font-weight: 600; color: var(--c-ink-2); }
         .calc-value-box {
@@ -775,7 +786,7 @@ const Calculator = () => {
           border-radius: 50%;
           background: #fff;
           border: 2.5px solid var(--c-ink);
-          box-shadow: 0 2px 8px rgba(0,0,0,.15);
+          box-shadow: 0 2px 8px rgba(37,32,96,.2);
           cursor: pointer;
           transition: transform .15s;
         }
@@ -819,6 +830,9 @@ const Calculator = () => {
           gap: 10px;
           margin-top: 1.5rem;
         }
+        @media (max-width: 480px) {
+          .metric-row { grid-template-columns: 1fr 1fr; }
+        }
         .metric-chip {
           background: var(--c-surface);
           border: 1px solid var(--c-rule);
@@ -842,6 +856,7 @@ const Calculator = () => {
         .emi-results {
           background: var(--c-surface);
           border: 1px solid var(--c-rule);
+          border-top: 3px solid var(--c-ink);
           border-radius: var(--radius-lg);
           padding: 1.5rem;
           display: flex;
@@ -897,29 +912,35 @@ const Calculator = () => {
           font-weight: 600;
           color: var(--c-ink-2);
           cursor: pointer;
-          transition: background .2s, border-color .2s;
+          transition: background .2s, border-color .2s, color .2s;
         }
-        .amort-toggle-btn:hover { background: #fff; border-color: var(--c-ink); }
+        .amort-toggle-btn:hover {
+          background: var(--c-ink);
+          border-color: var(--c-ink);
+          color: #fff;
+        }
 
         /* ─── Amortization table ─── */
         .amort-section { margin-top: 2rem; }
         .amort-scroll {
           max-height: 280px;
           overflow-y: auto;
+          overflow-x: auto;
           border: 1px solid var(--c-rule);
           border-radius: var(--radius-md);
+          -webkit-overflow-scrolling: touch;
         }
-        .amort-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .amort-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
         .amort-table th {
           position: sticky;
           top: 0;
-          background: var(--c-surface);
+          background: var(--c-ink);
+          color: rgba(255,255,255,0.85);
           font-size: 11px;
           font-weight: 600;
-          color: var(--c-ink-3);
           text-align: left;
           padding: 8px 14px;
-          border-bottom: 1px solid var(--c-rule);
+          border-bottom: 1px solid rgba(255,255,255,0.1);
           z-index: 1;
         }
         .amort-table td {
@@ -936,6 +957,9 @@ const Calculator = () => {
           grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
           gap: 1rem;
           margin-bottom: 1.5rem;
+        }
+        @media (max-width: 575px) {
+          .unit-grid { grid-template-columns: 1fr; }
         }
         .unit-card {
           background: #fff;
@@ -981,14 +1005,18 @@ const Calculator = () => {
         .unit-row input::-webkit-outer-spin-button,
         .unit-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
         .unit-row input:focus {
-          border-color: var(--c-ink);
-          box-shadow: 0 0 0 3px rgba(26,23,21,.08);
+          border-color: var(--c-teal);
+          box-shadow: 0 0 0 3px rgba(28,148,164,.12);
           background: #fff;
+        }
+        @media (max-width: 400px) {
+          .unit-row input { width: 100px; }
         }
 
         .unit-ref {
           background: var(--c-surface);
           border: 1px solid var(--c-rule);
+          border-left: 3px solid var(--c-teal);
           border-radius: var(--radius-lg);
           padding: 1.25rem 1.5rem;
         }
@@ -1019,7 +1047,7 @@ const Calculator = () => {
         }
         .unit-ref__list li::before {
           content: "→";
-          color: var(--c-ink-3);
+          color: var(--c-teal);
           font-size: 11px;
           flex-shrink: 0;
           margin-top: 1px;

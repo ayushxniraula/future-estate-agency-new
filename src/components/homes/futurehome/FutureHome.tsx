@@ -1,6 +1,4 @@
-import FutureHeader from "../../../layouts/headers/FutureHeader";
 import FutureHeroBanner from "./FutureHeroBanner";
-import FutureCategory from "./FutureCategory";
 import FutureFeatureOne from "./FutureFeatureOne";
 import FutureBigProperty from "./FutureBigProperty";
 import FutureFeatureTwo from "./FutureFeatureTwo";
@@ -11,12 +9,18 @@ import FutureBrand from "./FutureBrand";
 import FutureBannerTwo from "./FutureBannerTwo";
 import FutureFooter from "../../../layouts/footers/FutureFooter";
 import NavMenu from "../../../layouts/headers/Menu/FutureNavMenu";
+import LoginModal from "../../../modals/LoginModal";
+import { useClientSession } from "../../../my-components/userclientsession";
+import { useState } from "react";
 
 const FutureHome = () => {
+  const [loginModal, setLoginModal] = useState(false);
+  const { session } = useClientSession();
   return (
     <>
       {/* <NavMenu /> */}
-      <NavMenu />
+      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
+      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
       <FutureHeroBanner />
       {/* <FutureCategory style={false} /> */}
       <FutureFeatureOne />

@@ -1,5 +1,4 @@
 import FutureFooter from "../../../layouts/footers/FutureFooter";
-import FutureHeader from "../../../layouts/headers/FutureHeader";
 import NavMenu from "../../../layouts/headers/Menu/FutureNavMenu";
 import FancyBanner from "../../common/FancyBanner";
 import ListingDetailsFourArea from "./BuyDetail";

@@ -8,6 +8,8 @@
 //   • Staggered link reveal animation on drawer open
 //   • Keyboard-accessible (Escape closes drawer)
 //   • Full mobile responsiveness
+//   • Login modal trigger instead of route navigation
+//   • Protected route guard for /sell (requires auth)
 // ============================================================
 
 import { useEffect, useState, useRef } from "react";
@@ -25,6 +27,11 @@ const NAV_ITEMS = [
   { label: "Smart Finder", to: "/smart" },
   { label: "Contact", to: "/contact" },
 ];
+
+// ─── Routes that require authentication ───────────────────────
+const PROTECTED_ROUTES = ["/sell"];
+
+// ─── Props ────────────────────────────────────────────────────
 
 // ─── Styles ───────────────────────────────────────────────────
 const NAV_STYLES = `
@@ -85,7 +92,7 @@ const NAV_STYLES = `
     margin-right: 36px;
   }
   .fw-logo img {
-    height: 44px;
+    height: 45px;
     width: auto;
     display: block;
   }
@@ -118,6 +125,10 @@ const NAV_STYLES = `
     white-space: nowrap;
     position: relative;
     letter-spacing: 0.1px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--fw-font-body);
   }
   .fw-nav__link::after {
     content: '';
@@ -146,16 +157,18 @@ const NAV_STYLES = `
     background: linear-gradient(90deg, var(--fw-navy), var(--fw-teal));
   }
 
-  /* "Buy" badge dot */
-  .fw-nav__link[data-badge]::before {
-    content: attr(data-badge);
+  /* Protected route lock icon hint */
+  .fw-nav__link[data-protected="true"]:not(.active)::before {
+    content: '🔒';
+    font-size: 9px;
     position: absolute;
-    top: 3px;
-    right: 6px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--fw-teal);
+    top: 4px;
+    right: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .fw-nav__link[data-protected="true"]:not(.active):hover::before {
+    opacity: 0.5;
   }
 
   /* ── Right side: Login + hamburger ── */
@@ -182,6 +195,8 @@ const NAV_STYLES = `
     transition: all 0.22s ease;
     white-space: nowrap;
     letter-spacing: 0.2px;
+    background: transparent;
+    cursor: pointer;
   }
   .fw-login-btn svg { transition: transform 0.22s ease; }
   .fw-login-btn:hover {
@@ -339,6 +354,12 @@ const NAV_STYLES = `
     margin-bottom: 2px;
     font-family: var(--fw-font-body);
     letter-spacing: 0.1px;
+    /* button reset for when rendered as button */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
   }
   .fw-drawer__link:hover {
     background: rgba(37,32,96,0.05);
@@ -379,6 +400,13 @@ const NAV_STYLES = `
     background: linear-gradient(180deg, var(--fw-navy), var(--fw-teal));
   }
 
+  /* Lock icon on protected drawer links when not authed */
+  .fw-drawer__link[data-protected="true"] .fw-drawer__lock {
+    font-size: 11px;
+    opacity: 0.45;
+    margin-right: 4px;
+  }
+
   /* Drawer footer */
   .fw-drawer__foot {
     padding: 16px 24px 28px;
@@ -402,6 +430,8 @@ const NAV_STYLES = `
     transition: opacity 0.2s, box-shadow 0.2s;
     letter-spacing: 0.2px;
     box-shadow: 0 6px 20px rgba(37,32,96,0.22);
+    border: none;
+    cursor: pointer;
   }
   .fw-drawer__login:hover { opacity: 0.9; box-shadow: 0 8px 28px rgba(37,32,96,0.3); }
   .fw-drawer__login svg { transition: transform 0.22s; }
@@ -427,7 +457,7 @@ function injectNavStyles() {
 }
 
 // ─── Component ────────────────────────────────────────────────
-const NavMenu = () => {
+const NavMenu = ({ onLoginClick, session }: any) => {
   injectNavStyles();
 
   const location = useLocation();
@@ -463,8 +493,33 @@ const NavMenu = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
+  const logout = () => {
+    localStorage.removeItem("ea_client_session");
+    window.location.reload();
+  };
+
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname === path;
+
+  // ── Protected route guard ────────────────────────────────
+  // Returns true if the route requires auth AND user is not logged in
+  const isProtectedAndUnauthed = (path: string) =>
+    PROTECTED_ROUTES.includes(path) && !session;
+
+  // ── Handler for nav link clicks ──────────────────────────
+  const handleNavClick = (
+    e: React.MouseEvent,
+    path: string,
+    closeDrawer = false,
+  ) => {
+    if (isProtectedAndUnauthed(path)) {
+      e.preventDefault(); // block the Link navigation
+      if (closeDrawer) setDrawerOpen(false);
+      onLoginClick(); // open login modal instead
+    } else if (closeDrawer) {
+      setDrawerOpen(false);
+    }
+  };
 
   return (
     <>
@@ -473,7 +528,7 @@ const NavMenu = () => {
         <div className="fw-header__inner">
           {/* Logo */}
           <Link to="/" className="fw-logo">
-            <img src="/assets/images/logo/logo_01.svg" alt="Future Work" />
+            <img src="/assets/ayu.png" alt="Future Work" />
           </Link>
 
           {/* Desktop nav */}
@@ -485,6 +540,10 @@ const NavMenu = () => {
                     to={item.to}
                     className={`fw-nav__link${isActive(item.to) ? " active" : ""}`}
                     aria-current={isActive(item.to) ? "page" : undefined}
+                    data-protected={
+                      PROTECTED_ROUTES.includes(item.to) ? "true" : undefined
+                    }
+                    onClick={(e) => handleNavClick(e, item.to)}
                   >
                     {item.label}
                   </Link>
@@ -495,19 +554,42 @@ const NavMenu = () => {
 
           {/* Right side */}
           <div className="fw-header__right">
-            {/* Login — desktop */}
-            <Link to="/login" className="fw-login-btn d-none d-lg-inline-flex">
-              <span>Login / Sign Up</span>
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path
-                  d="M1 10L10 1M10 1H3M10 1V8"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
+            {/* Login button — desktop */}
+            {/* Renders as button (triggers modal) when not logged in,
+                or can be swapped for a user avatar / profile link when logged in */}
+            {!session ? (
+              <button
+                onClick={onLoginClick}
+                className="fw-login-btn d-none d-lg-inline-flex"
+              >
+                <span>Login / Sign Up</span>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path
+                    d="M1 10L10 1M10 1H3M10 1V8"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            ) : (
+              <button
+                className="fw-login-btn d-none d-lg-inline-flex"
+                onClick={logout}
+              >
+                <span>Logout</span>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path
+                    d="M1 10L10 1M10 1H3M10 1V8"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )}
 
             {/* Hamburger — mobile / tablet */}
             <button
@@ -564,41 +646,74 @@ const NavMenu = () => {
 
         {/* Drawer nav */}
         <ul className="fw-drawer__nav" role="navigation">
-          {NAV_ITEMS.map((item) => (
-            <li key={item.to} className="fw-drawer__nav-item">
-              <Link
-                to={item.to}
-                className={`fw-drawer__link${isActive(item.to) ? " active" : ""}`}
-                aria-current={isActive(item.to) ? "page" : undefined}
-                onClick={() => setDrawerOpen(false)}
-              >
-                <span>{item.label}</span>
-                <span className="fw-drawer__chevron" aria-hidden="true">
-                  ›
-                </span>
-              </Link>
-            </li>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const needsAuth = isProtectedAndUnauthed(item.to);
+            return (
+              <li key={item.to} className="fw-drawer__nav-item">
+                <Link
+                  to={item.to}
+                  className={`fw-drawer__link${isActive(item.to) ? " active" : ""}`}
+                  aria-current={isActive(item.to) ? "page" : undefined}
+                  data-protected={needsAuth ? "true" : undefined}
+                  onClick={(e) => handleNavClick(e, item.to, true)}
+                >
+                  <span>
+                    {/* Show lock icon on protected routes for unauthenticated users */}
+                    {needsAuth && (
+                      <span className="fw-drawer__lock" aria-hidden="true">
+                        🔒{" "}
+                      </span>
+                    )}
+                    {item.label}
+                  </span>
+                  <span className="fw-drawer__chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Drawer footer — login CTA */}
         <div className="fw-drawer__foot">
-          <Link
-            to="/login"
-            className="fw-drawer__login"
-            onClick={() => setDrawerOpen(false)}
-          >
-            <span>Login / Sign Up</span>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path
-                d="M1.5 11.5L11.5 1.5M11.5 1.5H4.5M11.5 1.5V8.5"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Link>
+          {!session ? (
+            <button
+              onClick={() => {
+                setDrawerOpen(false);
+                onLoginClick();
+              }}
+              className="fw-drawer__login"
+            >
+              <span>Login / Sign Up</span>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path
+                  d="M1.5 11.5L11.5 1.5M11.5 1.5H4.5M11.5 1.5V8.5"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          ) : (
+            <Link
+              to="/dashboard"
+              className="fw-drawer__login"
+              onClick={() => setDrawerOpen(false)}
+            >
+              <span>My Account</span>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path
+                  d="M1.5 11.5L11.5 1.5M11.5 1.5H4.5M11.5 1.5V8.5"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          )}
         </div>
       </div>
     </>

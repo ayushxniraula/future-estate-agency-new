@@ -13,8 +13,9 @@ import SEO from "../components/SEO";
 import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
-import FutureHeader from "../layouts/headers/FutureHeader";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
+import { useClientSession } from "./userclientsession";
+import LoginModal from "../modals/LoginModal";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -708,6 +709,9 @@ function Field({
 const SellPropertyArea = () => {
   injectSellStyles();
 
+  const [loginModal, setLoginModal] = useState(false);
+  const { session } = useClientSession();
+
   const [step, setStep] = useState<"form" | "success">("form");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -823,7 +827,8 @@ const SellPropertyArea = () => {
   return (
     <Wrapper>
       <SEO pageTitle="List Your Property – Sell or Rent" />
-      <NavMenu />
+      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
+      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
       {/* ── Banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">

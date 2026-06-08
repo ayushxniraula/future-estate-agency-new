@@ -4,7 +4,6 @@
 // ============================================================
 import { useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
-import FutureHeader from "../../../layouts/headers/FutureHeader";
 import { Link } from "react-router-dom";
 
 // ─── Supabase config (mirror of config.js) ─────────────────
@@ -33,32 +32,9 @@ interface ContactFormData {
 }
 
 interface ContactAreaProps {
-  /** Optional: pre-fill a property reference (e.g. from a listing page) */
   linkedPropertyId?: string;
   linkedPropertyName?: string;
 }
-
-// ─── Info blocks ─────────────────────────────────────────────
-const INFO_BLOCKS = [
-  {
-    icon: "✉",
-    title: "Email us anytime",
-    value: "ask@homy.com",
-    href: "mailto:ask@homy.com",
-  },
-  {
-    icon: "📞",
-    title: "Call our hotline",
-    value: "+757 699 4478",
-    href: "tel:+7576994478",
-  },
-  {
-    icon: "💬",
-    title: "Live chat support",
-    value: "www.homylivechat.com",
-    href: "https://www.homylivechat.com",
-  },
-];
 
 const INITIAL: ContactFormData = {
   name: "",
@@ -74,6 +50,37 @@ const INITIAL: ContactFormData = {
   budget_max: "",
   move_timeline: "",
 };
+
+// ─── Creative side panel data ─────────────────────────────────
+const STATS = [
+  { value: "1,200+", label: "Properties Listed" },
+  { value: "98%", label: "Client Satisfaction" },
+  { value: "15 yrs", label: "Market Experience" },
+  { value: "48 hr", label: "Avg. Response Time" },
+];
+
+const PROMISES = [
+  {
+    icon: "🔒",
+    title: "Your privacy, protected",
+    desc: "We never share your details with third parties.",
+  },
+  {
+    icon: "⚡",
+    title: "Fast, personal replies",
+    desc: "A real agent — not a bot — responds within 48 hours.",
+  },
+  {
+    icon: "🧭",
+    title: "Expert local guidance",
+    desc: "15 years navigating this market, district by district.",
+  },
+  {
+    icon: "💼",
+    title: "End-to-end support",
+    desc: "From first inquiry to keys in hand, we're with you.",
+  },
+];
 
 // ─── Component ───────────────────────────────────────────────
 const ContactArea = ({
@@ -91,7 +98,6 @@ const ContactArea = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
-  // ─── Handlers ──────────────────────────────────────────────
   const set =
     (k: keyof ContactFormData) =>
     (
@@ -149,9 +155,8 @@ const ContactArea = ({
     }
   };
 
-  // ─── Render ────────────────────────────────────────────────
   return (
-    <div className="contact-us border-top xl-mt-100 pt-80 lg-pt-60">
+    <div className="contact-us border-op xl-mt-100 lg-pt-60">
       {/* ── Header ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">
         <div
@@ -160,7 +165,7 @@ const ContactArea = ({
         >
           <div className="container position-relative z-2">
             <h2 className="mb-35 xl-mb-20 md-mb-10 pt-15 font-garamond text-white">
-              Calculator
+              Contact
             </h2>
             <ul className="theme-breadcrumb style-none d-inline-flex align-items-center justify-content-center position-relative z-1 bottom-line">
               <li>
@@ -183,40 +188,107 @@ const ContactArea = ({
         </div>
       </div>
 
-      {/* ── Info blocks ── */}
-      <div className="address-banner mt-60 lg-mt-40">
-        <div className="container">
-          <div className="contact-info-row">
-            {INFO_BLOCKS.map((b, i) => (
-              <a
-                key={i}
-                href={b.href}
-                className="contact-info-card"
-                target={b.href.startsWith("http") ? "_blank" : undefined}
-                rel="noreferrer"
-              >
-                <div className="contact-info-icon">{b.icon}</div>
-                <div className="contact-info-text">
-                  <p className="contact-info-title">{b.title}</p>
-                  <span className="contact-info-value">{b.value}</span>
+      {/* ── Creative Panel + Form ── */}
+      <div className="contact-main-wrap mt-20 mb-20 lg-mt-60">
+        {/* ── LEFT: Creative info panel ── */}
+        <div className="contact-creative-side">
+          {/* Floating blobs */}
+          <div className="blob blob-1" aria-hidden="true" />
+          <div className="blob blob-2" aria-hidden="true" />
+          <div className="blob blob-3" aria-hidden="true" />
+
+          <div className="creative-inner">
+            {/* Eyebrow */}
+            <p className="creative-eyebrow">Let's talk real estate</p>
+
+            {/* Headline */}
+            <h2 className="creative-headline">
+              Your dream <br />
+              <em>home is one</em>
+              <br /> message away.
+            </h2>
+
+            <p className="creative-sub">
+              Whether you're buying, selling, or simply exploring — our team of
+              local experts is ready to guide you at every step.
+            </p>
+
+            {/* Stats strip */}
+            <div className="creative-stats">
+              {STATS.map((s) => (
+                <div key={s.label} className="creative-stat">
+                  <span className="creative-stat-value">{s.value}</span>
+                  <span className="creative-stat-label">{s.label}</span>
                 </div>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="creative-divider" />
+
+            {/* Promises list */}
+            <div className="creative-promises">
+              {PROMISES.map((p) => (
+                <div key={p.title} className="creative-promise">
+                  <span className="creative-promise-icon" aria-hidden="true">
+                    {p.icon}
+                  </span>
+                  <div>
+                    <p className="creative-promise-title">{p.title}</p>
+                    <p className="creative-promise-desc">{p.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Contact info pills */}
+            <div className="creative-pills">
+              <a href="tel:+8801700000000" className="creative-pill">
+                <span className="creative-pill-icon">📞</span>
+                +880 1700 000 000
               </a>
-            ))}
+              <a href="mailto:hello@estateadmin.com" className="creative-pill">
+                <span className="creative-pill-icon">✉️</span>
+                hello@estateadmin.com
+              </a>
+            </div>
+
+            {/* Decorative grid overlay */}
+            <svg
+              className="creative-grid-svg"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <pattern
+                  id="cg"
+                  width="32"
+                  height="32"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M 32 0 L 0 0 0 32"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.07)"
+                    strokeWidth="1"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#cg)" />
+            </svg>
+
+            {/* Floating card accent */}
+            <div className="creative-card-accent">
+              <div className="cca-avatar">EA</div>
+              <div>
+                <p className="cca-name">EstateAdmin Team</p>
+                <p className="cca-tag">● Online now</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Map + Form ── */}
-      <div className="contact-main-wrap mt-80 lg-mt-60">
-        <div className="contact-map-side">
-          <iframe
-            title="Office Location"
-            className="contact-map-iframe"
-            src="https://maps.google.com/maps?width=600&height=400&hl=en&q=dhaka+collage&t=&z=12&ie=UTF8&iwloc=B&output=embed"
-            loading="lazy"
-          />
-        </div>
-
+        {/* ── RIGHT: Form ── */}
         <div className="contact-form-side" ref={formRef}>
           {success ? (
             <div className="contact-success">
@@ -243,7 +315,6 @@ const ContactArea = ({
                 </div>
               )}
 
-              {/* ── Row 1: Name + Email ── */}
               <div className="contact-row">
                 <div className="contact-field">
                   <label htmlFor="c_name">Full Name *</label>
@@ -269,7 +340,6 @@ const ContactArea = ({
                 </div>
               </div>
 
-              {/* ── Row 2: Phone + WhatsApp ── */}
               <div className="contact-row">
                 <div className="contact-field">
                   <label htmlFor="c_phone">Phone Number</label>
@@ -293,7 +363,6 @@ const ContactArea = ({
                 </div>
               </div>
 
-              {/* ── Inquiry type ── */}
               <div className="contact-field">
                 <label htmlFor="c_inquiry">Inquiry Type *</label>
                 <div className="contact-inquiry-grid">
@@ -320,7 +389,6 @@ const ContactArea = ({
                 </div>
               </div>
 
-              {/* ── Subject ── */}
               <div className="contact-field">
                 <label htmlFor="c_subject">Subject</label>
                 <input
@@ -332,7 +400,6 @@ const ContactArea = ({
                 />
               </div>
 
-              {/* ── Message ── */}
               <div className="contact-field">
                 <label htmlFor="c_message">Your Message *</label>
                 <textarea
@@ -345,7 +412,6 @@ const ContactArea = ({
                 />
               </div>
 
-              {/* ── Advanced (collapsible) ── */}
               <button
                 type="button"
                 className="contact-advanced-toggle"
@@ -357,7 +423,6 @@ const ContactArea = ({
 
               {showAdvanced && (
                 <div className="contact-advanced">
-                  {/* Budget */}
                   <div className="contact-row">
                     <div className="contact-field">
                       <label htmlFor="c_bmin">Budget Min ($)</label>
@@ -383,7 +448,6 @@ const ContactArea = ({
                     </div>
                   </div>
 
-                  {/* Preferred contact + time */}
                   <div className="contact-row">
                     <div className="contact-field">
                       <label htmlFor="c_pcontact">Preferred Contact</label>
@@ -413,7 +477,6 @@ const ContactArea = ({
                     </div>
                   </div>
 
-                  {/* Move-in timeline */}
                   <div className="contact-field">
                     <label htmlFor="c_timeline">
                       Move-in / Purchase Timeline
@@ -434,10 +497,8 @@ const ContactArea = ({
                 </div>
               )}
 
-              {/* ── Error ── */}
               {error && <div className="contact-error">{error}</div>}
 
-              {/* ── Submit ── */}
               <button
                 type="submit"
                 className="contact-btn-primary contact-btn-submit"
@@ -458,75 +519,9 @@ const ContactArea = ({
 
       {/* ── Inline styles ── */}
       <style>{`
-        /* ── Layout ── */
-        .contact-heading {
-          font-size: clamp(26px, 4vw, 38px);
-          font-weight: 700;
-          line-height: 1.25;
-          color: #1a1a2e;
-        }
-        .contact-heading em {
-          font-style: italic;
-          color: #f15a29;
-        }
-        .contact-subheading {
-          color: #888;
-          margin-top: 10px;
-          font-size: 15px;
-        }
-
-        /* ── Info row ── */
-        .contact-info-row {
-          display: flex;
-          gap: 16px;
-          justify-content: center;
-          flex-wrap: wrap;
-          padding: 0 16px;
-        }
-        .contact-info-card {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 18px 24px;
-          background: #fff;
-          border: 1px solid #ebebeb;
-          border-radius: 12px;
-          text-decoration: none;
-          flex: 1;
-          min-width: 220px;
-          max-width: 320px;
-          transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
-        }
-        .contact-info-card:hover {
-          box-shadow: 0 8px 32px rgba(241,90,41,0.1);
-          border-color: rgba(241,90,41,0.3);
-          transform: translateY(-2px);
-        }
-        .contact-info-icon {
-          width: 46px;
-          height: 46px;
-          background: #1a1a2e;
-          color: #fff;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          flex-shrink: 0;
-        }
-        .contact-info-title {
-          font-size: 13px;
-          font-weight: 600;
-          color: #444;
-          margin: 0 0 2px;
-        }
-        .contact-info-value {
-          font-size: 13px;
-          color: #f15a29;
-          font-weight: 500;
-        }
-
-        /* ── Map + Form wrapper ── */
+        /* ══════════════════════════════════════════════
+           CREATIVE SIDE PANEL
+        ══════════════════════════════════════════════ */
         .contact-main-wrap {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -534,38 +529,314 @@ const ContactArea = ({
         }
         @media (max-width: 900px) {
           .contact-main-wrap { grid-template-columns: 1fr; }
-          .contact-map-side { height: 300px; order: 2; }
+          .contact-creative-side { min-height: 480px; order: 2; }
         }
-        .contact-map-side { overflow: hidden; }
-        .contact-map-iframe {
+
+        /* ── Panel shell ── */
+        .contact-creative-side {
+          position: relative;
+          background: #252060;
+          overflow: hidden;
+          display: flex;
+          align-items: stretch;
+        }
+
+        /* ── Floating blobs ── */
+        .blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(60px);
+          opacity: 0.35;
+          pointer-events: none;
+        }
+        .blob-1 {
+          width: 320px; height: 320px;
+          background: #1C94A4;
+          top: -80px; left: -80px;
+          animation: blobFloat 9s ease-in-out infinite;
+        }
+        .blob-2 {
+          width: 240px; height: 240px;
+          background: #0d5a8a;
+          bottom: 60px; right: -60px;
+          animation: blobFloat 12s ease-in-out infinite reverse;
+        }
+        .blob-3 {
+          width: 160px; height: 160px;
+          background: #1C94A4;
+          bottom: 200px; left: 40%;
+          animation: blobFloat 7s ease-in-out infinite 2s;
+        }
+        @keyframes blobFloat {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-24px) scale(1.06); }
+        }
+
+        /* ── Grid overlay SVG ── */
+        .creative-grid-svg {
+          position: absolute;
+          inset: 0;
           width: 100%;
           height: 100%;
-          min-height: 500px;
-          border: none;
-          display: block;
+          pointer-events: none;
+          z-index: 1;
         }
+
+        /* ── Inner content ── */
+        .creative-inner {
+          position: relative;
+          z-index: 2;
+          padding: 52px 44px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          width: 100%;
+        }
+        @media (max-width: 600px) {
+          .creative-inner { padding: 36px 24px; }
+        }
+
+        /* ── Eyebrow ── */
+        .creative-eyebrow {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 2.5px;
+          text-transform: uppercase;
+          color: #1C94A4;
+          margin: 0 0 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .creative-eyebrow::before {
+          content: '';
+          display: inline-block;
+          width: 28px;
+          height: 2px;
+          background: #1C94A4;
+          border-radius: 2px;
+        }
+
+        /* ── Headline ── */
+        .creative-headline {
+          font-size: clamp(30px, 3.5vw, 44px);
+          font-weight: 700;
+          line-height: 1.18;
+          color: #fff;
+          margin: 0 0 16px;
+          letter-spacing: -0.5px;
+        }
+        .creative-headline em {
+          font-style: italic;
+          color: #1C94A4;
+        }
+
+        /* ── Subtext ── */
+        .creative-sub {
+          font-size: 14px;
+          line-height: 1.7;
+          color: rgba(255,255,255,0.6);
+          margin: 0 0 28px;
+          max-width: 360px;
+        }
+
+        /* ── Stats strip ── */
+        .creative-stats {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          overflow: hidden;
+          margin-bottom: 28px;
+        }
+        @media (max-width: 600px) {
+          .creative-stats { grid-template-columns: repeat(2,1fr); }
+        }
+        .creative-stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 16px 10px;
+          border-right: 1px solid rgba(255,255,255,0.1);
+          transition: background 0.2s;
+        }
+        .creative-stat:last-child { border-right: none; }
+        .creative-stat:hover { background: rgba(28,148,164,0.12); }
+        .creative-stat-value {
+          font-size: 20px;
+          font-weight: 800;
+          color: #fff;
+          line-height: 1;
+          margin-bottom: 4px;
+          letter-spacing: -0.5px;
+        }
+        .creative-stat-label {
+          font-size: 10px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          color: rgba(255,255,255,0.45);
+          text-align: center;
+        }
+
+        /* ── Divider ── */
+        .creative-divider {
+          width: 40px;
+          height: 2px;
+          background: linear-gradient(90deg, #1C94A4, transparent);
+          border-radius: 2px;
+          margin-bottom: 22px;
+        }
+
+        /* ── Promises ── */
+        .creative-promises {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          margin-bottom: 28px;
+        }
+        .creative-promise {
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          animation: fadeSlideIn 0.5s ease both;
+        }
+        .creative-promise:nth-child(1) { animation-delay: 0.05s; }
+        .creative-promise:nth-child(2) { animation-delay: 0.12s; }
+        .creative-promise:nth-child(3) { animation-delay: 0.19s; }
+        .creative-promise:nth-child(4) { animation-delay: 0.26s; }
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateX(-12px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .creative-promise-icon {
+          width: 36px;
+          height: 36px;
+          background: rgba(28,148,164,0.15);
+          border: 1px solid rgba(28,148,164,0.3);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          flex-shrink: 0;
+          transition: background 0.2s, border-color 0.2s;
+        }
+        .creative-promise:hover .creative-promise-icon {
+          background: rgba(28,148,164,0.28);
+          border-color: rgba(28,148,164,0.55);
+        }
+        .creative-promise-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #fff;
+          margin: 0 0 2px;
+        }
+        .creative-promise-desc {
+          font-size: 12px;
+          color: rgba(255,255,255,0.5);
+          margin: 0;
+          line-height: 1.5;
+        }
+
+        /* ── Pills ── */
+        .creative-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 24px;
+        }
+        .creative-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 16px;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.14);
+          border-radius: 100px;
+          font-size: 12.5px;
+          color: rgba(255,255,255,0.8);
+          text-decoration: none;
+          transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+          font-weight: 500;
+        }
+        .creative-pill:hover {
+          background: rgba(28,148,164,0.2);
+          border-color: rgba(28,148,164,0.5);
+          color: #fff;
+          transform: translateY(-1px);
+        }
+        .creative-pill-icon { font-size: 14px; }
+
+        /* ── Floating agent card ── */
+        .creative-card-accent {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 12px;
+          padding: 12px 16px;
+          max-width: 220px;
+          backdrop-filter: blur(8px);
+          animation: cardPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s both;
+        }
+        @keyframes cardPop {
+          from { opacity: 0; transform: scale(0.88) translateY(12px); }
+          to   { opacity: 1; transform: scale(1)  translateY(0); }
+        }
+        .cca-avatar {
+          width: 38px;
+          height: 38px;
+          background: linear-gradient(135deg, #1C94A4, #0d5a8a);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 800;
+          color: #fff;
+          flex-shrink: 0;
+          letter-spacing: 0.5px;
+        }
+        .cca-name {
+          font-size: 12.5px;
+          font-weight: 700;
+          color: #fff;
+          margin: 0 0 2px;
+        }
+        .cca-tag {
+          font-size: 11px;
+          color: #4ade80;
+          margin: 0;
+          font-weight: 600;
+        }
+
+        /* ══════════════════════════════════════════════
+           FORM SIDE (unchanged from original)
+        ══════════════════════════════════════════════ */
         .contact-form-side {
-          background: #fdf5f0;
+          background: rgba(28,148,164,0.05);
           padding: 48px 44px;
         }
         @media (max-width: 600px) {
           .contact-form-side { padding: 32px 20px; }
         }
-
-        /* ── Form internals ── */
         .contact-form-title {
           font-size: 22px;
           font-weight: 700;
-          color: #1a1a2e;
+          color: #252060;
           margin-bottom: 22px;
         }
         .contact-property-badge {
-          background: #fff3ed;
-          border: 1px solid rgba(241,90,41,0.25);
+          background: rgba(28,148,164,0.08);
+          border: 1px solid rgba(28,148,164,0.25);
           border-radius: 8px;
           padding: 10px 14px;
           font-size: 13px;
-          color: #c04010;
+          color: #1C94A4;
           margin-bottom: 18px;
         }
         .contact-row {
@@ -586,35 +857,33 @@ const ContactArea = ({
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.7px;
-          color: #555;
+          color: #5a5e7a;
           margin-bottom: 6px;
         }
         .contact-field input,
         .contact-field textarea,
         .contact-field select {
           background: #fff;
-          border: 1px solid #ddd;
+          border: 1px solid rgba(37,32,96,0.15);
           border-radius: 8px;
           padding: 11px 14px;
           font-size: 14px;
           font-family: inherit;
-          color: #222;
+          color: #252060;
           transition: border-color 0.18s, box-shadow 0.18s;
           outline: none;
           resize: vertical;
         }
         .contact-field input::placeholder,
         .contact-field textarea::placeholder {
-          color: #aaa;
+          color: #a0a3b5;
         }
         .contact-field input:focus,
         .contact-field textarea:focus,
         .contact-field select:focus {
-          border-color: #f15a29;
-          box-shadow: 0 0 0 3px rgba(241,90,41,0.08);
+          border-color: #1C94A4;
+          box-shadow: 0 0 0 3px rgba(28,148,164,0.1);
         }
-
-        /* ── Inquiry chips ── */
         .contact-inquiry-grid {
           display: flex;
           flex-wrap: wrap;
@@ -623,53 +892,49 @@ const ContactArea = ({
         }
         .contact-inquiry-chip {
           padding: 7px 14px;
-          border: 1.5px solid #ddd;
+          border: 1.5px solid rgba(37,32,96,0.15);
           border-radius: 20px;
           background: #fff;
           font-size: 12.5px;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.15s;
-          color: #444;
+          color: #5a5e7a;
           font-family: inherit;
         }
         .contact-inquiry-chip:hover {
-          border-color: #f15a29;
-          color: #f15a29;
+          border-color: #1C94A4;
+          color: #1C94A4;
         }
         .contact-inquiry-chip.selected {
-          background: #f15a29;
-          border-color: #f15a29;
+          background: #252060;
+          border-color: #252060;
           color: #fff;
         }
-
-        /* ── Advanced section ── */
         .contact-advanced-toggle {
           background: none;
           border: none;
           font-size: 12.5px;
           font-weight: 600;
-          color: #888;
+          color: #8a8c9e;
           cursor: pointer;
           padding: 0;
           margin-bottom: 14px;
           font-family: inherit;
           transition: color 0.15s;
         }
-        .contact-advanced-toggle:hover { color: #f15a29; }
+        .contact-advanced-toggle:hover { color: #1C94A4; }
         .contact-advanced-toggle span {
           font-weight: 400;
-          color: #bbb;
+          color: #b0b3c5;
         }
         .contact-advanced {
-          background: rgba(255,255,255,0.6);
-          border: 1px solid #e8e0d8;
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(37,32,96,0.1);
           border-radius: 10px;
           padding: 18px;
           margin-bottom: 16px;
         }
-
-        /* ── Error ── */
         .contact-error {
           background: #fff0f0;
           border: 1px solid #fca5a5;
@@ -679,10 +944,8 @@ const ContactArea = ({
           color: #dc2626;
           margin-bottom: 14px;
         }
-
-        /* ── Submit button ── */
         .contact-btn-primary {
-          background: #f15a29;
+          background: #252060;
           color: #fff;
           border: none;
           border-radius: 8px;
@@ -698,9 +961,9 @@ const ContactArea = ({
           gap: 8px;
         }
         .contact-btn-primary:hover:not(:disabled) {
-          background: #d94a1a;
+          background: #1C94A4;
           transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(241,90,41,0.3);
+          box-shadow: 0 6px 20px rgba(28,148,164,0.3);
         }
         .contact-btn-primary:disabled {
           opacity: 0.6;
@@ -713,8 +976,6 @@ const ContactArea = ({
           padding: 16px;
           margin-top: 4px;
         }
-
-        /* ── Spinner ── */
         .contact-spinner {
           display: inline-block;
           width: 14px;
@@ -725,8 +986,6 @@ const ContactArea = ({
           animation: c-spin 0.7s linear infinite;
         }
         @keyframes c-spin { to { transform: rotate(360deg); } }
-
-        /* ── Success ── */
         .contact-success {
           display: flex;
           flex-direction: column;
@@ -739,7 +998,7 @@ const ContactArea = ({
         .contact-success-icon {
           width: 64px;
           height: 64px;
-          background: #f15a29;
+          background: #1C94A4;
           color: #fff;
           border-radius: 50%;
           display: flex;
@@ -751,10 +1010,10 @@ const ContactArea = ({
         .contact-success h4 {
           font-size: 22px;
           font-weight: 700;
-          color: #1a1a2e;
+          color: #252060;
         }
         .contact-success p {
-          color: #666;
+          color: #5a5e7a;
           font-size: 14px;
           max-width: 300px;
         }

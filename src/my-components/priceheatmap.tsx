@@ -1,15 +1,6 @@
 // ============================================================
 //  PriceHeatmap.tsx — Kathmandu neighborhood price intelligence
-//  Design: DM Serif Display + DM Sans, matches BuyListing tokens
-//  Data: Live from Supabase properties table
-//  Features:
-//    • Aggregates avg / min / max price per location from DB
-//    • Color-coded heatmap table (green → yellow → red scale)
-//    • Horizontal bar chart sorted by avg price
-//    • Price per Ropani column (1 Ropani = 5476 sqft)
-//    • Filter by property type / status
-//    • Sort by any column
-//    • Animated bar chart on load
+//  Theme: FutureWork (#252060 navy + #1C94A4 teal)
 // ============================================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -20,8 +11,9 @@ import SEO from "../components/SEO";
 import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
-import FutureHeader from "../layouts/headers/FutureHeader";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
+import LoginModal from "../modals/LoginModal";
+import { useClientSession } from "./userclientsession";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -90,32 +82,29 @@ function fmtShortNPR(v: number): string {
   return r.toLocaleString("en-IN");
 }
 
-// Normalize location string to extract area name
 function normalizeArea(location: string): string {
   if (!location) return "Unknown";
-  // Take the last meaningful part after comma, or first part
   const parts = location
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  // Try second-to-last or last part as area
   if (parts.length >= 2) return parts[parts.length - 2];
   return parts[0] || "Unknown";
 }
 
-// Heat color: green (low price) → yellow → red (high price)
+// Heat color using FutureWork palette: teal (low) → navy (high)
 function heatColor(
   value: number,
   min: number,
   max: number,
 ): { bg: string; text: string } {
-  if (max === min) return { bg: "rgba(45,122,79,0.12)", text: "#1a5c38" };
-  const ratio = (value - min) / (max - min); // 0 = cheapest, 1 = most expensive
-  if (ratio < 0.33) return { bg: "rgba(45,122,79,0.13)", text: "#1a5c38" };
-  if (ratio < 0.55) return { bg: "rgba(45,122,79,0.07)", text: "#2d7a4f" };
-  if (ratio < 0.7) return { bg: "rgba(255,193,7,0.13)", text: "#7a5f00" };
-  if (ratio < 0.85) return { bg: "rgba(255,152,0,0.14)", text: "#7a3e00" };
-  return { bg: "rgba(200,64,42,0.13)", text: "#8b2517" };
+  if (max === min) return { bg: "rgba(28,148,164,0.12)", text: "#0e6e7a" };
+  const ratio = (value - min) / (max - min);
+  if (ratio < 0.33) return { bg: "rgba(28,148,164,0.13)", text: "#0e6e7a" };
+  if (ratio < 0.55) return { bg: "rgba(28,148,164,0.07)", text: "#1C94A4" };
+  if (ratio < 0.7) return { bg: "rgba(37,32,96,0.08)", text: "#3d3880" };
+  if (ratio < 0.85) return { bg: "rgba(37,32,96,0.13)", text: "#252060" };
+  return { bg: "rgba(37,32,96,0.2)", text: "#1a1650" };
 }
 
 // ─── Styles ───────────────────────────────────────────────────
@@ -125,22 +114,21 @@ const HEATMAP_STYLES = `
   :root {
     --font-display: 'DM Serif Display', Georgia, serif;
     --font-body:    'DM Sans', system-ui, sans-serif;
-    --c-ink:        #1a1715;
-    --c-ink-2:      #4a4845;
-    --c-ink-3:      #8a8785;
-    --c-rule:       #ede9e4;
-    --c-surface:    #faf9f7;
+    --c-ink:        #252060;
+    --c-ink-2:      #3d3880;
+    --c-ink-3:      #8a88a8;
+    --c-rule:       #e8e7f0;
+    --c-surface:    #f5f5fb;
     --c-white:      #ffffff;
-    --c-accent:     #c8402a;
-    --c-better:     #2d7a4f;
+    --c-accent:     #1C94A4;
+    --c-better:     #1C94A4;
     --radius-card:  16px;
     --radius-sm:    10px;
-    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
+    --shadow-card:  0 1px 3px rgba(37,32,96,0.06), 0 4px 16px rgba(37,32,96,0.08);
   }
 
   .hm-root, .hm-root * { font-family: var(--font-body); box-sizing: border-box; }
 
-  /* ── Page ── */
   .hm-page {
     background: var(--c-surface);
     padding-bottom: 80px;
@@ -152,7 +140,6 @@ const HEATMAP_STYLES = `
     background: var(--c-white);
     border-bottom: 1px solid var(--c-rule);
     padding: 20px 0;
-    margin-bottom: 0;
   }
   .hm-topbar__inner {
     display: flex;
@@ -169,10 +156,7 @@ const HEATMAP_STYLES = `
     letter-spacing: -0.2px;
     margin-bottom: 2px;
   }
-  .hm-topbar__sub {
-    font-size: 13px;
-    color: var(--c-ink-3);
-  }
+  .hm-topbar__sub { font-size: 13px; color: var(--c-ink-3); }
   .hm-back-link {
     display: inline-flex;
     align-items: center;
@@ -187,17 +171,18 @@ const HEATMAP_STYLES = `
     background: var(--c-surface);
     transition: all 0.18s;
     margin-bottom: 10px;
-    display: inline-flex;
   }
   .hm-back-link:hover { border-color: var(--c-ink); color: var(--c-ink); }
 
   /* ── Filters ── */
   .hm-filters {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
     align-items: center;
     padding: 16px 0 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .hm-filter-label {
     font-size: 11px;
@@ -206,6 +191,7 @@ const HEATMAP_STYLES = `
     text-transform: uppercase;
     color: var(--c-ink-3);
     margin-right: 2px;
+    white-space: nowrap;
   }
   .hm-pill {
     padding: 5px 14px;
@@ -228,6 +214,9 @@ const HEATMAP_STYLES = `
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 12px;
     margin: 28px 0 24px;
+  }
+  @media (max-width: 575px) {
+    .hm-summary-grid { grid-template-columns: 1fr 1fr; }
   }
   .hm-summary-card {
     background: var(--c-white);
@@ -252,13 +241,9 @@ const HEATMAP_STYLES = `
     color: var(--c-ink);
     line-height: 1.1;
   }
-  .hm-summary-card__sub {
-    font-size: 11.5px;
-    color: var(--c-ink-3);
-    margin-top: 3px;
-  }
+  .hm-summary-card__sub { font-size: 11.5px; color: var(--c-ink-3); margin-top: 3px; }
 
-  /* ── Main layout: table + chart ── */
+  /* ── Main layout ── */
   .hm-main-grid {
     display: grid;
     grid-template-columns: 1fr 420px;
@@ -267,7 +252,7 @@ const HEATMAP_STYLES = `
   }
   @media (max-width: 1100px) { .hm-main-grid { grid-template-columns: 1fr; } }
 
-  /* ── Table panel ── */
+  /* ── Panel ── */
   .hm-panel {
     background: var(--c-white);
     border: 1px solid var(--c-rule);
@@ -278,7 +263,7 @@ const HEATMAP_STYLES = `
   .hm-panel__head {
     padding: 16px 20px;
     border-bottom: 1px solid var(--c-rule);
-    background: var(--c-surface);
+    background: var(--c-ink);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -289,23 +274,24 @@ const HEATMAP_STYLES = `
     font-family: var(--font-display);
     font-size: 16px;
     font-weight: 400;
-    color: var(--c-ink);
+    color: #fff;
   }
   .hm-panel__count {
     font-size: 12px;
-    color: var(--c-ink-3);
-    background: var(--c-white);
-    border: 1px solid var(--c-rule);
+    color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 20px;
     padding: 3px 10px;
   }
 
-  /* ── Heatmap table ── */
-  .hm-table-wrap { overflow-x: auto; }
+  /* ── Table ── */
+  .hm-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .hm-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
+    min-width: 580px;
   }
   .hm-table thead th {
     background: var(--c-surface);
@@ -334,76 +320,39 @@ const HEATMAP_STYLES = `
     font-size: 9px;
     vertical-align: middle;
   }
-  .hm-sort-icon.active { opacity: 1; }
+  .hm-sort-icon.active { opacity: 1; color: var(--c-accent); }
 
   .hm-table tbody tr {
     border-bottom: 1px solid var(--c-rule);
     transition: background 0.14s;
   }
   .hm-table tbody tr:last-child { border-bottom: none; }
-  .hm-table tbody tr:hover td { background: rgba(26,23,21,0.025) !important; }
+  .hm-table tbody tr:hover td { background: rgba(37,32,96,0.025) !important; }
+  .hm-table td { padding: 12px 16px; vertical-align: middle; white-space: nowrap; }
 
-  .hm-table td {
-    padding: 12px 16px;
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-
-  /* area name cell */
-  .hm-area-cell {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-width: 140px;
-  }
+  .hm-area-cell { display: flex; align-items: center; gap: 9px; min-width: 140px; }
   .hm-area-rank {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--c-surface);
-    border: 1px solid var(--c-rule);
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--c-surface); border: 1px solid var(--c-rule);
     display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; color: var(--c-ink-3);
-    flex-shrink: 0;
+    font-size: 10px; font-weight: 700; color: var(--c-ink-3); flex-shrink: 0;
   }
   .hm-area-rank.top { background: var(--c-ink); border-color: var(--c-ink); color: #fff; }
-  .hm-area-name {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--c-ink);
-  }
+  .hm-area-name { font-size: 13.5px; font-weight: 600; color: var(--c-ink); }
 
-  /* count badge */
   .hm-count-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 28px;
-    height: 22px;
-    padding: 0 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 22px; padding: 0 7px;
     border-radius: 11px;
-    background: var(--c-surface);
-    border: 1px solid var(--c-rule);
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--c-ink-2);
+    background: var(--c-surface); border: 1px solid var(--c-rule);
+    font-size: 11px; font-weight: 700; color: var(--c-ink-2);
   }
 
-  /* type pills in table */
-  .hm-type-pills {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    max-width: 140px;
-  }
+  .hm-type-pills { display: flex; gap: 4px; flex-wrap: wrap; max-width: 140px; }
   .hm-type-pill {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 6px;
-    background: var(--c-surface);
-    border: 1px solid var(--c-rule);
-    color: var(--c-ink-3);
-    white-space: nowrap;
+    font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 6px; background: var(--c-surface);
+    border: 1px solid var(--c-rule); color: var(--c-ink-3); white-space: nowrap;
   }
 
   /* ── Chart panel ── */
@@ -417,52 +366,23 @@ const HEATMAP_STYLES = `
     top: 20px;
   }
   .hm-chart-inner { padding: 20px; }
-  .hm-chart-title {
-    font-family: var(--font-display);
-    font-size: 16px;
-    color: var(--c-ink);
-    margin-bottom: 4px;
-  }
-  .hm-chart-sub {
-    font-size: 12px;
-    color: var(--c-ink-3);
-    margin-bottom: 20px;
-  }
+  .hm-chart-title { font-family: var(--font-display); font-size: 16px; color: var(--c-ink); margin-bottom: 4px; }
+  .hm-chart-sub { font-size: 12px; color: var(--c-ink-3); margin-bottom: 20px; }
 
-  /* Bar chart */
   .hm-bar-list { display: flex; flex-direction: column; gap: 9px; }
   .hm-bar-row { display: flex; flex-direction: column; gap: 3px; }
-  .hm-bar-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
-  }
+  .hm-bar-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .hm-bar-area {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--c-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 160px;
+    font-size: 12.5px; font-weight: 600; color: var(--c-ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;
   }
-  .hm-bar-val {
-    font-size: 12px;
-    color: var(--c-ink-3);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
+  .hm-bar-val { font-size: 12px; color: var(--c-ink-3); white-space: nowrap; flex-shrink: 0; }
   .hm-bar-track {
-    height: 8px;
-    background: var(--c-surface);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--c-rule);
+    height: 8px; background: var(--c-surface);
+    border-radius: 4px; overflow: hidden; border: 1px solid var(--c-rule);
   }
   .hm-bar-fill {
-    height: 100%;
-    border-radius: 4px;
+    height: 100%; border-radius: 4px;
     transition: width 0.7s cubic-bezier(0.16,1,0.3,1);
     width: 0;
   }
@@ -470,40 +390,31 @@ const HEATMAP_STYLES = `
 
   /* ── Legend ── */
   .hm-legend {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    display: flex; gap: 10px; flex-wrap: wrap;
     padding: 14px 20px;
     border-top: 1px solid var(--c-rule);
     background: var(--c-surface);
   }
-  .hm-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11.5px;
-    color: var(--c-ink-3);
-  }
-  .hm-legend-dot {
-    width: 10px; height: 10px;
-    border-radius: 3px;
-    flex-shrink: 0;
-  }
+  .hm-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--c-ink-3); }
+  .hm-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
   /* ── Empty / Loading ── */
-  .hm-empty {
-    padding: 60px 20px;
-    text-align: center;
-    color: var(--c-ink-3);
-  }
+  .hm-empty { padding: 60px 20px; text-align: center; color: var(--c-ink-3); }
   .hm-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
-  .hm-empty-title {
-    font-family: var(--font-display);
-    font-size: 18px;
-    color: var(--c-ink);
-    margin-bottom: 6px;
-  }
+  .hm-empty-title { font-family: var(--font-display); font-size: 18px; color: var(--c-ink); margin-bottom: 6px; }
   .hm-empty-sub { font-size: 13.5px; color: var(--c-ink-3); }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 767px) {
+    .hm-topbar__title { font-size: 18px; }
+    .hm-summary-card__value { font-size: 18px; }
+    .hm-chart-panel { position: static; }
+    .hm-filters { padding-bottom: 8px; }
+  }
+  @media (max-width: 480px) {
+    .hm-summary-grid { grid-template-columns: 1fr; }
+    .hm-topbar__inner { flex-direction: column; }
+  }
 `;
 
 function injectHeatmapStyles() {
@@ -518,16 +429,14 @@ function injectHeatmapStyles() {
   }
 }
 
-// ─── Bar color by rank ────────────────────────────────────────
 function barColor(ratio: number): string {
-  if (ratio < 0.33) return "#2d7a4f";
-  if (ratio < 0.55) return "#5aab78";
-  if (ratio < 0.7) return "#c9a000";
-  if (ratio < 0.85) return "#d97706";
-  return "#c8402a";
+  if (ratio < 0.33) return "#1C94A4";
+  if (ratio < 0.55) return "#17798a";
+  if (ratio < 0.7) return "#3d3880";
+  if (ratio < 0.85) return "#2d2870";
+  return "#252060";
 }
 
-// ─── Sort icon ────────────────────────────────────────────────
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   return (
     <span className={`hm-sort-icon${active ? " active" : ""}`}>
@@ -539,6 +448,9 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
 // ─── Main Component ───────────────────────────────────────────
 const PriceHeatmap = () => {
   injectHeatmapStyles();
+
+  const [loginModal, setLoginModal] = useState(false);
+  const { session } = useClientSession();
 
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -568,7 +480,6 @@ const PriceHeatmap = () => {
     })();
   }, []);
 
-  // ── Filter ───────────────────────────────────────────────────
   const filtered = useMemo(() => {
     return allProperties.filter((p) => {
       if (typeFilter !== "All" && p.property_type !== typeFilter) return false;
@@ -577,7 +488,6 @@ const PriceHeatmap = () => {
     });
   }, [allProperties, typeFilter, statusFilter]);
 
-  // ── Aggregate by area ─────────────────────────────────────────
   const areaStats = useMemo<AreaStat[]>(() => {
     const map = new Map<string, Property[]>();
     filtered.forEach((p) => {
@@ -593,7 +503,6 @@ const PriceHeatmap = () => {
       const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
       const min = Math.min(...prices);
       const max = Math.max(...prices);
-
       const sqftList = props
         .map((p) => p.sqft)
         .filter((v): v is number => v != null && v > 0);
@@ -604,11 +513,9 @@ const PriceHeatmap = () => {
       const avgPricePerRopani = avgSqft
         ? (avg / avgSqft) * SQFT_PER_ROPANI
         : null;
-
       const types = Array.from(
         new Set(props.map((p) => p.property_type).filter(Boolean)),
       );
-
       stats.push({
         area,
         count: props.length,
@@ -623,7 +530,6 @@ const PriceHeatmap = () => {
     return stats;
   }, [filtered]);
 
-  // ── Sort ──────────────────────────────────────────────────────
   const sorted = useMemo(() => {
     return [...areaStats].sort((a, b) => {
       let va: number | string = a[sortKey] ?? 0;
@@ -638,14 +544,12 @@ const PriceHeatmap = () => {
     });
   }, [areaStats, sortKey, sortDir]);
 
-  // ── Chart data (always sorted by avgPrice desc) ───────────────
-  const chartData = useMemo(() => {
-    return [...areaStats].sort((a, b) => b.avgPrice - a.avgPrice).slice(0, 12);
-  }, [areaStats]);
-
+  const chartData = useMemo(
+    () => [...areaStats].sort((a, b) => b.avgPrice - a.avgPrice).slice(0, 12),
+    [areaStats],
+  );
   const chartMax = chartData[0]?.avgPrice || 1;
 
-  // ── Summary stats ─────────────────────────────────────────────
   const totalListings = filtered.length;
   const allPrices = filtered.map((p) => p.price).filter((v) => v > 0);
   const overallAvg =
@@ -669,9 +573,9 @@ const PriceHeatmap = () => {
   return (
     <Wrapper>
       <SEO pageTitle="Price Heatmap — Kathmandu Areas" />
-      <NavMenu />
+      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
+      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
-      {/* ── Banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">
         <div
           className="bg-wrapper overflow-hidden position-relative z-1"
@@ -702,7 +606,6 @@ const PriceHeatmap = () => {
         </div>
       </div>
 
-      {/* ── Main content ── */}
       <div className="hm-root hm-page">
         {/* Top bar */}
         <div className="hm-topbar">
@@ -722,7 +625,6 @@ const PriceHeatmap = () => {
               </div>
             </div>
 
-            {/* Filters */}
             <div className="hm-filters">
               <span className="hm-filter-label">Type</span>
               {PROPERTY_TYPES.map((t) => (
@@ -751,7 +653,6 @@ const PriceHeatmap = () => {
         </div>
 
         <div className="container" style={{ paddingTop: "28px" }}>
-          {/* Loading */}
           {loading && (
             <div className="hm-empty">
               <div
@@ -760,7 +661,7 @@ const PriceHeatmap = () => {
                 style={{
                   width: "2rem",
                   height: "2rem",
-                  color: "var(--c-accent)",
+                  color: "#1C94A4",
                   borderWidth: "2px",
                 }}
               />
@@ -776,7 +677,6 @@ const PriceHeatmap = () => {
             </div>
           )}
 
-          {/* Error */}
           {!loading && error && (
             <div className="hm-empty">
               <div className="hm-empty-icon">⚠️</div>
@@ -785,7 +685,6 @@ const PriceHeatmap = () => {
             </div>
           )}
 
-          {/* Content */}
           {!loading && !error && (
             <>
               {/* Summary cards */}
@@ -824,14 +723,14 @@ const PriceHeatmap = () => {
                 </div>
                 <div
                   className="hm-summary-card"
-                  style={{ borderLeft: "3px solid var(--c-better)" }}
+                  style={{ borderLeft: "3px solid #1C94A4" }}
                 >
                   <span className="hm-summary-card__label">
                     Most affordable
                   </span>
                   <div
                     className="hm-summary-card__value"
-                    style={{ fontSize: "15px", color: "var(--c-better)" }}
+                    style={{ fontSize: "15px", color: "#1C94A4" }}
                   >
                     {sorted.length > 0
                       ? [...sorted].sort((a, b) => a.avgPrice - b.avgPrice)[0]
@@ -842,12 +741,12 @@ const PriceHeatmap = () => {
                 </div>
                 <div
                   className="hm-summary-card"
-                  style={{ borderLeft: "3px solid var(--c-accent)" }}
+                  style={{ borderLeft: "3px solid #252060" }}
                 >
                   <span className="hm-summary-card__label">Most premium</span>
                   <div
                     className="hm-summary-card__value"
-                    style={{ fontSize: "15px", color: "var(--c-accent)" }}
+                    style={{ fontSize: "15px", color: "#252060" }}
                   >
                     {sorted.length > 0
                       ? [...sorted].sort((a, b) => b.avgPrice - a.avgPrice)[0]
@@ -868,7 +767,7 @@ const PriceHeatmap = () => {
                 </div>
               ) : (
                 <div className="hm-main-grid">
-                  {/* ── Heatmap Table ── */}
+                  {/* Heatmap Table */}
                   <div className="hm-panel">
                     <div className="hm-panel__head">
                       <span className="hm-panel__title">
@@ -979,10 +878,8 @@ const PriceHeatmap = () => {
                                   ),
                                 )
                               : null;
-
                             return (
                               <tr key={stat.area}>
-                                {/* Area */}
                                 <td>
                                   <div className="hm-area-cell">
                                     <span
@@ -995,15 +892,11 @@ const PriceHeatmap = () => {
                                     </span>
                                   </div>
                                 </td>
-
-                                {/* Count */}
                                 <td>
                                   <span className="hm-count-badge">
                                     {stat.count}
                                   </span>
                                 </td>
-
-                                {/* Avg price — colored */}
                                 <td style={{ background: avgHeat.bg }}>
                                   <span
                                     style={{
@@ -1015,8 +908,6 @@ const PriceHeatmap = () => {
                                     {fmtNPR(stat.avgPrice)}
                                   </span>
                                 </td>
-
-                                {/* Min price */}
                                 <td style={{ background: minHeat.bg }}>
                                   <span
                                     style={{
@@ -1027,8 +918,6 @@ const PriceHeatmap = () => {
                                     {fmtNPR(stat.minPrice)}
                                   </span>
                                 </td>
-
-                                {/* Max price */}
                                 <td style={{ background: maxHeat.bg }}>
                                   <span
                                     style={{
@@ -1039,8 +928,6 @@ const PriceHeatmap = () => {
                                     {fmtNPR(stat.maxPrice)}
                                   </span>
                                 </td>
-
-                                {/* Per Ropani */}
                                 <td
                                   style={
                                     ropaniHeat
@@ -1071,8 +958,6 @@ const PriceHeatmap = () => {
                                     </span>
                                   )}
                                 </td>
-
-                                {/* Types */}
                                 <td>
                                   <div className="hm-type-pills">
                                     {stat.types.slice(0, 3).map((t) => (
@@ -1094,26 +979,25 @@ const PriceHeatmap = () => {
                       </table>
                     </div>
 
-                    {/* Legend */}
                     <div className="hm-legend">
                       <span className="hm-legend-item">
                         <span
                           className="hm-legend-dot"
-                          style={{ background: "rgba(45,122,79,0.5)" }}
+                          style={{ background: "rgba(28,148,164,0.5)" }}
                         />
                         Affordable
                       </span>
                       <span className="hm-legend-item">
                         <span
                           className="hm-legend-dot"
-                          style={{ background: "rgba(201,160,0,0.5)" }}
+                          style={{ background: "rgba(61,56,128,0.4)" }}
                         />
                         Mid-range
                       </span>
                       <span className="hm-legend-item">
                         <span
                           className="hm-legend-dot"
-                          style={{ background: "rgba(200,64,42,0.5)" }}
+                          style={{ background: "rgba(37,32,96,0.7)" }}
                         />
                         Premium
                       </span>
@@ -1129,14 +1013,13 @@ const PriceHeatmap = () => {
                     </div>
                   </div>
 
-                  {/* ── Bar Chart ── */}
+                  {/* Bar Chart */}
                   <div className="hm-chart-panel">
                     <div className="hm-chart-inner">
                       <div className="hm-chart-title">Avg price by area</div>
                       <div className="hm-chart-sub">
                         Top {chartData.length} areas · sorted highest → lowest
                       </div>
-
                       <div className="hm-bar-list">
                         {chartData.map((stat, idx) => {
                           const ratio = stat.avgPrice / chartMax;
@@ -1168,8 +1051,6 @@ const PriceHeatmap = () => {
                         })}
                       </div>
                     </div>
-
-                    {/* Chart legend */}
                     <div
                       className="hm-legend"
                       style={{ justifyContent: "center" }}
@@ -1177,21 +1058,21 @@ const PriceHeatmap = () => {
                       <span className="hm-legend-item">
                         <span
                           className="hm-legend-dot"
-                          style={{ background: "#2d7a4f" }}
+                          style={{ background: "#1C94A4" }}
                         />{" "}
                         Low
                       </span>
                       <span className="hm-legend-item">
                         <span
                           className="hm-legend-dot"
-                          style={{ background: "#c9a000" }}
+                          style={{ background: "#3d3880" }}
                         />{" "}
                         Mid
                       </span>
                       <span className="hm-legend-item">
                         <span
                           className="hm-legend-dot"
-                          style={{ background: "#c8402a" }}
+                          style={{ background: "#252060" }}
                         />{" "}
                         High
                       </span>

@@ -2,6 +2,7 @@
 //  SmartFinder.tsx — AI-style Smart Property Finder v2
 //  Advanced NLP scoring engine + epic AI loading animation
 //  Design: DM Serif Display + DM Sans, matches site tokens
+//  Colors: #252060 (navy) + #1C94A4 (teal) — FutureWork brand
 // ============================================================
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -12,8 +13,9 @@ import SEO from "../components/SEO";
 import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
-import FutureHeader from "../layouts/headers/FutureHeader";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
+import LoginModal from "../modals/LoginModal";
+import { useClientSession } from "./userclientsession";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -605,9 +607,9 @@ function fmtNPR(v: number): string {
 function statusColor(status: string): string {
   switch (status) {
     case "For Sale":
-      return "rgba(200,64,42,0.92)";
+      return "rgba(37,32,96,0.92)"; // navy
     case "For Rent":
-      return "rgba(33,130,215,0.92)";
+      return "rgba(28,148,164,0.92)"; // teal
     case "Sold":
       return "rgba(56,161,105,0.92)";
     default:
@@ -616,8 +618,8 @@ function statusColor(status: string): string {
 }
 
 function scoreColor(score: number): { bg: string; text: string; ring: string } {
-  if (score >= 70) return { bg: "#edf7f1", text: "#2d7a4f", ring: "#b2e0c8" };
-  if (score >= 45) return { bg: "#fef9ec", text: "#7a5f00", ring: "#fde68a" };
+  if (score >= 70) return { bg: "#e8f7f9", text: "#1C94A4", ring: "#a8dde4" }; // teal tint
+  if (score >= 45) return { bg: "#eceaf5", text: "#252060", ring: "#b5b0d8" }; // navy tint
   return { bg: "#faf9f7", text: "#8a8785", ring: "#ede9e4" };
 }
 
@@ -634,6 +636,12 @@ const SUGGESTIONS = [
 ];
 
 // ─── All Styles ───────────────────────────────────────────────
+// Color mapping:
+//   --c-accent  : #1C94A4  (teal  — was red   #c8402a)
+//   --c-navy    : #252060  (navy  — was blue   #1d4ed8)
+//   --c-better  : #2d7a4f  (green — unchanged)
+//   Token blues  → navy tints  (#eceaf5 bg, #b5b0d8 ring, #252060 text)
+//   Token reds   → teal tints  (#e8f7f9 bg, #a8dde4 ring, #1C94A4 text)
 const SF_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
@@ -646,7 +654,8 @@ const SF_STYLES = `
     --c-rule:       #ede9e4;
     --c-surface:    #faf9f7;
     --c-white:      #ffffff;
-    --c-accent:     #c8402a;
+    --c-accent:     #1C94A4;
+    --c-navy:       #252060;
     --c-better:     #2d7a4f;
     --radius-card:  16px;
     --radius-sm:    10px;
@@ -720,7 +729,7 @@ const SF_STYLES = `
     transition: box-shadow 0.2s, border-color 0.2s;
   }
   .sf-input-wrap:focus-within {
-    box-shadow: 0 6px 32px rgba(26,23,21,0.15);
+    box-shadow: 0 6px 32px rgba(28,148,164,0.18);
     border-color: var(--c-accent);
   }
   .sf-input-icon {
@@ -756,7 +765,7 @@ const SF_STYLES = `
     padding: 0 24px;
     height: 100%;
     border: none;
-    background: var(--c-ink);
+    background: var(--c-navy);
     color: #fff;
     font-size: 14px;
     font-weight: 700;
@@ -801,9 +810,9 @@ const SF_STYLES = `
     white-space: nowrap;
   }
   .sf-chip:hover {
-    border-color: var(--c-ink);
+    border-color: var(--c-navy);
     background: var(--c-white);
-    color: var(--c-ink);
+    color: var(--c-navy);
   }
 
   /* ── Intent tokens ── */
@@ -838,11 +847,16 @@ const SF_STYLES = `
     from { opacity: 0; transform: translateY(4px) scale(0.95); }
     to   { opacity: 1; transform: none; }
   }
-  .sf-token--blue   { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-  .sf-token--green  { background: #edf7f1; border-color: #b2e0c8; color: #2d7a4f; }
+  /* navy tints (was blue) */
+  .sf-token--blue   { background: #eceaf5; border-color: #b5b0d8; color: #252060; }
+  /* teal tints (was green) */
+  .sf-token--green  { background: #e8f7f9; border-color: #a8dde4; color: #1C94A4; }
+  /* amber — unchanged */
   .sf-token--amber  { background: #fef9ec; border-color: #fde68a; color: #7a5f00; }
-  .sf-token--red    { background: #fdf0ee; border-color: #f5c4bd; color: var(--c-accent); }
-  .sf-token--purple { background: #f5f3ff; border-color: #ddd6fe; color: #5b21b6; }
+  /* teal tints (was red) */
+  .sf-token--red    { background: #e8f7f9; border-color: #a8dde4; color: #1C94A4; }
+  /* navy tints (was purple) */
+  .sf-token--purple { background: #eceaf5; border-color: #b5b0d8; color: #252060; }
   .sf-token--gray   { background: var(--c-surface); border-color: var(--c-rule); color: var(--c-ink-2); }
 
   /* ══════════════════════════════════════════
@@ -884,13 +898,13 @@ const SF_STYLES = `
   }
   .sf-ai-orb--1 {
     width: 500px; height: 500px;
-    background: radial-gradient(circle, #c8402a, transparent);
+    background: radial-gradient(circle, #252060, transparent);
     top: -100px; left: -100px;
     animation-duration: 9s;
   }
   .sf-ai-orb--2 {
     width: 400px; height: 400px;
-    background: radial-gradient(circle, #1d4ed8, transparent);
+    background: radial-gradient(circle, #1C94A4, transparent);
     bottom: -80px; right: -60px;
     animation-duration: 11s;
     animation-direction: alternate-reverse;
@@ -943,7 +957,7 @@ const SF_STYLES = `
   .sf-ai-brain {
     width: 72px; height: 72px;
     border-radius: 20px;
-    background: var(--c-ink);
+    background: var(--c-navy);
     display: flex; align-items: center; justify-content: center;
     font-size: 32px;
     margin: 0 auto 24px;
@@ -951,8 +965,8 @@ const SF_STYLES = `
     animation: sf-brain-pulse 2s ease-in-out infinite;
   }
   @keyframes sf-brain-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(200,64,42,0.3); }
-    50%       { box-shadow: 0 0 0 12px rgba(200,64,42,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(28,148,164,0.35); }
+    50%       { box-shadow: 0 0 0 12px rgba(28,148,164,0); }
   }
 
   /* Rings around brain */
@@ -961,7 +975,7 @@ const SF_STYLES = `
     position: absolute;
     inset: -8px;
     border-radius: 28px;
-    border: 2px solid rgba(200,64,42,0.2);
+    border: 2px solid rgba(28,148,164,0.25);
     animation: sf-ring-expand 2s ease-in-out infinite;
   }
   @keyframes sf-ring-expand {
@@ -1025,15 +1039,15 @@ const SF_STYLES = `
   .sf-ai-step.active {
     opacity: 1;
     transform: none;
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    box-shadow: 0 2px 8px rgba(29,78,216,0.08);
+    background: #eceaf5;
+    border-color: #b5b0d8;
+    box-shadow: 0 2px 8px rgba(37,32,96,0.10);
   }
   .sf-ai-step.done {
     opacity: 0.7;
     transform: none;
-    background: #edf7f1;
-    border-color: #b2e0c8;
+    background: #e8f7f9;
+    border-color: #a8dde4;
   }
   .sf-ai-step__icon {
     font-size: 20px;
@@ -1056,21 +1070,21 @@ const SF_STYLES = `
     font-size: 14px;
     transition: all 0.3s;
   }
-  .sf-ai-step.done .sf-ai-step__check::after { content: '✓'; color: var(--c-better); font-weight: 700; }
+  .sf-ai-step.done .sf-ai-step__check::after { content: '✓'; color: #1C94A4; font-weight: 700; }
   .sf-ai-step.active .sf-ai-step__check::after { content: ''; }
 
-  /* Spinner for active step */
+  /* Spinner for active step — teal */
   .sf-ai-spinner {
     width: 16px; height: 16px;
-    border: 2px solid #bfdbfe;
-    border-top-color: #1d4ed8;
+    border: 2px solid #a8dde4;
+    border-top-color: #1C94A4;
     border-radius: 50%;
     animation: sf-spin 0.7s linear infinite;
     flex-shrink: 0;
   }
   @keyframes sf-spin { to { transform: rotate(360deg); } }
 
-  /* Progress bar */
+  /* Progress bar — navy → teal gradient */
   .sf-ai-progress-wrap {
     height: 4px;
     background: var(--c-rule);
@@ -1080,7 +1094,7 @@ const SF_STYLES = `
   }
   .sf-ai-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--c-accent), #1d4ed8, var(--c-better));
+    background: linear-gradient(90deg, #252060, #1C94A4, #2d7a4f);
     background-size: 200% 100%;
     border-radius: 4px;
     transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1099,7 +1113,7 @@ const SF_STYLES = `
     letter-spacing: 0.5px;
   }
 
-  /* Particle dots floating around */
+  /* Particle dots — navy + teal + green */
   .sf-ai-particles {
     position: absolute;
     inset: 0;
@@ -1165,8 +1179,8 @@ const SF_STYLES = `
     transition: all 0.16s;
   }
   .sf-sort-btn.active {
-    background: var(--c-ink);
-    border-color: var(--c-ink);
+    background: var(--c-navy);
+    border-color: var(--c-navy);
     color: #fff;
   }
 
@@ -1252,7 +1266,7 @@ const SF_STYLES = `
     margin-bottom: 12px;
   }
 
-  /* Match reasons */
+  /* Match reasons — teal */
   .sf-reasons {
     display: flex;
     flex-wrap: wrap;
@@ -1264,7 +1278,7 @@ const SF_STYLES = `
     font-weight: 600;
     padding: 2px 8px;
     border-radius: 6px;
-    background: var(--c-better);
+    background: var(--c-accent);
     color: #fff;
     opacity: 0.9;
   }
@@ -1300,7 +1314,7 @@ const SF_STYLES = `
   }
   .sf-card__arrow {
     width: 36px; height: 36px; border-radius: 50%;
-    background: var(--c-ink); color: #fff;
+    background: var(--c-navy); color: #fff;
     display: flex; align-items: center; justify-content: center;
     text-decoration: none; font-size: 13px;
     transition: background 0.18s, transform 0.22s;
@@ -1371,7 +1385,7 @@ const SF_STYLES = `
   }
   .sf-feat-pill:hover {
     border-color: var(--c-accent);
-    box-shadow: 0 4px 16px rgba(200,64,42,0.1);
+    box-shadow: 0 4px 16px rgba(28,148,164,0.12);
     transform: translateY(-2px);
   }
   .sf-feat-pill span:first-child { font-size: 1.6rem; }
@@ -1449,12 +1463,12 @@ function AILoadingOverlay({
     return () => timers.forEach(clearTimeout);
   }, [onDone]);
 
-  // Particle positions
+  // Particle positions — navy + teal + green
   const particles = Array.from({ length: 12 }, (_, i) => ({
     left: `${8 + ((i * 7.5) % 85)}%`,
     bottom: `${10 + ((i * 11) % 30)}%`,
     delay: `${(i * 0.25) % 3}s`,
-    color: i % 3 === 0 ? "#c8402a" : i % 3 === 1 ? "#1d4ed8" : "#2d7a4f",
+    color: i % 3 === 0 ? "#252060" : i % 3 === 1 ? "#1C94A4" : "#2d7a4f",
   }));
 
   return (
@@ -1590,6 +1604,8 @@ function IntentTokens({ intent }: { intent: ParsedIntent }) {
 
 // ─── Main Component ───────────────────────────────────────────
 const SmartFinder = () => {
+  const [loginModal, setLoginModal] = useState(false);
+  const { session } = useClientSession();
   injectSFStyles();
 
   const [allProperties, setAllProperties] = useState<Property[]>([]);
@@ -1673,7 +1689,8 @@ const SmartFinder = () => {
   return (
     <Wrapper>
       <SEO pageTitle="Smart Property Finder" />
-      <NavMenu />
+      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
+      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
       {/* AI Loading Overlay */}
       {showAILoader && (

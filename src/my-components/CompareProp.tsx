@@ -1,14 +1,6 @@
 // ============================================================
 //  PropertyCompare.tsx — Advanced 2-property comparison page
-//  Design: DM Serif Display + DM Sans, consistent with
-//  BuyListing / BuyDetails design tokens
-//  Features:
-//    • Search & select any 2 properties from Supabase
-//    • Side-by-side diff highlighting (better / worse / equal)
-//    • URL state — shareable compare links (?a=ID&b=ID)
-//    • Sticky comparison header
-//    • Swap, remove, and replace slots
-//    • Section-by-section row grouping with collapsible groups
+//  Theme: FutureWork (#252060 navy + #1C94A4 teal)
 // ============================================================
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -17,10 +9,11 @@ import SEO from "../components/SEO";
 import Brand from "../components/homes/home-four/Brand";
 import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
-import FutureHeader from "../layouts/headers/FutureHeader";
 import { Link, useSearchParams } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
+import LoginModal from "../modals/LoginModal";
+import { useClientSession } from "./userclientsession";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
@@ -60,28 +53,27 @@ const COMPARE_STYLES = `
   :root {
     --font-display: 'DM Serif Display', Georgia, serif;
     --font-body:    'DM Sans', system-ui, sans-serif;
-    --c-ink:        #1a1715;
-    --c-ink-2:      #4a4845;
-    --c-ink-3:      #8a8785;
-    --c-rule:       #ede9e4;
-    --c-surface:    #faf9f7;
+    --c-ink:        #252060;
+    --c-ink-2:      #3d3880;
+    --c-ink-3:      #8a88a8;
+    --c-rule:       #e8e7f0;
+    --c-surface:    #f5f5fb;
     --c-white:      #ffffff;
-    --c-accent:     #c8402a;
-    --c-accent-h:   #a83320;
-    --c-better:     #2d7a4f;
-    --c-better-bg:  #edf7f1;
-    --c-worse:      #b93a2a;
-    --c-worse-bg:   #fdf0ee;
-    --c-equal:      #8a8785;
+    --c-accent:     #1C94A4;
+    --c-accent-h:   #157a88;
+    --c-better:     #1C94A4;
+    --c-better-bg:  #e8f7f9;
+    --c-worse:      #252060;
+    --c-worse-bg:   #eeedf8;
+    --c-equal:      #8a88a8;
     --radius-card:  16px;
     --radius-sm:    10px;
-    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
-    --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
+    --shadow-card:  0 1px 3px rgba(37,32,96,0.06), 0 4px 16px rgba(37,32,96,0.08);
+    --shadow-hover: 0 4px 8px rgba(37,32,96,0.10), 0 16px 40px rgba(37,32,96,0.14);
   }
 
   .cmp-root, .cmp-root * { font-family: var(--font-body); box-sizing: border-box; }
 
-  /* ── Page layout ── */
   .cmp-page {
     min-height: 100vh;
     background: var(--c-surface);
@@ -93,7 +85,6 @@ const COMPARE_STYLES = `
     background: var(--c-white);
     border-bottom: 1px solid var(--c-rule);
     padding: 18px 0;
-    margin-bottom: 0;
   }
   .cmp-topbar__inner {
     display: flex;
@@ -102,307 +93,169 @@ const COMPARE_STYLES = `
     gap: 16px;
     flex-wrap: wrap;
   }
-  .cmp-topbar__left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .cmp-topbar__left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .cmp-back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--c-ink-3);
-    text-decoration: none;
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--c-rule);
-    background: var(--c-surface);
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--c-ink-3);
+    text-decoration: none; padding: 6px 12px; border-radius: 20px;
+    border: 1px solid var(--c-rule); background: var(--c-surface);
     transition: all 0.18s;
   }
   .cmp-back-link:hover { border-color: var(--c-ink); color: var(--c-ink); }
   .cmp-topbar__title {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--c-ink);
-    letter-spacing: -0.2px;
+    font-family: var(--font-display); font-size: 20px;
+    font-weight: 400; color: var(--c-ink); letter-spacing: -0.2px;
   }
-  .cmp-topbar__subtitle {
-    font-size: 12.5px;
-    color: var(--c-ink-3);
-    margin-top: 1px;
-  }
+  .cmp-topbar__subtitle { font-size: 12.5px; color: var(--c-ink-3); margin-top: 1px; }
   .cmp-share-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--c-ink-2);
-    padding: 8px 18px;
-    border-radius: 20px;
-    border: 1.5px solid var(--c-rule);
-    background: var(--c-white);
-    cursor: pointer;
-    transition: all 0.18s;
-    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--c-ink-2);
+    padding: 8px 18px; border-radius: 20px;
+    border: 1.5px solid var(--c-rule); background: var(--c-white);
+    cursor: pointer; transition: all 0.18s;
   }
   .cmp-share-btn:hover { border-color: var(--c-ink); color: var(--c-ink); }
   .cmp-share-btn.copied { border-color: var(--c-better); color: var(--c-better); }
 
   /* ── Legend ── */
   .cmp-legend {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 10px 0 14px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 18px;
+    padding: 10px 0 14px; flex-wrap: wrap;
   }
-  .cmp-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--c-ink-3);
-    font-weight: 500;
-  }
-  .cmp-legend-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
+  .cmp-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c-ink-3); font-weight: 500; }
+  .cmp-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
   /* ── Sticky header ── */
   .cmp-sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
     background: var(--c-white);
     border-bottom: 1px solid var(--c-rule);
-    box-shadow: 0 2px 12px rgba(26,23,21,0.07);
+    box-shadow: 0 2px 12px rgba(37,32,96,0.08);
   }
   .cmp-sticky-header__inner {
-    display: grid;
-    grid-template-columns: 220px 1fr 1fr;
+    display: grid; grid-template-columns: 220px 1fr 1fr;
     align-items: stretch;
   }
   .cmp-sticky-header__label {
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--c-ink-3);
-    border-right: 1px solid var(--c-rule);
-    background: var(--c-surface);
+    padding: 14px 20px; display: flex; align-items: center;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--c-ink-3);
+    border-right: 1px solid var(--c-rule); background: var(--c-surface);
   }
   .cmp-sticky-prop {
-    padding: 10px 16px;
-    border-right: 1px solid var(--c-rule);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
+    padding: 10px 16px; border-right: 1px solid var(--c-rule);
+    display: flex; align-items: center; gap: 10px; min-width: 0;
   }
   .cmp-sticky-prop:last-child { border-right: none; }
   .cmp-sticky-prop__thumb {
-    width: 44px; height: 36px;
-    border-radius: 7px;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--c-surface);
+    width: 44px; height: 36px; border-radius: 7px;
+    overflow: hidden; flex-shrink: 0; background: var(--c-surface);
   }
   .cmp-sticky-prop__thumb img { width: 100%; height: 100%; object-fit: cover; }
   .cmp-sticky-prop__name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--c-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-    flex: 1;
+    font-size: 13px; font-weight: 600; color: var(--c-ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0; flex: 1;
   }
   .cmp-sticky-prop__price {
-    font-family: var(--font-display);
-    font-size: 14px;
-    color: var(--c-ink-2);
-    white-space: nowrap;
-    flex-shrink: 0;
+    font-family: var(--font-display); font-size: 14px;
+    color: var(--c-ink-2); white-space: nowrap; flex-shrink: 0;
   }
 
   /* ── Cards header ── */
   .cmp-header-grid {
-    display: grid;
-    grid-template-columns: 220px 1fr 1fr;
-    gap: 0;
-    align-items: stretch;
-    border-bottom: 1px solid var(--c-rule);
+    display: grid; grid-template-columns: 220px 1fr 1fr;
+    gap: 0; align-items: stretch; border-bottom: 1px solid var(--c-rule);
   }
   .cmp-header-spacer {
-    background: var(--c-surface);
-    border-right: 1px solid var(--c-rule);
-    padding: 24px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: space-between;
+    background: var(--c-ink); border-right: 1px solid rgba(255,255,255,0.08);
+    padding: 24px 20px; display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: space-between;
   }
   .cmp-spacer-eyebrow {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--c-ink-3);
-    margin-bottom: 6px;
-    display: block;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+    margin-bottom: 6px; display: block;
   }
   .cmp-spacer-title {
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--c-ink);
-    line-height: 1.3;
-    margin-bottom: 10px;
+    font-family: var(--font-display); font-size: 18px;
+    font-weight: 400; color: #fff; line-height: 1.3; margin-bottom: 10px;
   }
-  .cmp-spacer-desc {
-    font-size: 12px;
-    color: var(--c-ink-3);
-    line-height: 1.6;
-  }
+  .cmp-spacer-desc { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.6; }
   .cmp-prop-header {
-    background: var(--c-white);
-    border-right: 1px solid var(--c-rule);
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    position: relative;
+    background: var(--c-white); border-right: 1px solid var(--c-rule);
+    padding: 0; display: flex; flex-direction: column; position: relative;
   }
   .cmp-prop-header:last-child { border-right: none; }
 
-  /* property image */
-  .cmp-prop-img {
-    position: relative;
-    overflow: hidden;
-    height: 200px;
-  }
-  .cmp-prop-img img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.4s ease;
-  }
+  .cmp-prop-img { position: relative; overflow: hidden; height: 200px; }
+  .cmp-prop-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
   .cmp-prop-header:hover .cmp-prop-img img { transform: scale(1.04); }
-  .cmp-prop-img__placeholder {
-    width: 100%; height: 200px;
-    background: var(--c-surface);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 3rem;
-  }
+  .cmp-prop-img__placeholder { width: 100%; height: 200px; background: var(--c-surface); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
 
-  /* status badge */
   .cmp-status-badge {
     position: absolute; top: 10px; left: 10px;
     padding: 3px 10px; border-radius: 20px;
     font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
     color: #fff; z-index: 2;
   }
-
-  /* remove button */
   .cmp-remove-btn {
     position: absolute; top: 10px; right: 10px;
     width: 28px; height: 28px; border-radius: 50%;
-    background: rgba(26,23,21,0.55);
-    backdrop-filter: blur(6px);
-    border: none; color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-    z-index: 3;
+    background: rgba(37,32,96,0.55); backdrop-filter: blur(6px);
+    border: none; color: #fff; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; cursor: pointer;
+    transition: background 0.2s, transform 0.2s; z-index: 3;
   }
   .cmp-remove-btn:hover { background: var(--c-accent); transform: scale(1.1); }
 
-  /* header body */
   .cmp-prop-header__body { padding: 16px 18px 14px; flex: 1; }
   .cmp-prop-header__type {
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.9px; text-transform: uppercase;
-    color: var(--c-ink-3); margin-bottom: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.9px;
+    text-transform: uppercase; color: var(--c-ink-3); margin-bottom: 4px;
   }
   .cmp-prop-header__title {
-    font-family: var(--font-display);
-    font-size: 16px; font-weight: 400;
-    color: var(--c-ink); line-height: 1.25;
-    text-decoration: none; display: block;
-    margin-bottom: 5px; transition: color 0.18s;
+    font-family: var(--font-display); font-size: 16px; font-weight: 400;
+    color: var(--c-ink); line-height: 1.25; text-decoration: none;
+    display: block; margin-bottom: 5px; transition: color 0.18s;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .cmp-prop-header__title:hover { color: var(--c-accent); }
   .cmp-prop-header__loc {
     font-size: 12px; color: var(--c-ink-3);
-    display: flex; align-items: center; gap: 3px;
-    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 3px; margin-bottom: 10px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .cmp-prop-header__price {
-    font-family: var(--font-display);
-    font-size: 20px; font-weight: 400;
+    font-family: var(--font-display); font-size: 20px; font-weight: 400;
     color: var(--c-ink); letter-spacing: -0.4px;
   }
-  .cmp-prop-header__price sup {
-    font-family: var(--font-body); font-size: 11px;
-    font-weight: 500; color: var(--c-ink-3);
-    vertical-align: super; margin-right: 1px;
-  }
-  .cmp-prop-header__price sub {
-    font-family: var(--font-body); font-size: 11px;
-    color: var(--c-ink-3);
-  }
+  .cmp-prop-header__price sup { font-family: var(--font-body); font-size: 11px; font-weight: 500; color: var(--c-ink-3); vertical-align: super; margin-right: 1px; }
+  .cmp-prop-header__price sub { font-family: var(--font-body); font-size: 11px; color: var(--c-ink-3); }
 
-  /* footer actions */
   .cmp-prop-header__footer {
     display: flex; align-items: center; gap: 6px;
-    padding: 10px 18px 14px;
-    border-top: 1px solid var(--c-rule);
+    padding: 10px 18px 14px; border-top: 1px solid var(--c-rule);
     background: var(--c-surface);
   }
   .cmp-btn-sm {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 11.5px; font-weight: 600;
-    padding: 5px 12px; border-radius: 8px;
-    text-decoration: none; border: none; cursor: pointer;
-    transition: all 0.18s; font-family: var(--font-body);
+    font-size: 11.5px; font-weight: 600; padding: 5px 12px;
+    border-radius: 8px; text-decoration: none; border: none;
+    cursor: pointer; transition: all 0.18s; font-family: var(--font-body);
   }
   .cmp-btn-sm--outline {
-    border: 1.5px solid var(--c-rule);
-    color: var(--c-ink-2); background: var(--c-white);
+    border: 1.5px solid var(--c-rule); color: var(--c-ink-2); background: var(--c-white);
   }
   .cmp-btn-sm--outline:hover { border-color: var(--c-ink); color: var(--c-ink); }
-  .cmp-btn-sm--fill {
-    background: var(--c-ink); color: #fff; border: 1.5px solid var(--c-ink);
-  }
+  .cmp-btn-sm--fill { background: var(--c-ink); color: #fff; border: 1.5px solid var(--c-ink); }
   .cmp-btn-sm--fill:hover { background: var(--c-accent); border-color: var(--c-accent); }
-  .cmp-swap-btn {
-    margin-left: auto;
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; font-weight: 500; color: var(--c-ink-3);
-    background: none; border: none; cursor: pointer;
-    padding: 4px 0; transition: color 0.18s;
-    font-family: var(--font-body);
-  }
-  .cmp-swap-btn:hover { color: var(--c-ink); }
 
   /* ── Empty slot ── */
   .cmp-empty-slot {
-    background: var(--c-surface);
-    border-right: 1px solid var(--c-rule);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    min-height: 320px; padding: 24px;
+    background: var(--c-surface); border-right: 1px solid var(--c-rule);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 320px; padding: 24px;
     position: relative; gap: 16px;
   }
   .cmp-empty-slot:last-child { border-right: none; }
@@ -412,75 +265,51 @@ const COMPARE_STYLES = `
     display: flex; align-items: center; justify-content: center;
     font-size: 1.5rem; color: var(--c-ink-3);
   }
-  .cmp-empty-slot__text {
-    font-family: var(--font-display); font-size: 17px;
-    color: var(--c-ink-3); text-align: center;
-  }
-  .cmp-empty-slot__sub {
-    font-size: 12.5px; color: var(--c-ink-3);
-    text-align: center; margin-top: -8px;
-  }
+  .cmp-empty-slot__text { font-family: var(--font-display); font-size: 17px; color: var(--c-ink-3); text-align: center; }
+  .cmp-empty-slot__sub { font-size: 12.5px; color: var(--c-ink-3); text-align: center; margin-top: -8px; }
   .cmp-add-btn {
     padding: 10px 22px; border-radius: var(--radius-sm);
     background: var(--c-ink); color: #fff;
-    font-size: 13px; font-weight: 600;
-    font-family: var(--font-body);
-    border: none; cursor: pointer;
-    transition: background 0.2s;
+    font-size: 13px; font-weight: 600; font-family: var(--font-body);
+    border: none; cursor: pointer; transition: background 0.2s;
   }
   .cmp-add-btn:hover { background: var(--c-accent); }
 
   /* ── Section group header ── */
   .cmp-group-header {
-    display: grid;
-    grid-template-columns: 220px 1fr 1fr;
-    background: var(--c-ink);
-    cursor: pointer;
-    transition: background 0.18s;
-    user-select: none;
+    display: grid; grid-template-columns: 220px 1fr 1fr;
+    background: var(--c-ink); cursor: pointer;
+    transition: background 0.18s; user-select: none;
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  .cmp-group-header:hover { background: #2c2825; }
+  .cmp-group-header:hover { background: #1e1a52; }
   .cmp-group-header__cell {
-    padding: 12px 20px;
-    display: flex; align-items: center; gap: 8px;
+    padding: 12px 20px; display: flex; align-items: center; gap: 8px;
   }
   .cmp-group-header__title {
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 1.2px; text-transform: uppercase;
-    color: rgba(255,255,255,0.7);
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.7);
   }
   .cmp-group-header__icon { font-size: 14px; opacity: 0.5; }
   .cmp-group-header__chevron {
-    margin-left: auto; font-size: 11px;
-    color: rgba(255,255,255,0.35);
+    margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.35);
     transition: transform 0.22s;
   }
   .cmp-group-header__chevron.open { transform: rotate(180deg); }
-  .cmp-group-header__count {
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.4px;
-    color: rgba(255,255,255,0.35);
-    margin-left: 6px;
-  }
+  .cmp-group-header__count { font-size: 10px; font-weight: 600; letter-spacing: 0.4px; color: rgba(255,255,255,0.35); margin-left: 6px; }
 
   /* ── Comparison rows ── */
   .cmp-row {
-    display: grid;
-    grid-template-columns: 220px 1fr 1fr;
-    border-bottom: 1px solid var(--c-rule);
-    transition: background 0.14s;
+    display: grid; grid-template-columns: 220px 1fr 1fr;
+    border-bottom: 1px solid var(--c-rule); transition: background 0.14s;
   }
   .cmp-row:last-child { border-bottom: none; }
-  .cmp-row:hover { background: rgba(26,23,21,0.02); }
+  .cmp-row:hover { background: rgba(37,32,96,0.02); }
 
   .cmp-row__label-cell {
-    padding: 14px 20px;
-    display: flex; align-items: center;
-    font-size: 12.5px; font-weight: 600;
-    color: var(--c-ink-2);
-    background: var(--c-surface);
-    border-right: 1px solid var(--c-rule);
+    padding: 14px 20px; display: flex; align-items: center;
+    font-size: 12.5px; font-weight: 600; color: var(--c-ink-2);
+    background: var(--c-surface); border-right: 1px solid var(--c-rule);
     position: sticky; left: 0; z-index: 2;
   }
   .cmp-row__label-icon {
@@ -491,92 +320,61 @@ const COMPARE_STYLES = `
   }
 
   .cmp-row__val {
-    padding: 14px 18px;
-    display: flex; align-items: center;
-    font-size: 13.5px; font-weight: 500;
-    color: var(--c-ink);
-    border-right: 1px solid var(--c-rule);
-    position: relative;
-    min-height: 52px;
-    transition: background 0.18s;
+    padding: 14px 18px; display: flex; align-items: center;
+    font-size: 13.5px; font-weight: 500; color: var(--c-ink);
+    border-right: 1px solid var(--c-rule); position: relative;
+    min-height: 52px; transition: background 0.18s;
   }
   .cmp-row__val:last-child { border-right: none; }
-  .cmp-row__val.diff-better {
-    background: var(--c-better-bg);
-    color: var(--c-better);
-  }
-  .cmp-row__val.diff-worse {
-    background: var(--c-worse-bg);
-    color: var(--c-worse);
-  }
-  .cmp-row__val.diff-equal { color: var(--c-ink-2); }
-  .cmp-row__val.diff-na { color: var(--c-ink-3); font-weight: 400; font-style: italic; }
+  .cmp-row__val.diff-better { background: var(--c-better-bg); color: #0e6e7a; }
+  .cmp-row__val.diff-worse  { background: var(--c-worse-bg);  color: var(--c-ink); }
+  .cmp-row__val.diff-equal  { color: var(--c-ink-2); }
+  .cmp-row__val.diff-na     { color: var(--c-ink-3); font-weight: 400; font-style: italic; }
 
-  /* diff badge */
   .cmp-diff-badge {
     position: absolute; top: 8px; right: 8px;
     font-size: 9px; font-weight: 800; letter-spacing: 0.5px;
-    padding: 2px 6px; border-radius: 6px;
-    text-transform: uppercase;
+    padding: 2px 6px; border-radius: 6px; text-transform: uppercase;
   }
   .cmp-diff-badge.better { background: var(--c-better); color: #fff; }
-  .cmp-diff-badge.worse { background: var(--c-worse); color: #fff; }
+  .cmp-diff-badge.worse  { background: var(--c-ink);    color: #fff; }
 
-  /* amenity tags */
   .cmp-amenity-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
   .cmp-amenity-tag {
-    font-size: 11px; font-weight: 500;
-    padding: 3px 9px; border-radius: 7px;
-    border: 1px solid var(--c-rule);
+    font-size: 11px; font-weight: 500; padding: 3px 9px;
+    border-radius: 7px; border: 1px solid var(--c-rule);
     background: var(--c-white); color: var(--c-ink-2);
   }
-  .cmp-amenity-tag.has { background: var(--c-better-bg); border-color: #b2e0c8; color: var(--c-better); }
-  .cmp-amenity-tag.missing { background: var(--c-worse-bg); border-color: #f5c4bd; color: var(--c-worse); opacity: 0.7; text-decoration: line-through; }
+  .cmp-amenity-tag.has     { background: var(--c-better-bg); border-color: #a8dde4; color: #0e6e7a; }
+  .cmp-amenity-tag.missing { background: var(--c-worse-bg);  border-color: #c9c7e8; color: var(--c-ink-3); opacity: 0.7; text-decoration: line-through; }
 
-  /* nearby list in cell */
   .cmp-nearby-list { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-  .cmp-nearby-row {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 12px; padding: 3px 0;
-    border-bottom: 1px dashed var(--c-rule);
-  }
+  .cmp-nearby-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 0; border-bottom: 1px dashed var(--c-rule); }
   .cmp-nearby-row:last-child { border-bottom: none; }
   .cmp-nearby-row__key { color: var(--c-ink-3); }
   .cmp-nearby-row__val { font-weight: 600; font-size: 12px; }
   .cmp-nearby-row__val.better { color: var(--c-better); }
-  .cmp-nearby-row__val.worse { color: var(--c-worse); }
+  .cmp-nearby-row__val.worse  { color: var(--c-ink); }
 
   /* ── Summary strip ── */
   .cmp-summary {
-    display: grid;
-    grid-template-columns: 220px 1fr 1fr;
-    background: var(--c-ink);
-    margin-top: 0;
+    display: grid; grid-template-columns: 220px 1fr 1fr;
+    background: var(--c-ink); margin-top: 0;
   }
   .cmp-summary__label {
-    padding: 20px 20px;
-    display: flex; align-items: center;
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 1.2px; text-transform: uppercase;
-    color: rgba(255,255,255,0.45);
+    padding: 20px; display: flex; align-items: center;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.45);
     border-right: 1px solid rgba(255,255,255,0.07);
   }
   .cmp-summary__cell {
-    padding: 20px 18px;
-    border-right: 1px solid rgba(255,255,255,0.07);
+    padding: 20px 18px; border-right: 1px solid rgba(255,255,255,0.07);
     display: flex; flex-direction: column; gap: 4px;
   }
   .cmp-summary__cell:last-child { border-right: none; }
-  .cmp-summary__score {
-    font-family: var(--font-display);
-    font-size: 32px; font-weight: 400;
-    color: #fff; line-height: 1;
-  }
+  .cmp-summary__score { font-family: var(--font-display); font-size: 32px; font-weight: 400; color: #fff; line-height: 1; }
   .cmp-summary__score-label { font-size: 11.5px; color: rgba(255,255,255,0.4); }
-  .cmp-summary__wins {
-    font-size: 12px; color: rgba(255,255,255,0.5);
-    margin-top: 4px;
-  }
+  .cmp-summary__wins { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
   .cmp-summary__wins strong { color: rgba(255,255,255,0.8); }
   .cmp-summary__winner-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -584,54 +382,41 @@ const COMPARE_STYLES = `
     padding: 4px 10px; border-radius: 8px; margin-top: 6px;
     background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8);
   }
-  .cmp-summary__winner-badge.winner { background: rgba(45,122,79,0.5); color: #7ee8a8; }
+  .cmp-summary__winner-badge.winner { background: rgba(28,148,164,0.5); color: #a8eaf0; }
 
   /* ── Search modal ── */
   .cmp-modal-overlay {
     position: fixed; inset: 0; z-index: 1000;
-    background: rgba(26,23,21,0.55);
-    backdrop-filter: blur(6px);
+    background: rgba(37,32,96,0.55); backdrop-filter: blur(6px);
     display: flex; align-items: flex-start; justify-content: center;
-    padding-top: 80px;
-    animation: fadeIn 0.18s ease;
+    padding-top: 80px; animation: fadeIn 0.18s ease;
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .cmp-modal {
-    background: var(--c-white);
-    border-radius: var(--radius-card);
-    box-shadow: 0 20px 80px rgba(26,23,21,0.22);
-    width: 100%; max-width: 560px;
-    max-height: 70vh;
-    display: flex; flex-direction: column;
-    overflow: hidden;
+    background: var(--c-white); border-radius: var(--radius-card);
+    box-shadow: 0 20px 80px rgba(37,32,96,0.22);
+    width: 100%; max-width: 560px; max-height: 70vh;
+    display: flex; flex-direction: column; overflow: hidden;
     animation: slideUp 0.22s ease;
+    margin: 0 16px;
   }
   @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .cmp-modal__header {
-    padding: 18px 20px 12px;
-    border-bottom: 1px solid var(--c-rule);
+    padding: 18px 20px 12px; border-bottom: 1px solid var(--c-rule);
     display: flex; align-items: center; gap: 10px;
   }
-  .cmp-modal__search-wrap {
-    flex: 1; position: relative;
-    display: flex; align-items: center;
-  }
-  .cmp-modal__search-icon {
-    position: absolute; left: 12px; font-size: 14px; color: var(--c-ink-3);
-    pointer-events: none;
-  }
+  .cmp-modal__search-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+  .cmp-modal__search-icon { position: absolute; left: 12px; font-size: 14px; color: var(--c-ink-3); pointer-events: none; }
   .cmp-modal__search {
     width: 100%; padding: 10px 12px 10px 36px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--c-rule);
+    border-radius: var(--radius-sm); border: 1.5px solid var(--c-rule);
     font-size: 14px; font-family: var(--font-body);
-    color: var(--c-ink); background: var(--c-surface);
-    outline: none;
+    color: var(--c-ink); background: var(--c-surface); outline: none;
     transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
   }
   .cmp-modal__search:focus {
     border-color: var(--c-ink); background: var(--c-white);
-    box-shadow: 0 0 0 3px rgba(26,23,21,0.06);
+    box-shadow: 0 0 0 3px rgba(37,32,96,0.08);
   }
   .cmp-modal__close {
     width: 32px; height: 32px; border-radius: 50%;
@@ -644,58 +429,45 @@ const COMPARE_STYLES = `
   .cmp-modal__body { flex: 1; overflow-y: auto; padding: 8px 0; }
   .cmp-modal__item {
     display: flex; align-items: center; gap: 12px;
-    padding: 11px 20px; cursor: pointer;
-    transition: background 0.14s;
-    border-bottom: 1px solid rgba(237,233,228,0.6);
+    padding: 11px 20px; cursor: pointer; transition: background 0.14s;
+    border-bottom: 1px solid rgba(232,231,240,0.6);
   }
   .cmp-modal__item:last-child { border-bottom: none; }
   .cmp-modal__item:hover { background: var(--c-surface); }
-  .cmp-modal__item.selected { background: #edf7f1; }
-  .cmp-modal__thumb {
-    width: 52px; height: 40px; border-radius: 8px;
-    overflow: hidden; flex-shrink: 0; background: var(--c-surface);
-  }
+  .cmp-modal__item.selected { background: #e8f7f9; }
+  .cmp-modal__thumb { width: 52px; height: 40px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--c-surface); }
   .cmp-modal__thumb img { width: 100%; height: 100%; object-fit: cover; }
   .cmp-modal__item-body { flex: 1; min-width: 0; }
-  .cmp-modal__item-title {
-    font-size: 13.5px; font-weight: 600; color: var(--c-ink);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-bottom: 2px;
-  }
+  .cmp-modal__item-title { font-size: 13.5px; font-weight: 600; color: var(--c-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
   .cmp-modal__item-meta { font-size: 12px; color: var(--c-ink-3); }
-  .cmp-modal__item-price {
-    font-family: var(--font-display); font-size: 15px;
-    color: var(--c-ink); flex-shrink: 0;
-  }
-  .cmp-modal__check {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--c-better); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; flex-shrink: 0; font-weight: 800;
-  }
-  .cmp-modal__empty {
-    padding: 40px 20px; text-align: center;
-    color: var(--c-ink-3); font-size: 14px;
-  }
-  .cmp-modal__loading {
-    padding: 40px 20px; text-align: center; color: var(--c-ink-3);
-  }
+  .cmp-modal__item-price { font-family: var(--font-display); font-size: 15px; color: var(--c-ink); flex-shrink: 0; }
+  .cmp-modal__check { width: 22px; height: 22px; border-radius: 50%; background: var(--c-better); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; font-weight: 800; }
+  .cmp-modal__empty { padding: 40px 20px; text-align: center; color: var(--c-ink-3); font-size: 14px; }
 
   /* ── Table container ── */
   .cmp-table {
-    border: 1px solid var(--c-rule);
-    border-radius: var(--radius-card);
-    overflow: hidden;
-    background: var(--c-white);
-    box-shadow: var(--shadow-card);
-    overflow-x: auto;
+    border: 1px solid var(--c-rule); border-radius: var(--radius-card);
+    overflow: hidden; overflow-x: auto;
+    background: var(--c-white); box-shadow: var(--shadow-card);
+    -webkit-overflow-scrolling: touch;
   }
   .cmp-table__inner { min-width: 700px; }
 
-  /* scrollbar */
   .cmp-table::-webkit-scrollbar { height: 6px; }
   .cmp-table::-webkit-scrollbar-track { background: var(--c-surface); }
   .cmp-table::-webkit-scrollbar-thumb { background: var(--c-rule); border-radius: 3px; }
+
+  /* ── Shimmer skeleton ── */
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .cmp-skeleton {
+    background: linear-gradient(90deg, #eeedf8 25%, #f5f5fb 50%, #eeedf8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
 
   /* ── Responsive ── */
   @media (max-width: 900px) {
@@ -706,25 +478,20 @@ const COMPARE_STYLES = `
     .cmp-summary { grid-template-columns: 160px 1fr 1fr; }
   }
   @media (max-width: 600px) {
-    .cmp-sticky-header__inner { grid-template-columns: 110px 1fr 1fr; }
-    .cmp-header-grid { grid-template-columns: 110px 1fr 1fr; }
-    .cmp-group-header { grid-template-columns: 110px 1fr 1fr; }
-    .cmp-row { grid-template-columns: 110px 1fr 1fr; }
-    .cmp-summary { grid-template-columns: 110px 1fr 1fr; }
-    .cmp-row__label-cell { font-size: 11px; padding: 12px 10px; }
-    .cmp-row__val { padding: 12px 10px; font-size: 12.5px; }
+    .cmp-sticky-header__inner { grid-template-columns: 100px 1fr 1fr; }
+    .cmp-header-grid { grid-template-columns: 100px 1fr 1fr; }
+    .cmp-group-header { grid-template-columns: 100px 1fr 1fr; }
+    .cmp-row { grid-template-columns: 100px 1fr 1fr; }
+    .cmp-summary { grid-template-columns: 100px 1fr 1fr; }
+    .cmp-row__label-cell { font-size: 11px; padding: 10px 8px; }
+    .cmp-row__val { padding: 10px 8px; font-size: 12px; }
+    .cmp-topbar__inner { flex-direction: column; align-items: flex-start; }
+    .cmp-header-spacer { padding: 16px 14px; }
+    .cmp-spacer-title { font-size: 15px; }
   }
-
-  /* ── Shimmer skeleton ── */
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-  .cmp-skeleton {
-    background: linear-gradient(90deg, #f0ede8 25%, #e8e4df 50%, #f0ede8 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 8px;
+  @media (max-width: 400px) {
+    .cmp-prop-header__price { font-size: 16px; }
+    .cmp-summary__score { font-size: 26px; }
   }
 `;
 
@@ -744,15 +511,15 @@ function injectCompareStyles() {
 function statusColor(status: string): string {
   switch (status) {
     case "For Sale":
-      return "rgba(200,64,42,0.92)";
+      return "rgba(28,148,164,0.92)";
     case "For Rent":
-      return "rgba(33,130,215,0.92)";
+      return "rgba(37,32,96,0.92)";
     case "Sold":
-      return "rgba(56,161,105,0.92)";
+      return "rgba(28,148,164,0.75)";
     case "Rented":
-      return "rgba(214,132,0,0.92)";
+      return "rgba(37,32,96,0.7)";
     default:
-      return "rgba(80,76,72,0.88)";
+      return "rgba(61,56,128,0.88)";
   }
 }
 
@@ -773,7 +540,6 @@ function fmtPrice(p: number): string {
 // ─── Diff logic ───────────────────────────────────────────────
 type DiffDir = "better" | "worse" | "equal" | "na";
 
-// For numeric fields — direction indicates whether higher is better
 function numericDiff(
   a: number | null | undefined,
   b: number | null | undefined,
@@ -783,14 +549,11 @@ function numericDiff(
   if (a == null) return ["na", higherIsBetter ? "better" : "worse"];
   if (b == null) return [higherIsBetter ? "better" : "worse", "na"];
   if (a === b) return ["equal", "equal"];
-  if (higherIsBetter) {
-    return a > b ? ["better", "worse"] : ["worse", "better"];
-  } else {
-    return a < b ? ["better", "worse"] : ["worse", "better"];
-  }
+  if (higherIsBetter) return a > b ? ["better", "worse"] : ["worse", "better"];
+  else return a < b ? ["better", "worse"] : ["worse", "better"];
 }
 
-// ─── Property search modal ────────────────────────────────────
+// ─── Search modal ─────────────────────────────────────────────
 function SearchModal({
   allProperties,
   onSelect,
@@ -804,7 +567,6 @@ function SearchModal({
 }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 60);
   }, []);
@@ -886,7 +648,6 @@ function SearchModal({
   );
 }
 
-// ─── Empty slot ───────────────────────────────────────────────
 function EmptySlot({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="cmp-empty-slot">
@@ -902,7 +663,6 @@ function EmptySlot({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-// ─── Property header card ─────────────────────────────────────
 function PropHeader({
   property,
   onRemove,
@@ -976,7 +736,6 @@ function PropHeader({
   );
 }
 
-// ─── Comparison row ────────────────────────────────────────────
 function CmpRow({
   label,
   icon,
@@ -1022,7 +781,6 @@ function CmpRow({
   );
 }
 
-// ─── Group ────────────────────────────────────────────────────
 function CmpGroup({
   title,
   icon,
@@ -1058,6 +816,8 @@ function CmpGroup({
 
 // ─── Main Compare Component ───────────────────────────────────
 const PropertyCompare = () => {
+  const [loginModal, setLoginModal] = useState(false);
+  const { session } = useClientSession();
   injectCompareStyles();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1070,7 +830,6 @@ const PropertyCompare = () => {
   const stickyRef = useRef<HTMLDivElement>(null);
   const [stickyVisible, setStickyVisible] = useState(false);
 
-  // Load all properties
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -1080,8 +839,6 @@ const PropertyCompare = () => {
         .order("created_at", { ascending: false });
       const props: Property[] = (data as Property[]) || [];
       setAllProperties(props);
-
-      // Hydrate from URL params
       const idA = searchParams.get("a");
       const idB = searchParams.get("b");
       if (idA) {
@@ -1096,7 +853,6 @@ const PropertyCompare = () => {
     })();
   }, []);
 
-  // Sync URL params when selections change
   useEffect(() => {
     const params: Record<string, string> = {};
     if (propA) params.a = propA.id;
@@ -1104,7 +860,6 @@ const PropertyCompare = () => {
     setSearchParams(params, { replace: true });
   }, [propA, propB]);
 
-  // Sticky header visibility
   useEffect(() => {
     const handleScroll = () => {
       if (stickyRef.current) {
@@ -1118,11 +873,8 @@ const PropertyCompare = () => {
 
   const handleSelect = useCallback(
     (p: Property) => {
-      if (modalSlot === "a") {
-        setPropA(p);
-      } else {
-        setPropB(p);
-      }
+      if (modalSlot === "a") setPropA(p);
+      else setPropB(p);
       setModalSlot(null);
     },
     [modalSlot],
@@ -1132,14 +884,12 @@ const PropertyCompare = () => {
     setPropA(propB);
     setPropB(propA);
   };
-
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2200);
   };
 
-  // ── Compute diff scores ──────────────────────────────────────
   const computeWins = () => {
     if (!propA || !propB) return { a: 0, b: 0 };
     let a = 0,
@@ -1152,13 +902,12 @@ const PropertyCompare = () => {
     check(numericDiff(propA.bedrooms, propB.bedrooms));
     check(numericDiff(propA.bathrooms, propB.bathrooms));
     check(numericDiff(propA.kitchens, propB.kitchens));
-    check(numericDiff(propA.price, propB.price, false)); // lower price = better
+    check(numericDiff(propA.price, propB.price, false));
     check(numericDiff(propA.amenities?.length, propB.amenities?.length));
     return { a, b };
   };
   const wins = propA && propB ? computeWins() : null;
 
-  // ── Section: Details rows ────────────────────────────────────
   const renderDetailsRows = () => {
     if (!propA && !propB) return null;
     const keys = Array.from(
@@ -1197,7 +946,6 @@ const PropertyCompare = () => {
     });
   };
 
-  // ── Section: Utility rows ────────────────────────────────────
   const renderUtilityRows = () => {
     if (!propA && !propB) return null;
     const keys = Array.from(
@@ -1235,7 +983,6 @@ const PropertyCompare = () => {
     });
   };
 
-  // ── Section: Outdoor rows ────────────────────────────────────
   const renderOutdoorRows = () => {
     if (!propA && !propB) return null;
     const keys = Array.from(
@@ -1273,7 +1020,6 @@ const PropertyCompare = () => {
     });
   };
 
-  // ── Section: Nearby ──────────────────────────────────────────
   const renderNearbyRows = () => {
     if (!propA?.whats_nearby && !propB?.whats_nearby) return null;
     const keys = Array.from(
@@ -1304,7 +1050,7 @@ const PropertyCompare = () => {
       const vB = propB?.whats_nearby?.[k];
       const numA = parseFloat(vA ?? "999");
       const numB = parseFloat(vB ?? "999");
-      const [dA, dB] = numericDiff(numA, numB, false); // closer = better
+      const [dA, dB] = numericDiff(numA, numB, false);
       return (
         <CmpRow
           key={k}
@@ -1320,16 +1066,13 @@ const PropertyCompare = () => {
     });
   };
 
-  // ── Amenities comparison ─────────────────────────────────────
   const renderAmenities = () => {
     const allAmenities = Array.from(
       new Set([...(propA?.amenities || []), ...(propB?.amenities || [])]),
     );
     if (allAmenities.length === 0) return null;
-
     const aHas = new Set(propA?.amenities || []);
     const bHas = new Set(propB?.amenities || []);
-
     return (
       <CmpRow
         label="Amenities"
@@ -1379,7 +1122,6 @@ const PropertyCompare = () => {
 
   const bothSelected = propA && propB;
 
-  // ── Count rows per section for group headers ─────────────────
   const detailsKeys = Array.from(
     new Set([
       ...Object.keys(propA?.property_details || {}),
@@ -1411,9 +1153,9 @@ const PropertyCompare = () => {
   return (
     <Wrapper>
       <SEO pageTitle="Compare Properties" />
-      <NavMenu />
+      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
+      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
-      {/* ── Page banner ── */}
       <div className="inner-banner-three inner-banner text-center z-1 position-relative">
         <div
           className="bg-wrapper overflow-hidden position-relative z-1"
@@ -1444,9 +1186,8 @@ const PropertyCompare = () => {
         </div>
       </div>
 
-      {/* ── Compare content ── */}
       <div className="cmp-root cmp-page">
-        {/* ── Top bar ── */}
+        {/* Top bar */}
         <div className="cmp-topbar">
           <div className="container">
             <div className="cmp-topbar__inner">
@@ -1471,33 +1212,32 @@ const PropertyCompare = () => {
               </button>
             </div>
 
-            {/* Legend */}
             <div className="cmp-legend">
               <span className="cmp-legend-item">
                 <span
                   className="cmp-legend-dot"
-                  style={{ background: "var(--c-better)" }}
+                  style={{ background: "#1C94A4" }}
                 />
                 Better value
               </span>
               <span className="cmp-legend-item">
                 <span
                   className="cmp-legend-dot"
-                  style={{ background: "var(--c-worse)" }}
+                  style={{ background: "#252060" }}
                 />
                 Lower value
               </span>
               <span className="cmp-legend-item">
                 <span
                   className="cmp-legend-dot"
-                  style={{ background: "var(--c-ink-3)" }}
+                  style={{ background: "#8a88a8" }}
                 />
                 Equal
               </span>
               <span className="cmp-legend-item">
                 <span
                   className="cmp-legend-dot"
-                  style={{ background: "var(--c-rule)" }}
+                  style={{ background: "#e8e7f0" }}
                 />
                 Not available
               </span>
@@ -1505,7 +1245,7 @@ const PropertyCompare = () => {
           </div>
         </div>
 
-        {/* ── Sticky compact header ── */}
+        {/* Sticky header */}
         {stickyVisible && bothSelected && (
           <div className="cmp-sticky-header">
             <div className="container">
@@ -1565,7 +1305,7 @@ const PropertyCompare = () => {
                 style={{
                   width: "2rem",
                   height: "2rem",
-                  color: "var(--c-accent)",
+                  color: "#1C94A4",
                   borderWidth: "2px",
                 }}
               />
@@ -1573,7 +1313,7 @@ const PropertyCompare = () => {
             </div>
           ) : (
             <>
-              {/* ── Property header cards ── */}
+              {/* Property header cards */}
               <div
                 className="cmp-table"
                 ref={stickyRef}
@@ -1581,7 +1321,6 @@ const PropertyCompare = () => {
               >
                 <div className="cmp-table__inner">
                   <div className="cmp-header-grid">
-                    {/* Spacer — always-visible label + conditional swap */}
                     <div className="cmp-header-spacer">
                       <div>
                         <span className="cmp-spacer-eyebrow">Side-by-side</span>
@@ -1601,13 +1340,13 @@ const PropertyCompare = () => {
                             display: "flex",
                             alignItems: "center",
                             gap: "6px",
-                            background: "none",
-                            border: "1.5px solid var(--c-rule)",
+                            background: "rgba(255,255,255,0.1)",
+                            border: "1.5px solid rgba(255,255,255,0.2)",
                             borderRadius: "var(--radius-sm)",
                             padding: "7px 13px",
                             fontSize: "12px",
                             fontWeight: 600,
-                            color: "var(--c-ink-2)",
+                            color: "#fff",
                             cursor: "pointer",
                             transition: "all 0.18s",
                             fontFamily: "var(--font-body)",
@@ -1617,16 +1356,12 @@ const PropertyCompare = () => {
                           onMouseEnter={(e) => {
                             (
                               e.currentTarget as HTMLButtonElement
-                            ).style.borderColor = "var(--c-ink)";
-                            (e.currentTarget as HTMLButtonElement).style.color =
-                              "var(--c-ink)";
+                            ).style.background = "rgba(28,148,164,0.4)";
                           }}
                           onMouseLeave={(e) => {
                             (
                               e.currentTarget as HTMLButtonElement
-                            ).style.borderColor = "var(--c-rule)";
-                            (e.currentTarget as HTMLButtonElement).style.color =
-                              "var(--c-ink-2)";
+                            ).style.background = "rgba(255,255,255,0.1)";
                           }}
                         >
                           <i className="bi bi-arrow-left-right" />
@@ -1635,7 +1370,6 @@ const PropertyCompare = () => {
                       )}
                     </div>
 
-                    {/* Slot A */}
                     {propA ? (
                       <PropHeader
                         property={propA}
@@ -1645,8 +1379,6 @@ const PropertyCompare = () => {
                     ) : (
                       <EmptySlot onAdd={() => setModalSlot("a")} />
                     )}
-
-                    {/* Slot B */}
                     {propB ? (
                       <PropHeader
                         property={propB}
@@ -1660,11 +1392,11 @@ const PropertyCompare = () => {
                 </div>
               </div>
 
-              {/* ── Comparison table ── */}
+              {/* Comparison table */}
               {bothSelected && (
                 <div className="cmp-table">
                   <div className="cmp-table__inner">
-                    {/* ── Pricing ── */}
+                    {/* Pricing */}
                     <CmpGroup title="Pricing" icon="💰" rowCount={2}>
                       {(() => {
                         const [dA, dB] = numericDiff(
@@ -1744,8 +1476,8 @@ const PropertyCompare = () => {
                         : null}
                     </CmpGroup>
 
-                    {/* ── Key Specs ── */}
-                    <CmpGroup title="Key Specifications" icon="📋" rowCount={5}>
+                    {/* Key Specs */}
+                    <CmpGroup title="Key Specifications" icon="📋" rowCount={7}>
                       {(() => {
                         const [dA, dB] = numericDiff(propA.sqft, propB.sqft);
                         return (
@@ -1892,7 +1624,6 @@ const PropertyCompare = () => {
                       />
                     </CmpGroup>
 
-                    {/* ── Amenities ── */}
                     {allAmenitiesCount > 0 && (
                       <CmpGroup
                         title="Amenities"
@@ -1918,7 +1649,6 @@ const PropertyCompare = () => {
                       </CmpGroup>
                     )}
 
-                    {/* ── Property Details ── */}
                     {detailsKeys.length > 0 && (
                       <CmpGroup
                         title="Property Details"
@@ -1928,8 +1658,6 @@ const PropertyCompare = () => {
                         {renderDetailsRows()}
                       </CmpGroup>
                     )}
-
-                    {/* ── Utility & Home Features ── */}
                     {utilityKeys.length > 0 && (
                       <CmpGroup
                         title="Utility & Home Features"
@@ -1940,8 +1668,6 @@ const PropertyCompare = () => {
                         {renderUtilityRows()}
                       </CmpGroup>
                     )}
-
-                    {/* ── Outdoor Features ── */}
                     {outdoorKeys.length > 0 && (
                       <CmpGroup
                         title="Outdoor Features"
@@ -1952,8 +1678,6 @@ const PropertyCompare = () => {
                         {renderOutdoorRows()}
                       </CmpGroup>
                     )}
-
-                    {/* ── What's Nearby ── */}
                     {nearbyKeys.length > 0 && (
                       <CmpGroup
                         title="What's Nearby"
@@ -1965,7 +1689,6 @@ const PropertyCompare = () => {
                       </CmpGroup>
                     )}
 
-                    {/* ── Summary score bar ── */}
                     {wins && (
                       <div className="cmp-summary">
                         <div className="cmp-summary__label">
@@ -2009,7 +1732,6 @@ const PropertyCompare = () => {
                 </div>
               )}
 
-              {/* ── Prompt to select ── */}
               {!bothSelected && (
                 <div
                   style={{
@@ -2025,7 +1747,7 @@ const PropertyCompare = () => {
                     style={{
                       fontFamily: "var(--font-display)",
                       fontSize: "20px",
-                      color: "var(--c-ink)",
+                      color: "#252060",
                       marginBottom: "8px",
                     }}
                   >
@@ -2043,7 +1765,6 @@ const PropertyCompare = () => {
           )}
         </div>
 
-        {/* ── Search modal ── */}
         {modalSlot && (
           <SearchModal
             allProperties={allProperties}
@@ -2053,7 +1774,6 @@ const PropertyCompare = () => {
           />
         )}
       </div>
-      {/* end cmp-root */}
 
       <Brand />
       <FancyBanner />

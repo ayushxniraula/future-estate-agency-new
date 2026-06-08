@@ -116,8 +116,40 @@ const HERO_STYLES = `
     border-radius: 14px !important;
     box-shadow: 0 20px 60px rgba(37,32,96,0.22) !important;
     border: 1px solid rgba(28,148,164,0.15) !important;
-    overflow: hidden;
+    overflow: visible;
   }
+    .fw-search-wrapper .nice-select .list {
+  z-index: 9999 !important;
+  position: absolute;
+}
+  .fw-search-wrapper,
+.fw-search-wrapper .search-wrapper-one,
+.fw-search-wrapper .bg-wrapper {
+  overflow: visible !important;
+}
+  /* Selected item highlight */
+.nice-select .option.selected,
+.nice-select .option.focus,
+.nice-select .option.selected.focus {
+  color: #252060 !important;
+  background: rgba(28, 148, 164, 0.08) !important;
+}
+
+/* Hover state */
+.nice-select .option:hover {
+  color: #1C94A4 !important;
+  background: rgba(28, 148, 164, 0.08) !important;
+}
+
+/* The arrow */
+.nice-select::after {
+  border-color: #252060 !important;
+}
+
+/* Open state border */
+.nice-select.open {
+  border-color: #1C94A4 !important;
+}
   .fw-search-wrapper .search-btn-three,
   .fw-search-wrapper .search-btn {
     background: #252060 !important;

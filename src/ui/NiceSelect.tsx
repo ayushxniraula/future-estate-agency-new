@@ -1,4 +1,4 @@
-import{ useState, useCallback, useRef, FC, ChangeEvent } from "react";
+import { useState, useCallback, useRef, FC, ChangeEvent } from "react";
 import { useClickAway } from "react-use";
 
 interface Option {
@@ -13,7 +13,7 @@ type NiceSelectProps = {
   className?: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   name: string;
-}
+};
 
 const NiceSelect: FC<NiceSelectProps> = ({
   options,
@@ -33,7 +33,9 @@ const NiceSelect: FC<NiceSelectProps> = ({
 
   const currentHandler = (item: Option) => {
     setCurrent(item);
-    onChange({ target: { value: item.value } } as ChangeEvent<HTMLSelectElement>);
+    onChange({
+      target: { value: item.value },
+    } as ChangeEvent<HTMLSelectElement>);
     onClose();
   };
 
@@ -57,9 +59,10 @@ const NiceSelect: FC<NiceSelectProps> = ({
           <li
             key={i}
             data-value={item.value}
-            className={`option ${item.value === current?.value ? "selected focus" : ""
-              }`}
-            style={{ fontSize: '14px' }}
+            className={`option ${
+              item.value === current?.value ? "selected focus" : ""
+            }`}
+            style={{ fontSize: "14px" }}
             role="menuitem"
             onClick={() => currentHandler(item)}
             onKeyDown={(e) => e}
