@@ -1,15 +1,8 @@
 // ============================================================
 //  FutureBannerOne.tsx — Nepal-focused presence banner
 //  FutureWork brand: #252060 (navy) + #1C94A4 (teal)
-//  Nepal map with 7 city pins + Nepal-specific location & region data
-//  Structure, layout, and className identical to original
 // ============================================================
 
-// ─── Nepal city pins ──────────────────────────────────────────
-// Uses flag images that already exist in /assets/images/logo/
-// Positions are approximate % offsets on the Nepal SVG map
-
-// ─── Brand styles injected once ───────────────────────────────
 const BANNER_ONE_STYLES = `
   /* ── Overall banner ── */
   .fancy-banner-six .bg-wrapper {
@@ -30,7 +23,6 @@ const BANNER_ONE_STYLES = `
     color: #fff !important;
     position: relative;
   }
-  /* Underline decoration for "easily" */
   .fancy-banner-six .title-one h2 em span::after {
     content: '';
     position: absolute;
@@ -50,7 +42,6 @@ const BANNER_ONE_STYLES = `
     max-width: 820px;
   }
   .fancy-banner-six .map-wrapper img.w-100 {
-    /* Tint the map to match theme */
     filter: invert(1) hue-rotate(180deg) brightness(0.6) saturate(0.5) opacity(0.55);
   }
 
@@ -59,7 +50,6 @@ const BANNER_ONE_STYLES = `
     cursor: default;
   }
 
-  /* Dot marker — teal brand */
   .fancy-banner-six .dot-marker {
     width: 12px !important;
     height: 12px !important;
@@ -74,7 +64,6 @@ const BANNER_ONE_STYLES = `
     100% { box-shadow: 0 0 0 4px rgba(28,148,164,0.3); }
   }
 
-  /* Map info card */
   .fancy-banner-six .map-info {
     background: rgba(255,255,255,0.97) !important;
     border: 1.5px solid rgba(28,148,164,0.25) !important;
@@ -107,7 +96,7 @@ const BANNER_ONE_STYLES = `
     font-weight: 500;
   }
 
-  /* ── Region / country list at bottom ── */
+  /* ── Region list ── */
   .fancy-banner-six .country-list {
     gap: 0;
     flex-wrap: wrap;
@@ -136,20 +125,74 @@ const BANNER_ONE_STYLES = `
     background: rgba(28,148,164,0.7) !important;
   }
 
-  /* ── Marquee text strip ── */
-  .fancy-banner-six .text-slide-wrapper .marquee p {
-    color: rgba(255,255,255,0.18) !important;
-    font-size: clamp(3rem, 8vw, 7rem) !important;
-    font-family: 'DM Serif Display', Georgia, serif !important;
-    letter-spacing: 0.05em;
+  /* ── Marquee strip — redesigned ── */
+  .fancy-banner-six .text-slide-wrapper {
+    /* Dark frosted band with top + bottom borders */
+    background: rgba(10, 9, 30, 0.55) !important;
+    border-top: 1px solid rgba(28, 148, 164, 0.35) !important;
+    border-bottom: 1px solid rgba(28, 148, 164, 0.35) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    overflow: hidden;
+    /* Fade edges on left/right */
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+    padding: 0 !important;
   }
 
-  /* ── Decorative shape recolour ── */
+  .fancy-banner-six .text-slide-wrapper .marquee {
+    display: flex;
+    align-items: center;
+    padding: 14px 0 !important;
+    gap: 0;
+  }
+
+  .fancy-banner-six .text-slide-wrapper .marquee p {
+    /* Refined type treatment */
+    color: rgba(255, 255, 255, 0.08) !important;
+    font-size: clamp(2.6rem, 6vw, 5.8rem) !important;
+    font-family: 'DM Serif Display', Georgia, serif !important;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    white-space: nowrap;
+    /* Stroke-only text effect */
+    -webkit-text-stroke: 1px rgba(28, 148, 164, 0.45);
+    text-stroke: 1px rgba(28, 148, 164, 0.45);
+    /* Teal dots between city names rendered as content */
+    padding-right: 2em;
+  }
+
+  /* Teal diamond separators between repeated tracks */
+  .fancy-banner-six .text-slide-wrapper .marquee p::before {
+    content: '◆ ';
+    font-size: 0.38em;
+    color: #1C94A4;
+    opacity: 0.7;
+    vertical-align: middle;
+    margin-right: 0.6em;
+    -webkit-text-stroke: 0;
+    text-stroke: 0;
+  }
+
+  /* ── Decorative shapes ── */
   .fancy-banner-six .shapes {
     filter: hue-rotate(180deg) saturate(0.5) opacity(0.3);
   }
 
-  /* ── Mobile responsiveness ── */
+  /* ── Mobile ── */
   @media (max-width: 767px) {
     .fancy-banner-six .bg-wrapper {
       border-radius: 18px;
@@ -166,6 +209,9 @@ const BANNER_ONE_STYLES = `
     .fancy-banner-six .map-info {
       min-width: 140px;
       padding: 8px 10px !important;
+    }
+    .fancy-banner-six .text-slide-wrapper .marquee p {
+      font-size: clamp(2rem, 9vw, 3.5rem) !important;
     }
   }
 `;
@@ -210,11 +256,15 @@ const FutureBannerOne = () => {
             </div>
           </div>
 
-          {/* Marquee strip — Nepal focused */}
+          {/* Marquee strip */}
           <div className="text-slide-wrapper">
             <div className="marquee">
-              <p>Kathmandu . Pokhara . Chitwan .</p>
-              <p>Kathmandu . Pokhara . Chitwan .</p>
+              <p>
+                Kathmandu . Pokhara . Chitwan . Lalitpur . Bhaktapur . Pokhara
+              </p>
+              <p>
+                Kathmandu . Pokhara . Chitwan . Lalitpur . Bhaktapur . Pokhara
+              </p>
             </div>
           </div>
         </div>

@@ -72,6 +72,9 @@ import PropertyCompare from "../my-components/CompareProp";
 import PriceHeatmap from "../my-components/priceheatmap";
 import SmartFinder from "../my-components/smartai";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import TermsAndConditions from "../my-components/TermsCondi";
+import CookiePolicy from "../my-components/Cookie";
+import PrivacyPolicy from "../my-components/Privacy";
 
 const AppNavigation = () => {
   return (
@@ -139,6 +142,9 @@ const AppNavigation = () => {
         <Route path="/heat" element={<PriceHeatmap />} />
         <Route path="/smart" element={<SmartFinder />} />
         <Route path="/listing_details_05" element={<ListingDetailsFive />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/cookie" element={<CookiePolicy />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/listing_details_06" element={<ListingDetailsSix />} />
         <Route path="/blog_01" element={<BlogOne />} />
         <Route path="/blog_02" element={<BlogTwo />} />

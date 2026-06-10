@@ -493,6 +493,39 @@ const COMPARE_STYLES = `
     .cmp-prop-header__price { font-size: 16px; }
     .cmp-summary__score { font-size: 26px; }
   }
+
+  .fwc-banner {
+  position: relative; overflow: hidden;
+  background: #252060;
+}
+.fwc-banner__bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0.18;
+}
+.fwc-banner__inner {
+  position: relative; z-index: 2;
+  padding: 80px 20px 72px;
+  text-align: center;
+}
+.fwc-banner__title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(32px, 5vw, 54px);
+  color: #fff; letter-spacing: -0.5px;
+  margin: 0 0 18px; line-height: 1.1;
+}
+.fwc-banner__title em { color: #7dd8e4; font-style: italic; }
+.fwc-banner__crumb {
+  list-style: none; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+}
+.fwc-banner__crumb a {
+  color: rgba(255,255,255,0.65); text-decoration: none;
+  transition: color 0.15s;
+}
+.fwc-banner__crumb a:hover { color: #7dd8e4; }
+.fwc-banner__crumb li:last-child { color: rgba(255,255,255,0.35); }
 `;
 
 function injectCompareStyles() {
@@ -1156,33 +1189,22 @@ const PropertyCompare = () => {
       <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
       <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
-      <div className="inner-banner-three inner-banner text-center z-1 position-relative">
+      <div className="fwc-banner">
         <div
-          className="bg-wrapper overflow-hidden position-relative z-1"
+          className="fwc-banner__bg"
           style={{ backgroundImage: `url(/assets/images/media/img_51.jpg)` }}
-        >
-          <div className="container position-relative z-2">
-            <h2 className="mb-35 xl-mb-20 md-mb-10 pt-15 font-garamond text-white">
-              Compare Properties
-            </h2>
-            <ul className="theme-breadcrumb style-none d-inline-flex align-items-center justify-content-center position-relative z-1 bottom-line">
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>/</li>
-              <li>Compare</li>
-            </ul>
-          </div>
-          <img
-            src="/assets/images/shape/shape_35.svg"
-            alt=""
-            className="lazy-img shapes shape_01"
-          />
-          <img
-            src="/assets/images/shape/shape_36.svg"
-            alt=""
-            className="lazy-img shapes shape_02"
-          />
+        />
+        <div className="fwc-banner__inner">
+          <h2 className="fwc-banner__title">
+            Let's <em>talk</em>
+          </h2>
+          <ul className="fwc-banner__crumb">
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>/</li>
+            <li>Contact</li>
+          </ul>
         </div>
       </div>
 

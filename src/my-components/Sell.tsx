@@ -1,8 +1,7 @@
 // ============================================================
 //  SellPropertyArea.tsx — User-facing "List Your Property" form
-//  Design: DM Serif Display + DM Sans, consistent with
-//  BuyListing / PropertyCompare / Calculator design tokens
-//  Submits to `sell_requests` table in Supabase
+//  Theme: FutureWork brand — #252060 navy / #1C94A4 teal
+//  Font: Plus Jakarta Sans + DM Serif Display
 // ============================================================
 
 import { useState, useRef } from "react";
@@ -22,7 +21,6 @@ const SUPABASE_URL = "https://wzttfewbiiakxkmgzfre.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6dHRmZXdiaWlha3hrbWd6ZnJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3ODY0MjksImV4cCI6MjA5NTM2MjQyOX0.-00zf6PqvccpLvBGxy4FtveqX5mCeGXJbC-ZF8ziEBk";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 const STORAGE_BUCKET = "FutureState";
 
 // ─── Types ────────────────────────────────────────────────────
@@ -48,45 +46,91 @@ interface SellFormData {
   amenities: string[];
 }
 
-// ─── Design tokens (consistent with rest of site) ─────────────
+// ─── Styles ───────────────────────────────────────────────────
 const SELL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
 
   :root {
-    --font-display: 'DM Serif Display', Georgia, serif;
-    --font-body:    'DM Sans', system-ui, sans-serif;
-    --c-ink:        #1a1715;
-    --c-ink-2:      #4a4845;
-    --c-ink-3:      #8a8785;
-    --c-rule:       #ede9e4;
-    --c-surface:    #faf9f7;
-    --c-white:      #ffffff;
-    --c-accent:     #c8402a;
-    --c-accent-h:   #a83320;
-    --radius-card:  16px;
-    --radius-sm:    10px;
-    --shadow-card:  0 1px 3px rgba(26,23,21,0.06), 0 4px 16px rgba(26,23,21,0.07);
-    --shadow-hover: 0 4px 8px rgba(26,23,21,0.08), 0 16px 40px rgba(26,23,21,0.13);
+    --fw-navy:        #252060;
+    --fw-navy-dark:   #1a1648;
+    --fw-navy-faint:  rgba(37,32,96,0.06);
+    --fw-navy-faint2: rgba(37,32,96,0.10);
+    --fw-teal:        #1C94A4;
+    --fw-teal-dark:   #157a88;
+    --fw-teal-faint:  rgba(28,148,164,0.08);
+    --fw-teal-border: rgba(28,148,164,0.22);
+    --c-ink:          #0f0e1a;
+    --c-ink-2:        #3a3850;
+    --c-ink-3:        #7a7890;
+    --c-rule:         #e8e6f0;
+    --c-surface:      #f7f6fb;
+    --c-white:        #ffffff;
+    --font-display:   'DM Serif Display', Georgia, serif;
+    --font-body:      'Plus Jakarta Sans', system-ui, sans-serif;
+    --radius-card:    14px;
+    --radius-sm:      9px;
+    --shadow-card:    0 1px 3px rgba(37,32,96,0.05), 0 4px 18px rgba(37,32,96,0.08);
+    --shadow-focus:   0 0 0 3px rgba(28,148,164,0.15);
   }
 
-  /* ── Base ── */
   .sell-root, .sell-root * {
     font-family: var(--font-body);
     box-sizing: border-box;
   }
 
-  /* ── Section wrapper ── */
+  /* ── Page background ── */
   .sell-section {
-    padding-top: 100px;
+    padding-top: 80px;
     padding-bottom: 120px;
     background: var(--c-surface);
+  }
+
+  /* ── Page heading ── */
+  .sell-page-head {
+    margin-bottom: 40px;
+  }
+  .sell-page-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--fw-teal);
+    margin-bottom: 10px;
+  }
+  .sell-page-eyebrow::before {
+    content: '';
+    display: block;
+    width: 22px;
+    height: 1.5px;
+    background: var(--fw-teal);
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+  .sell-page-title {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3.5vw, 36px);
+    font-weight: 400;
+    color: var(--fw-navy);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+    margin: 0 0 8px;
+  }
+  .sell-page-title em { font-style: italic; color: var(--fw-teal); }
+  .sell-page-sub {
+    font-size: 14px;
+    color: var(--c-ink-3);
+    line-height: 1.7;
+    margin: 0;
   }
 
   /* ── Two-column layout ── */
   .sell-layout {
     display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 32px;
+    grid-template-columns: 240px 1fr;
+    gap: 28px;
     align-items: start;
   }
   @media (max-width: 991px) {
@@ -94,28 +138,34 @@ const SELL_STYLES = `
     .sell-sidebar { display: none; }
   }
 
-  /* ── Sticky sidebar nav ── */
+  /* ── Sidebar ── */
   .sell-sidebar {
     position: sticky;
-    top: 100px;
+    top: 96px;
+    background: var(--c-white);
+    border: 1.5px solid var(--c-rule);
+    border-radius: var(--radius-card);
+    padding: 20px 16px;
+    box-shadow: var(--shadow-card);
   }
-  .sell-sidebar__title {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
+  .sell-sidebar__label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
     text-transform: uppercase;
-    color: var(--c-ink-3);
-    margin-bottom: 16px;
+    color: var(--fw-teal);
+    margin-bottom: 12px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--c-rule);
+    display: block;
   }
   .sell-nav-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
+    gap: 9px;
+    padding: 8px 11px;
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
     color: var(--c-ink-3);
     cursor: pointer;
@@ -125,51 +175,82 @@ const SELL_STYLES = `
     border: 1px solid transparent;
   }
   .sell-nav-item:hover {
-    background: var(--c-white);
+    background: var(--fw-navy-faint);
+    color: var(--fw-navy);
     border-color: var(--c-rule);
-    color: var(--c-ink);
   }
   .sell-nav-item.active {
-    background: var(--c-ink);
+    background: var(--fw-navy);
     color: var(--c-white);
-    border-color: var(--c-ink);
   }
-  .sell-nav-item__icon {
-    width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
+  .sell-nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.4;
     flex-shrink: 0;
+  }
+  .sell-nav-item.active .sell-nav-dot { opacity: 1; background: var(--fw-teal); }
+
+  /* ── Section progress indicator ── */
+  .sell-progress {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--c-rule);
+  }
+  .sell-progress__label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--c-ink-3);
+    margin-bottom: 7px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .sell-progress__track {
+    height: 4px;
+    background: var(--c-rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .sell-progress__fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--fw-navy), var(--fw-teal));
+    border-radius: 3px;
+    transition: width 0.4s ease;
   }
 
   /* ── Form cards ── */
   .sell-card {
     background: var(--c-white);
-    border: 1px solid var(--c-rule);
+    border: 1.5px solid var(--c-rule);
     border-radius: var(--radius-card);
-    padding: 32px 36px;
-    margin-bottom: 20px;
+    padding: 30px 32px;
+    margin-bottom: 16px;
     box-shadow: var(--shadow-card);
+    transition: border-color 0.2s;
   }
-  @media (max-width: 600px) {
-    .sell-card { padding: 24px 18px; }
+  .sell-card:focus-within {
+    border-color: var(--fw-teal-border);
   }
+  @media (max-width: 600px) { .sell-card { padding: 22px 18px; } }
+
   .sell-card__header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 28px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--c-rule);
+    gap: 13px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1.5px solid var(--c-rule);
   }
   .sell-card__icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: var(--c-surface);
-    border: 1px solid var(--c-rule);
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: var(--fw-teal-faint);
+    border: 1.5px solid var(--fw-teal-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -178,34 +259,35 @@ const SELL_STYLES = `
   }
   .sell-card__title {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 400;
-    color: var(--c-ink);
+    color: var(--fw-navy);
     letter-spacing: -0.2px;
+    line-height: 1.2;
   }
   .sell-card__subtitle {
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--c-ink-3);
-    margin-top: 1px;
+    margin-top: 2px;
   }
 
-  /* ── Form elements ── */
+  /* ── Labels & inputs ── */
   .sell-label {
     display: block;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.9px;
     text-transform: uppercase;
     color: var(--c-ink-3);
-    margin-bottom: 7px;
+    margin-bottom: 6px;
   }
-  .sell-label .req { color: var(--c-accent); margin-left: 2px; }
+  .sell-label .req { color: var(--fw-teal); margin-left: 2px; }
 
   .sell-input,
   .sell-select,
   .sell-textarea {
     width: 100%;
-    padding: 10px 14px;
+    padding: 10px 13px;
     border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule);
     font-size: 13.5px;
@@ -220,16 +302,19 @@ const SELL_STYLES = `
   .sell-input:focus,
   .sell-select:focus,
   .sell-textarea:focus {
-    border-color: var(--c-ink);
+    border-color: var(--fw-teal);
     background: var(--c-white);
-    box-shadow: 0 0 0 3px rgba(26,23,21,0.06);
+    box-shadow: var(--shadow-focus);
   }
+  .sell-input::placeholder,
+  .sell-textarea::placeholder { color: rgba(122,120,144,0.55); }
+
   .sell-textarea {
     resize: vertical;
     min-height: 110px;
-    line-height: 1.6;
+    line-height: 1.65;
   }
-  .sell-select { cursor: pointer; }
+  .sell-select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7890' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
   .sell-hint {
     font-size: 11.5px;
     color: var(--c-ink-3);
@@ -257,8 +342,9 @@ const SELL_STYLES = `
     width: 100%;
   }
   .kv-row input:focus {
-    border-color: var(--c-ink);
+    border-color: var(--fw-teal);
     background: var(--c-white);
+    box-shadow: var(--shadow-focus);
   }
   .kv-remove {
     width: 32px; height: 32px;
@@ -271,7 +357,7 @@ const SELL_STYLES = `
     transition: all 0.18s;
     flex-shrink: 0;
   }
-  .kv-remove:hover { border-color: var(--c-accent); color: var(--c-accent); background: #fdf0ee; }
+  .kv-remove:hover { border-color: #e05f5f; color: #e05f5f; background: #fff5f5; }
   .kv-add {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 14px;
@@ -281,24 +367,24 @@ const SELL_STYLES = `
     color: var(--c-ink-3);
     font-size: 12.5px;
     font-family: var(--font-body);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.18s;
     margin-top: 4px;
   }
-  .kv-add:hover { border-color: var(--c-ink); color: var(--c-ink); background: var(--c-surface); }
+  .kv-add:hover { border-color: var(--fw-teal); color: var(--fw-teal); background: var(--fw-teal-faint); }
 
   /* ── Amenities grid ── */
   .amenities-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 8px;
   }
   .amenity-label {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 10px 14px;
+    gap: 8px;
+    padding: 10px 13px;
     border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule);
     background: var(--c-surface);
@@ -309,21 +395,27 @@ const SELL_STYLES = `
     transition: all 0.18s;
     user-select: none;
   }
-  .amenity-label:hover { border-color: var(--c-ink-2); background: var(--c-white); }
+  .amenity-label:hover { border-color: var(--fw-teal-border); background: var(--fw-teal-faint); color: var(--fw-navy); }
   .amenity-label.checked {
-    border-color: var(--c-ink);
-    background: var(--c-ink);
+    border-color: var(--fw-navy);
+    background: var(--fw-navy);
     color: var(--c-white);
   }
   .amenity-label input { display: none; }
   .amenity-check-icon {
-    width: 16px; height: 16px;
+    width: 15px; height: 15px;
     border-radius: 4px;
     border: 1.5px solid currentColor;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     font-size: 9px;
+    opacity: 0.6;
     transition: all 0.15s;
+  }
+  .amenity-label.checked .amenity-check-icon {
+    opacity: 1;
+    background: var(--fw-teal);
+    border-color: var(--fw-teal);
   }
 
   /* ── Image uploader ── */
@@ -335,27 +427,26 @@ const SELL_STYLES = `
     cursor: pointer;
     background: var(--c-surface);
     transition: border-color 0.2s, background 0.2s;
-    position: relative;
   }
-  .upload-zone:hover { border-color: var(--c-ink); background: var(--c-white); }
-  .upload-zone__icon { font-size: 2rem; margin-bottom: 10px; }
+  .upload-zone:hover { border-color: var(--fw-teal); background: var(--fw-teal-faint); }
+  .upload-zone__icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.6; }
   .upload-zone__title {
     font-family: var(--font-display);
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 400;
-    color: var(--c-ink);
+    color: var(--fw-navy);
     margin-bottom: 5px;
   }
-  .upload-zone__sub { font-size: 12.5px; color: var(--c-ink-3); }
+  .upload-zone__sub { font-size: 12px; color: var(--c-ink-3); }
   .img-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 9px;
     margin-top: 16px;
   }
   .img-thumb {
     position: relative;
-    border-radius: 10px;
+    border-radius: 9px;
     overflow: hidden;
     aspect-ratio: 1;
     border: 1.5px solid var(--c-rule);
@@ -364,51 +455,56 @@ const SELL_STYLES = `
   .img-thumb__remove {
     position: absolute; top: 5px; right: 5px;
     width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(26,23,21,0.55);
+    background: rgba(37,32,96,0.6);
     backdrop-filter: blur(4px);
     color: #fff; border: none;
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; cursor: pointer;
     transition: background 0.18s;
   }
-  .img-thumb__remove:hover { background: var(--c-accent); }
+  .img-thumb__remove:hover { background: var(--fw-teal); }
 
   /* ── Submit button ── */
   .sell-submit {
     width: 100%;
-    padding: 16px;
+    padding: 15px;
     border-radius: var(--radius-sm);
     border: none;
-    background: var(--c-ink);
+    background: var(--fw-navy);
     color: var(--c-white);
-    font-size: 14.5px;
+    font-size: 14px;
     font-weight: 700;
     font-family: var(--font-body);
     letter-spacing: 0.3px;
     cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 9px;
+    box-shadow: 0 4px 18px rgba(37,32,96,0.18);
   }
-  .sell-submit:hover { background: var(--c-accent); }
+  .sell-submit:hover {
+    background: var(--fw-teal);
+    box-shadow: 0 6px 24px rgba(28,148,164,0.3);
+  }
   .sell-submit:active { transform: scale(0.99); }
-  .sell-submit:disabled { background: var(--c-ink-3); cursor: not-allowed; transform: none; }
+  .sell-submit:disabled { background: var(--c-ink-3); cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* ── Error ── */
+  /* ── Error banner ── */
   .sell-error {
     padding: 12px 16px;
     border-radius: var(--radius-sm);
-    background: #fdf0ee;
-    border: 1.5px solid #f5c4bd;
-    color: var(--c-accent);
+    background: rgba(28,148,164,0.06);
+    border: 1.5px solid var(--fw-teal-border);
+    color: var(--fw-navy);
     font-size: 13.5px;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
+  .sell-error i { color: var(--fw-teal); font-size: 15px; flex-shrink: 0; }
 
   /* ── Success screen ── */
   .sell-success {
@@ -416,61 +512,100 @@ const SELL_STYLES = `
     padding: 80px 30px;
   }
   .sell-success__circle {
-    width: 72px; height: 72px;
+    width: 68px; height: 68px;
     border-radius: 50%;
-    background: var(--c-ink);
+    background: linear-gradient(135deg, var(--fw-navy), var(--fw-teal));
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem;
-    margin: 0 auto 28px;
+    font-size: 1.7rem;
+    margin: 0 auto 26px;
+    box-shadow: 0 8px 28px rgba(28,148,164,0.3);
   }
   .sell-success__title {
     font-family: var(--font-display);
-    font-size: 32px;
+    font-size: clamp(26px, 4vw, 34px);
     font-weight: 400;
-    color: var(--c-ink);
+    color: var(--fw-navy);
     margin-bottom: 12px;
     letter-spacing: -0.4px;
   }
   .sell-success__body {
-    font-size: 15px;
+    font-size: 14.5px;
     color: var(--c-ink-3);
     max-width: 460px;
-    margin: 0 auto 32px;
-    line-height: 1.7;
+    margin: 0 auto 28px;
+    line-height: 1.75;
   }
   .sell-success__badge {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 7px;
     padding: 5px 14px;
     border-radius: 20px;
-    background: var(--c-surface);
-    border: 1px solid var(--c-rule);
-    color: var(--c-ink-2);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
+    background: var(--fw-teal-faint);
+    border: 1.5px solid var(--fw-teal-border);
+    color: var(--fw-teal-dark);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    margin-bottom: 32px;
+    margin-bottom: 30px;
   }
   .sell-success__badge::before {
     content: "";
-    width: 7px; height: 7px;
+    width: 6px; height: 6px;
     border-radius: 50%;
-    background: #56b870;
+    background: var(--fw-teal);
   }
   .sell-again-btn {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 30px;
+    padding: 12px 28px;
     border-radius: var(--radius-sm);
-    background: var(--c-ink);
+    background: var(--fw-navy);
     color: var(--c-white);
     font-size: 13.5px;
     font-weight: 600;
     font-family: var(--font-body);
     border: none; cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, box-shadow 0.2s;
     text-decoration: none;
+    box-shadow: 0 4px 18px rgba(37,32,96,0.2);
   }
-  .sell-again-btn:hover { background: var(--c-accent); color: var(--c-white); }
+  .sell-again-btn:hover {
+    background: var(--fw-teal);
+    color: var(--c-white);
+    box-shadow: 0 6px 22px rgba(28,148,164,0.3);
+  }
+
+  .fwc-banner {
+  position: relative; overflow: hidden;
+  background: #252060;
+}
+.fwc-banner__bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0.18;
+}
+.fwc-banner__inner {
+  position: relative; z-index: 2;
+  padding: 80px 20px 72px;
+  text-align: center;
+}
+.fwc-banner__title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(32px, 5vw, 54px);
+  color: #fff; letter-spacing: -0.5px;
+  margin: 0 0 18px; line-height: 1.1;
+}
+.fwc-banner__title em { color: #7dd8e4; font-style: italic; }
+.fwc-banner__crumb {
+  list-style: none; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+}
+.fwc-banner__crumb a {
+  color: rgba(255,255,255,0.65); text-decoration: none;
+  transition: color 0.15s;
+}
+.fwc-banner__crumb a:hover { color: #7dd8e4; }
+.fwc-banner__crumb li:last-child { color: rgba(255,255,255,0.35); }
 `;
 
 function injectSellStyles() {
@@ -513,6 +648,17 @@ const AMENITY_OPTIONS = [
   "Elevator",
 ];
 
+const NAV_ITEMS = [
+  { id: "sec-contact", icon: "👤", label: "Your Details" },
+  { id: "sec-property", icon: "🏠", label: "Property Info" },
+  { id: "sec-details", icon: "📋", label: "Details" },
+  { id: "sec-utility", icon: "⚡", label: "Utilities" },
+  { id: "sec-outdoor", icon: "🌿", label: "Outdoor" },
+  { id: "sec-nearby", icon: "📍", label: "Nearby" },
+  { id: "sec-amenities", icon: "✨", label: "Amenities" },
+  { id: "sec-images", icon: "🖼", label: "Images" },
+];
+
 const INITIAL_FORM: SellFormData = {
   contact_name: "",
   contact_email: "",
@@ -545,8 +691,6 @@ function KVEditor({
   onChange: (d: Record<string, string>) => void;
   placeholder?: { k: string; v: string };
 }) {
-  const entries = Object.entries(data);
-
   const update = (oldKey: string, newKey: string, value: string) => {
     const next: Record<string, string> = {};
     for (const [k, v] of Object.entries(data)) {
@@ -556,10 +700,9 @@ function KVEditor({
     }
     onChange(next);
   };
-
   return (
     <div className="kv-editor">
-      {entries.map(([k, v]) => (
+      {Object.entries(data).map(([k, v]) => (
         <div key={k} className="kv-row">
           <input
             value={k.replace(/_/g, " ")}
@@ -681,7 +824,7 @@ function SellCard({
   );
 }
 
-// ─── Field wrapper ────────────────────────────────────────────
+// ─── Field ────────────────────────────────────────────────────
 function Field({
   label,
   required,
@@ -711,7 +854,6 @@ const SellPropertyArea = () => {
 
   const [loginModal, setLoginModal] = useState(false);
   const { session } = useClientSession();
-
   const [step, setStep] = useState<"form" | "success">("form");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -735,6 +877,17 @@ const SellPropertyArea = () => {
       : [...form.amenities, a];
     set("amenities", next);
   };
+
+  // Progress: count non-empty required fields
+  const filledCount = [
+    form.contact_name,
+    form.contact_email,
+    form.contact_phone,
+    form.title,
+    form.price,
+    form.location,
+  ].filter(Boolean).length;
+  const progressPct = Math.round((filledCount / 6) * 100);
 
   async function uploadImages(
     files: File[],
@@ -813,17 +966,6 @@ const SellPropertyArea = () => {
     }
   };
 
-  const navItems = [
-    { id: "sec-contact", icon: "👤", label: "Your Details" },
-    { id: "sec-property", icon: "🏠", label: "Property Info" },
-    { id: "sec-details", icon: "📋", label: "Prop. Details" },
-    { id: "sec-utility", icon: "⚡", label: "Utilities" },
-    { id: "sec-outdoor", icon: "🌿", label: "Outdoor" },
-    { id: "sec-nearby", icon: "📍", label: "Nearby" },
-    { id: "sec-amenities", icon: "✨", label: "Amenities" },
-    { id: "sec-images", icon: "🖼", label: "Images" },
-  ];
-
   return (
     <Wrapper>
       <SEO pageTitle="List Your Property – Sell or Rent" />
@@ -831,39 +973,42 @@ const SellPropertyArea = () => {
       <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
       {/* ── Banner ── */}
-      <div className="inner-banner-three inner-banner text-center z-1 position-relative">
+      <div className="fwc-banner">
         <div
-          className="bg-wrapper overflow-hidden position-relative z-1"
+          className="fwc-banner__bg"
           style={{ backgroundImage: `url(/assets/images/media/img_51.jpg)` }}
-        >
-          <div className="container position-relative z-2">
-            <h2 className="mb-35 xl-mb-20 md-mb-10 pt-15 font-garamond text-white">
-              List Your Property
-            </h2>
-            <ul className="theme-breadcrumb style-none d-inline-flex align-items-center justify-content-center position-relative z-1 bottom-line">
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>/</li>
-              <li>List Property</li>
-            </ul>
-          </div>
-          <img
-            src="/assets/images/shape/shape_35.svg"
-            alt=""
-            className="lazy-img shapes shape_01"
-          />
-          <img
-            src="/assets/images/shape/shape_36.svg"
-            alt=""
-            className="lazy-img shapes shape_02"
-          />
+        />
+        <div className="fwc-banner__inner">
+          <h2 className="fwc-banner__title">
+            Let's <em>talk</em>
+          </h2>
+          <ul className="fwc-banner__crumb">
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>/</li>
+            <li>Contact</li>
+          </ul>
         </div>
       </div>
 
       {/* ── Form section ── */}
       <div className="sell-root sell-section">
         <div className="container">
+          {/* Page heading */}
+          {step === "form" && (
+            <div className="sell-page-head">
+              <div className="sell-page-eyebrow">New Listing</div>
+              <h1 className="sell-page-title">
+                List your <em>property</em>
+              </h1>
+              <p className="sell-page-sub">
+                Fill in the details below and our team will review and publish
+                your listing within 24–48 hours.
+              </p>
+            </div>
+          )}
+
           {step === "success" ? (
             <div className="sell-card">
               <div className="sell-success">
@@ -898,10 +1043,10 @@ const SellPropertyArea = () => {
             </div>
           ) : (
             <div className="sell-layout">
-              {/* ── Sidebar nav ── */}
+              {/* ── Sticky sidebar ── */}
               <aside className="sell-sidebar">
-                <div className="sell-sidebar__title">Sections</div>
-                {navItems.map((item) => (
+                <span className="sell-sidebar__label">Sections</span>
+                {NAV_ITEMS.map((item) => (
                   <a
                     key={item.id}
                     href={`#${item.id}`}
@@ -914,27 +1059,41 @@ const SellPropertyArea = () => {
                       });
                     }}
                   >
-                    <span className="sell-nav-item__icon">{item.icon}</span>
+                    <span className="sell-nav-dot" />
                     {item.label}
                   </a>
                 ))}
+
+                {/* Progress */}
+                <div className="sell-progress">
+                  <div className="sell-progress__label">
+                    <span>Required fields</span>
+                    <span>{progressPct}%</span>
+                  </div>
+                  <div className="sell-progress__track">
+                    <div
+                      className="sell-progress__fill"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
               </aside>
 
-              {/* ── Form ── */}
+              {/* ── Form cards ── */}
               <div>
                 {/* Contact */}
                 <SellCard
                   id="sec-contact"
                   icon="👤"
                   title="Your Contact Information"
-                  subtitle="We'll reach out to you at these details"
+                  subtitle="We'll reach out at these details after review"
                 >
                   <div className="row g-3">
                     <div className="col-md-4">
                       <Field label="Full Name" required>
                         <input
                           className="sell-input"
-                          placeholder="e.g. John Smith"
+                          placeholder="e.g. Aarav Sharma"
                           value={form.contact_name}
                           onChange={(e) => set("contact_name", e.target.value)}
                         />
@@ -956,7 +1115,7 @@ const SellPropertyArea = () => {
                         <input
                           type="tel"
                           className="sell-input"
-                          placeholder="+1 555 000 0000"
+                          placeholder="+977 98XXXXXXXX"
                           value={form.contact_phone}
                           onChange={(e) => set("contact_phone", e.target.value)}
                         />
@@ -970,14 +1129,14 @@ const SellPropertyArea = () => {
                   id="sec-property"
                   icon="🏠"
                   title="Property Information"
-                  subtitle="Core listing details shown to buyers"
+                  subtitle="Core details shown to buyers and renters"
                 >
                   <div className="row g-3">
                     <div className="col-12">
                       <Field label="Property Title" required>
                         <input
                           className="sell-input"
-                          placeholder="e.g. Modern 3-Bedroom Apartment in Downtown"
+                          placeholder="e.g. Modern 3-Bedroom Apartment in Thamel, Kathmandu"
                           value={form.title}
                           onChange={(e) => set("title", e.target.value)}
                         />
@@ -1015,7 +1174,7 @@ const SellPropertyArea = () => {
                     </div>
                     <div className="col-md-4">
                       <Field
-                        label="Price (USD)"
+                        label="Price (NPR / USD)"
                         required
                         hint={
                           form.status === "For Rent"
@@ -1035,7 +1194,7 @@ const SellPropertyArea = () => {
                       <Field label="Location / Address" required>
                         <input
                           className="sell-input"
-                          placeholder="e.g. 123 Main St, New York, NY 10001"
+                          placeholder="e.g. Lazimpat, Kathmandu, Nepal"
                           value={form.location}
                           onChange={(e) => set("location", e.target.value)}
                         />
@@ -1103,7 +1262,7 @@ const SellPropertyArea = () => {
                       <Field label="Description">
                         <textarea
                           className="sell-textarea"
-                          placeholder="Describe the property — highlights, condition, unique features…"
+                          placeholder="Describe the property — layout, condition, unique features, views…"
                           value={form.description}
                           onChange={(e) => set("description", e.target.value)}
                         />
@@ -1114,7 +1273,7 @@ const SellPropertyArea = () => {
                         <textarea
                           className="sell-textarea"
                           style={{ minHeight: "80px" }}
-                          placeholder="Briefly describe standout features like layout, views, renovations…"
+                          placeholder="Briefly describe standout features like renovations, premium finishes…"
                           value={form.features_description}
                           onChange={(e) =>
                             set("features_description", e.target.value)
@@ -1130,7 +1289,7 @@ const SellPropertyArea = () => {
                   id="sec-details"
                   icon="📋"
                   title="Property Details"
-                  subtitle="Year built, furnishing, parking, etc."
+                  subtitle="Year built, furnishing, parking, floors, etc."
                 >
                   <KVEditor
                     data={form.property_details}
@@ -1144,7 +1303,7 @@ const SellPropertyArea = () => {
                   id="sec-utility"
                   icon="⚡"
                   title="Utility & Home Features"
-                  subtitle="Heating, cooling, water supply, etc."
+                  subtitle="Heating, cooling, water supply, electricity, etc."
                 >
                   <KVEditor
                     data={form.utility_features}
@@ -1172,7 +1331,7 @@ const SellPropertyArea = () => {
                   id="sec-nearby"
                   icon="📍"
                   title="What's Nearby"
-                  subtitle='Enter distances, e.g. "0.5 km" or "5 min walk"'
+                  subtitle='Distances to key amenities — e.g. "0.5 km" or "5 min walk"'
                 >
                   <KVEditor
                     data={form.whats_nearby}
@@ -1186,7 +1345,7 @@ const SellPropertyArea = () => {
                   id="sec-amenities"
                   icon="✨"
                   title="Amenities"
-                  subtitle="Select all that apply"
+                  subtitle="Select all that apply to this property"
                 >
                   <div className="amenities-grid">
                     {AMENITY_OPTIONS.map((a) => {
@@ -1231,7 +1390,7 @@ const SellPropertyArea = () => {
                 <SellCard
                   icon="📐"
                   title="Floor Plans"
-                  subtitle="Upload floor plan images (optional)"
+                  subtitle="Optional — upload floor plan images"
                 >
                   <ImageUploader
                     label="Upload floor plan images"
@@ -1242,13 +1401,15 @@ const SellPropertyArea = () => {
                   />
                 </SellCard>
 
-                {/* Error + Submit */}
+                {/* Error */}
                 {error && (
                   <div className="sell-error">
-                    <span>⚠</span> {error}
+                    <i className="bi bi-exclamation-circle" />
+                    {error}
                   </div>
                 )}
 
+                {/* Submit */}
                 <button
                   className="sell-submit mb-5"
                   onClick={handleSubmit}
@@ -1260,8 +1421,8 @@ const SellPropertyArea = () => {
                         className="spinner-border spinner-border-sm"
                         role="status"
                         style={{
-                          width: "16px",
-                          height: "16px",
+                          width: "15px",
+                          height: "15px",
                           borderWidth: "2px",
                         }}
                       />

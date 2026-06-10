@@ -12,6 +12,7 @@ import NavMenu from "../../../layouts/headers/Menu/FutureNavMenu";
 import LoginModal from "../../../modals/LoginModal";
 import { useClientSession } from "../../../my-components/userclientsession";
 import { useState } from "react";
+import CategorySection from "../../../my-components/CategoryFuture";
 
 const FutureHome = () => {
   const [loginModal, setLoginModal] = useState(false);
@@ -22,9 +23,11 @@ const FutureHome = () => {
       <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
       <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
       <FutureHeroBanner />
+      <CategorySection />
+
       {/* <FutureCategory style={false} /> */}
       <FutureFeatureOne />
-      <FutureBigProperty />
+      {/* <FutureBigProperty /> */}
       <FutureListingHero style={false} />
       <FutureFeatureTwo />
       <FutureBannerOne />

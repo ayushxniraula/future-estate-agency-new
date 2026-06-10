@@ -10,6 +10,7 @@
 //   • Full mobile responsiveness
 //   • Login modal trigger instead of route navigation
 //   • Protected route guard for /sell (requires auth)
+//   • "Features" dropdown grouping Property Compare, Heat Map, Smart Finder
 // ============================================================
 
 import { useEffect, useState, useRef } from "react";
@@ -22,16 +23,18 @@ const NAV_ITEMS = [
   { label: "Sell", to: "/sell" },
   { label: "About", to: "/about" },
   { label: "Calculator", to: "/calculator" },
+  { label: "Contact", to: "/contact" },
+];
+
+// Items grouped under the "Features" dropdown
+const FEATURE_ITEMS = [
   { label: "Property Compare", to: "/propcompare" },
   { label: "Heat Map", to: "/heat" },
   { label: "Smart Finder", to: "/smart" },
-  { label: "Contact", to: "/contact" },
 ];
 
 // ─── Routes that require authentication ───────────────────────
 const PROTECTED_ROUTES = ["/sell"];
-
-// ─── Props ────────────────────────────────────────────────────
 
 // ─── Styles ───────────────────────────────────────────────────
 const NAV_STYLES = `
@@ -171,6 +174,128 @@ const NAV_STYLES = `
     opacity: 0.5;
   }
 
+  /* ── Features dropdown ── */
+  .fw-dropdown {
+    position: relative;
+  }
+
+  .fw-dropdown__trigger {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 13px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--fw-ink);
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+    position: relative;
+    letter-spacing: 0.1px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--fw-font-body);
+  }
+  .fw-dropdown__trigger::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 13px;
+    right: 13px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--fw-teal);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.24s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .fw-dropdown__trigger:hover {
+    color: var(--fw-navy);
+    background: rgba(37,32,96,0.04);
+  }
+  .fw-dropdown__trigger:hover::after,
+  .fw-dropdown__trigger.active::after { transform: scaleX(1); }
+  .fw-dropdown__trigger.active {
+    color: var(--fw-navy);
+    font-weight: 600;
+  }
+  .fw-dropdown__trigger.active::after {
+    background: linear-gradient(90deg, var(--fw-navy), var(--fw-teal));
+  }
+
+  .fw-dropdown__caret {
+    width: 12px;
+    height: 12px;
+    transition: transform 0.22s cubic-bezier(0.34,1.2,0.64,1);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .fw-dropdown.open .fw-dropdown__caret {
+    transform: rotate(180deg);
+  }
+
+  .fw-dropdown__menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 200px;
+    background: var(--fw-white);
+    border: 1px solid var(--fw-rule);
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(37,32,96,0.12);
+    padding: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px) scale(0.97);
+    transform-origin: top left;
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.34,1.2,0.64,1);
+    z-index: 100;
+  }
+  .fw-dropdown.open .fw-dropdown__menu {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+  }
+
+  .fw-dropdown__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--fw-ink);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+    font-family: var(--fw-font-body);
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+  }
+  .fw-dropdown__item:hover {
+    background: rgba(37,32,96,0.05);
+    color: var(--fw-navy);
+  }
+  .fw-dropdown__item.active {
+    background: linear-gradient(120deg, rgba(37,32,96,0.08), rgba(28,148,164,0.10));
+    color: var(--fw-navy);
+    font-weight: 600;
+  }
+  .fw-dropdown__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fw-teal);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .fw-dropdown__item:hover .fw-dropdown__dot,
+  .fw-dropdown__item.active .fw-dropdown__dot {
+    opacity: 1;
+  }
+
   /* ── Right side: Login + hamburger ── */
   .fw-header__right {
     display: flex;
@@ -237,7 +362,6 @@ const NAV_STYLES = `
     transition: transform 0.3s cubic-bezier(0.23,1,0.32,1), opacity 0.2s, width 0.2s;
     transform-origin: center;
   }
-  /* Open state: X */
   .fw-burger.open .fw-burger__bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
   .fw-burger.open .fw-burger__bar:nth-child(2) { opacity: 0; transform: scaleX(0); }
   .fw-burger.open .fw-burger__bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
@@ -275,7 +399,6 @@ const NAV_STYLES = `
   }
   .fw-drawer.open { transform: translateX(0); }
 
-  /* Drawer top accent bar */
   .fw-drawer::before {
     content: '';
     display: block;
@@ -284,7 +407,6 @@ const NAV_STYLES = `
     flex-shrink: 0;
   }
 
-  /* Drawer header */
   .fw-drawer__head {
     display: flex;
     align-items: center;
@@ -312,7 +434,6 @@ const NAV_STYLES = `
     color: var(--fw-white);
   }
 
-  /* Drawer nav list */
   .fw-drawer__nav {
     flex: 1;
     overflow-y: auto;
@@ -328,7 +449,6 @@ const NAV_STYLES = `
     transform: translateX(20px);
     transition: opacity 0.3s ease, transform 0.3s ease;
   }
-  /* Staggered reveal when drawer opens */
   .fw-drawer.open .fw-drawer__nav-item:nth-child(1)  { transition-delay: 0.04s; }
   .fw-drawer.open .fw-drawer__nav-item:nth-child(2)  { transition-delay: 0.08s; }
   .fw-drawer.open .fw-drawer__nav-item:nth-child(3)  { transition-delay: 0.12s; }
@@ -354,7 +474,6 @@ const NAV_STYLES = `
     margin-bottom: 2px;
     font-family: var(--fw-font-body);
     letter-spacing: 0.1px;
-    /* button reset for when rendered as button */
     background: transparent;
     border: none;
     cursor: pointer;
@@ -385,8 +504,6 @@ const NAV_STYLES = `
     background: var(--fw-teal);
     color: var(--fw-white);
   }
-
-  /* Active left accent */
   .fw-drawer__link.active {
     position: relative;
     padding-left: 20px;
@@ -399,15 +516,83 @@ const NAV_STYLES = `
     border-radius: 0 3px 3px 0;
     background: linear-gradient(180deg, var(--fw-navy), var(--fw-teal));
   }
-
-  /* Lock icon on protected drawer links when not authed */
   .fw-drawer__link[data-protected="true"] .fw-drawer__lock {
     font-size: 11px;
     opacity: 0.45;
     margin-right: 4px;
   }
 
-  /* Drawer footer */
+  /* ── Features section in drawer ── */
+  .fw-drawer__section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--fw-muted);
+    font-family: var(--fw-font-body);
+  }
+  .fw-drawer__section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--fw-rule);
+  }
+
+  .fw-drawer__sub-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px 11px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fw-ink);
+    text-decoration: none;
+    transition: background 0.18s, color 0.18s;
+    margin-bottom: 2px;
+    font-family: var(--fw-font-body);
+    letter-spacing: 0.1px;
+  }
+  .fw-drawer__sub-link:hover {
+    background: rgba(37,32,96,0.05);
+    color: var(--fw-navy);
+  }
+  .fw-drawer__sub-link.active {
+    background: linear-gradient(120deg, rgba(37,32,96,0.08), rgba(28,148,164,0.10));
+    color: var(--fw-navy);
+    font-weight: 700;
+    position: relative;
+    padding-left: 32px;
+  }
+  .fw-drawer__sub-link.active::before {
+    content: '';
+    position: absolute;
+    left: 16px; top: 8px; bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(180deg, var(--fw-navy), var(--fw-teal));
+  }
+  .fw-drawer__sub-link .fw-drawer__chevron {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--fw-rule);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    color: var(--fw-muted);
+    flex-shrink: 0;
+    transition: background 0.18s, color 0.18s;
+  }
+  .fw-drawer__sub-link:hover .fw-drawer__chevron,
+  .fw-drawer__sub-link.active .fw-drawer__chevron {
+    background: var(--fw-teal);
+    color: var(--fw-white);
+  }
+
+  /* ── Drawer footer ── */
   .fw-drawer__foot {
     padding: 16px 24px 28px;
     border-top: 1px solid var(--fw-rule);
@@ -440,7 +625,7 @@ const NAV_STYLES = `
   /* ── Body scroll lock ── */
   body.fw-nav-open { overflow: hidden; }
 
-  /* ── Spacer so page content isn't under fixed header ── */
+  /* ── Spacer ── */
   .fw-header-spacer { height: var(--fw-nav-h); }
 `;
 
@@ -462,8 +647,10 @@ const NavMenu = ({ onLoginClick, session }: any) => {
 
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLLIElement>(null);
 
   // ── Scroll-aware shadow ───────────────────────────────────
   useEffect(() => {
@@ -475,6 +662,7 @@ const NavMenu = ({ onLoginClick, session }: any) => {
   // ── Close drawer on route change ─────────────────────────
   useEffect(() => {
     setDrawerOpen(false);
+    setDropdownOpen(false);
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
@@ -484,14 +672,32 @@ const NavMenu = ({ onLoginClick, session }: any) => {
     return () => document.body.classList.remove("fw-nav-open");
   }, [drawerOpen]);
 
-  // ── Escape key closes drawer ─────────────────────────────
+  // ── Escape key closes drawer / dropdown ──────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && drawerOpen) setDrawerOpen(false);
+      if (e.key === "Escape") {
+        if (drawerOpen) setDrawerOpen(false);
+        if (dropdownOpen) setDropdownOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [drawerOpen]);
+  }, [drawerOpen, dropdownOpen]);
+
+  // ── Close dropdown on outside click ─────────────────────
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [dropdownOpen]);
 
   const logout = () => {
     localStorage.removeItem("ea_client_session");
@@ -501,21 +707,20 @@ const NavMenu = ({ onLoginClick, session }: any) => {
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname === path;
 
-  // ── Protected route guard ────────────────────────────────
-  // Returns true if the route requires auth AND user is not logged in
+  const isFeatureActive = FEATURE_ITEMS.some((item) => isActive(item.to));
+
   const isProtectedAndUnauthed = (path: string) =>
     PROTECTED_ROUTES.includes(path) && !session;
 
-  // ── Handler for nav link clicks ──────────────────────────
   const handleNavClick = (
     e: React.MouseEvent,
     path: string,
     closeDrawer = false,
   ) => {
     if (isProtectedAndUnauthed(path)) {
-      e.preventDefault(); // block the Link navigation
+      e.preventDefault();
       if (closeDrawer) setDrawerOpen(false);
-      onLoginClick(); // open login modal instead
+      onLoginClick();
     } else if (closeDrawer) {
       setDrawerOpen(false);
     }
@@ -549,14 +754,55 @@ const NavMenu = ({ onLoginClick, session }: any) => {
                   </Link>
                 </li>
               ))}
+
+              {/* Features dropdown */}
+              <li
+                ref={dropdownRef}
+                className={`fw-nav__item fw-dropdown${dropdownOpen ? " open" : ""}`}
+              >
+                <button
+                  className={`fw-dropdown__trigger${isFeatureActive ? " active" : ""}`}
+                  onClick={() => setDropdownOpen((v) => !v)}
+                  aria-expanded={dropdownOpen}
+                  aria-haspopup="true"
+                >
+                  Features
+                  <svg
+                    className="fw-dropdown__caret"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M2 4L6 8L10 4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                <div className="fw-dropdown__menu" role="menu">
+                  {FEATURE_ITEMS.map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      role="menuitem"
+                      className={`fw-dropdown__item${isActive(item.to) ? " active" : ""}`}
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <span className="fw-dropdown__dot" aria-hidden="true" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </li>
             </ul>
           </nav>
 
           {/* Right side */}
           <div className="fw-header__right">
-            {/* Login button — desktop */}
-            {/* Renders as button (triggers modal) when not logged in,
-                or can be swapped for a user avatar / profile link when logged in */}
             {!session ? (
               <button
                 onClick={onLoginClick}
@@ -591,7 +837,7 @@ const NavMenu = ({ onLoginClick, session }: any) => {
               </button>
             )}
 
-            {/* Hamburger — mobile / tablet */}
+            {/* Hamburger */}
             <button
               className={`fw-burger${drawerOpen ? " open" : ""}`}
               onClick={() => setDrawerOpen((v) => !v)}
@@ -658,7 +904,6 @@ const NavMenu = ({ onLoginClick, session }: any) => {
                   onClick={(e) => handleNavClick(e, item.to, true)}
                 >
                   <span>
-                    {/* Show lock icon on protected routes for unauthenticated users */}
                     {needsAuth && (
                       <span className="fw-drawer__lock" aria-hidden="true">
                         🔒{" "}
@@ -673,9 +918,28 @@ const NavMenu = ({ onLoginClick, session }: any) => {
               </li>
             );
           })}
+
+          {/* Features section in drawer */}
+          <li className="fw-drawer__nav-item">
+            <div className="fw-drawer__section-label">Features</div>
+            {FEATURE_ITEMS.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`fw-drawer__sub-link${isActive(item.to) ? " active" : ""}`}
+                aria-current={isActive(item.to) ? "page" : undefined}
+                onClick={() => setDrawerOpen(false)}
+              >
+                <span>{item.label}</span>
+                <span className="fw-drawer__chevron" aria-hidden="true">
+                  ›
+                </span>
+              </Link>
+            ))}
+          </li>
         </ul>
 
-        {/* Drawer footer — login CTA */}
+        {/* Drawer footer */}
         <div className="fw-drawer__foot">
           {!session ? (
             <button

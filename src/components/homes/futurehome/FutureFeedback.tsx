@@ -8,7 +8,6 @@
 import { Rating } from "react-simple-star-rating";
 import Slider from "react-slick";
 import { useRef } from "react";
-import { Link } from "react-router-dom";
 
 // ─── Nepal-specific static feedback data ──────────────────────
 // Replace feedback_data import with inline Nepal-targeted content
@@ -357,13 +356,6 @@ const FutureFeedback = ({ style }: { style?: boolean }) => {
               <i className="bi bi-arrow-right" />
             </li>
           </ul>
-
-          {/* CTA */}
-          <div className="section-btn text-center md-mt-30">
-            <Link to="#" className="btn-eleven fst-italic">
-              <span>See all Feedback</span>
-            </Link>
-          </div>
         </div>
       </div>
 

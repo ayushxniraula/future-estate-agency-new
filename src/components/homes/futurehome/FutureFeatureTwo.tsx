@@ -5,7 +5,6 @@
 // ============================================================
 
 import { Link } from "react-router-dom";
-import CardStyleTwo from "../../common/CardStyleTwo";
 import Count from "../../common/Count";
 
 const FEATURE_TWO_STYLES = `
@@ -226,7 +225,7 @@ const FutureFeatureTwo = () => {
               </div>
             </div>
           </div>
-          <CardStyleTwo />
+          {/* <CardStyleTwo /> */}
         </div>
       </div>
     </div>

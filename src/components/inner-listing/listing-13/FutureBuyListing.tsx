@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import ReactPaginate from "react-paginate";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 // ─── Supabase Client ──────────────────────────────────────────
@@ -168,85 +168,129 @@ const INJECTED_STYLE = `
     --radius-pill:    100px;
     --shadow-card:    0 1px 3px rgba(37,32,96,0.05), 0 4px 18px rgba(37,32,96,0.08);
     --shadow-hover:   0 6px 12px rgba(37,32,96,0.10), 0 20px 48px rgba(37,32,96,0.14);
-    --shadow-sidebar: 2px 0 24px rgba(37,32,96,0.06);
+    --shadow-sidebar: 2px 0 24px rgba(37,32,96,0.07);
   }
 
   .fw-listing-root, .fw-listing-root * { font-family: var(--font-body); box-sizing: border-box; }
   .fw-listing-root { background: var(--c-surface); min-height: 100vh; }
 
-  /* ── Type Bar ── */
-  .fw-type-bar {
-    background: var(--fw-navy);
-    padding: 0 20px;
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    box-shadow: 0 2px 16px rgba(37,32,96,0.18);
-  }
-  .fw-type-bar-inner {
-    display: flex; align-items: center; gap: 4px;
-    padding: 10px 0; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap;
-  }
-  .fw-type-bar-inner::-webkit-scrollbar { display: none; }
-  .fw-type-bar-label {
-    font-size: 9px; font-weight: 700; letter-spacing: 1.4px;
-    text-transform: uppercase; color: rgba(255,255,255,0.4);
-    margin-right: 8px; flex-shrink: 0; white-space: nowrap;
-  }
-  .fw-type-pill {
-    padding: 5px 14px; border-radius: var(--radius-pill);
-    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.65);
-    text-decoration: none; border: 1.5px solid rgba(255,255,255,0.15);
-    transition: all 0.18s ease; white-space: nowrap; background: transparent;
-    letter-spacing: 0.2px; flex-shrink: 0;
-  }
-  .fw-type-pill:hover { border-color: var(--fw-teal); color: var(--fw-teal-light); background: rgba(28,148,164,0.10); }
-  .fw-type-pill.active { background: var(--fw-teal); border-color: var(--fw-teal); color: #fff; box-shadow: 0 2px 12px rgba(28,148,164,0.35); }
-
   /* ── Layout ── */
+  /*
+   * Key sticky approach:
+   * .fw-layout is a normal flex row — it does NOT set a height or overflow,
+   * so the page itself scrolls. The sidebar uses position:sticky + top:0 +
+   * max-height:100vh + overflow-y:auto, which means it sticks to the top of
+   * the viewport and scrolls internally only when its own content is taller
+   * than the screen. The main column grows naturally and the page scrolls.
+   */
   .fw-layout {
     display: flex;
-    min-height: calc(100vh - 50px);
-    position: relative;
-    padding: 0 !important;        /* kill the old 5px hack */
+    align-items: flex-start;   /* critical: lets sticky work */
     gap: 0;
+    padding: 0 !important;
   }
 
   /* ── Mobile overlay ── */
-  .fw-sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,14,26,0.55); z-index: 100; backdrop-filter: blur(3px); }
+  .fw-sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,14,26,0.55); z-index: 100;
+    backdrop-filter: blur(3px);
+  }
   .fw-sidebar-overlay.open { display: block; }
 
   /* ── Sidebar ── */
   .fw-sidebar {
-    width: 288px; flex-shrink: 0;
+    width: 292px;
+    flex-shrink: 0;
     background: var(--c-white);
     border-right: 1px solid var(--c-rule);
     box-shadow: var(--shadow-sidebar);
-    position: sticky; top: 50px;
-    height: calc(100vh - 50px);
-    overflow-y: auto; scrollbar-width: thin;
+
+    /* Sticky magic */
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
     scrollbar-color: var(--c-rule) transparent;
-    transition: transform 0.3s cubic-bezier(.4,0,.2,1); z-index: 50;
+
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    z-index: 50;
   }
-  .fw-sidebar::-webkit-scrollbar { width: 4px; }
+  .fw-sidebar::-webkit-scrollbar       { width: 4px; }
   .fw-sidebar::-webkit-scrollbar-track { background: transparent; }
   .fw-sidebar::-webkit-scrollbar-thumb { background: var(--c-rule); border-radius: 4px; }
 
   @media (max-width: 991px) {
-    .fw-sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); z-index: 110; }
+    .fw-sidebar {
+      position: fixed; top: 0; left: 0;
+      height: 100vh; max-height: 100vh;
+      transform: translateX(-100%);
+      z-index: 110;
+    }
     .fw-sidebar.mobile-open { transform: translateX(0); }
     .fw-layout { display: block; }
   }
 
-  .fw-sidebar__header { display: flex; align-items: center; justify-content: space-between; padding: 22px 22px 0; margin-bottom: 20px; }
-  .fw-sidebar__title { font-family: var(--font-display); font-size: 19px; font-weight: 400; color: var(--fw-navy); letter-spacing: -0.2px; }
-  .fw-sidebar__close { display: none; background: none; border: none; cursor: pointer; font-size: 18px; color: var(--c-ink-3); padding: 2px; line-height: 1; }
-  @media (max-width: 991px) { .fw-sidebar__close { display: flex; align-items: center; } }
+  /* ── Sidebar header ── */
+  .fw-sidebar__header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 22px 16px;
+    border-bottom: 1px solid var(--c-rule);
+    position: sticky; top: 0;
+    background: var(--c-white);
+    z-index: 2;
+  }
+  .fw-sidebar__title-wrap { display: flex; align-items: center; gap: 9px; }
+  .fw-sidebar__title {
+    font-family: var(--font-display); font-size: 18px;
+    font-weight: 400; color: var(--fw-navy); letter-spacing: -0.2px;
+  }
+  .fw-sidebar__count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--fw-teal); color: #fff;
+    border-radius: var(--radius-pill); font-size: 10px; font-weight: 800;
+    padding: 1px 7px; letter-spacing: 0.3px; line-height: 1.6;
+    font-family: var(--font-body);
+  }
+  .fw-sidebar__close {
+    display: none; background: none; border: none; cursor: pointer;
+    font-size: 18px; color: var(--c-ink-3); padding: 2px; line-height: 1;
+  }
+  @media (max-width: 991px) {
+    .fw-sidebar__close { display: flex; align-items: center; }
+  }
 
-  .fw-sidebar-body { padding: 0 22px 32px; }
-  .fw-sidebar-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--c-rule); }
+  /* ── Sidebar body ── */
+  .fw-sidebar-body { padding: 8px 0 32px; }
+
+  .fw-sidebar-section {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--c-rule);
+    position: relative;
+  }
   .fw-sidebar-section:last-of-type { border-bottom: none; }
-  .fw-sidebar-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; color: var(--fw-teal); margin-bottom: 9px; display: block; }
+
+  /* Teal left accent line on focus-within */
+  .fw-sidebar-section::before {
+    content: '';
+    position: absolute; left: 0; top: 12px; bottom: 12px;
+    width: 3px; border-radius: 0 2px 2px 0;
+    background: var(--fw-teal);
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .fw-sidebar-section:focus-within::before { opacity: 1; }
+
+  .fw-sidebar-label {
+    font-size: 9px; font-weight: 800; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--c-ink-3);
+    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .fw-sidebar-label-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--fw-teal); flex-shrink: 0;
+  }
+
   .fw-sidebar-input {
     width: 100%; padding: 9px 13px; border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule); font-size: 13px; font-family: var(--font-body);
@@ -254,31 +298,55 @@ const INJECTED_STYLE = `
     transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
     outline: none; appearance: none; -webkit-appearance: none;
   }
-  .fw-sidebar-input:focus { border-color: var(--fw-teal); background: var(--c-white); box-shadow: 0 0 0 3px rgba(28,148,164,0.12); }
+  .fw-sidebar-input:focus {
+    border-color: var(--fw-teal); background: var(--c-white);
+    box-shadow: 0 0 0 3px rgba(28,148,164,0.12);
+  }
 
-  .fw-amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-  .fw-amenity-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--c-ink-2); cursor: pointer; padding: 5px 0; font-family: var(--font-body); transition: color 0.15s; }
+  /* Status pills inside sidebar */
+  .fw-status-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fw-status-pill {
+    padding: 5px 12px; border-radius: var(--radius-pill);
+    font-size: 11.5px; font-weight: 700; font-family: var(--font-body);
+    border: 1.5px solid var(--c-rule); background: transparent;
+    color: var(--c-ink-2); cursor: pointer;
+    transition: all 0.18s; letter-spacing: 0.1px;
+  }
+  .fw-status-pill:hover { border-color: var(--fw-navy); color: var(--fw-navy); }
+  .fw-status-pill.active {
+    background: var(--fw-navy); border-color: var(--fw-navy); color: #fff;
+  }
+
+  .fw-amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+  .fw-amenity-item {
+    display: flex; align-items: center; gap: 7px; font-size: 12px;
+    color: var(--c-ink-2); cursor: pointer; padding: 6px 0;
+    font-family: var(--font-body); transition: color 0.15s;
+  }
   .fw-amenity-item:hover { color: var(--fw-teal); }
-  .fw-amenity-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--fw-teal); cursor: pointer; flex-shrink: 0; }
+  .fw-amenity-item input[type="checkbox"] {
+    width: 14px; height: 14px; accent-color: var(--fw-teal);
+    cursor: pointer; flex-shrink: 0;
+  }
 
   .fw-reset-btn {
     width: 100%; padding: 10px; border-radius: var(--radius-sm);
-    border: 1.5px solid var(--fw-navy); background: transparent;
-    font-size: 12.5px; font-weight: 700; font-family: var(--font-body);
-    color: var(--fw-navy); cursor: pointer; letter-spacing: 0.4px;
+    border: 1.5px solid var(--c-rule); background: transparent;
+    font-size: 12px; font-weight: 700; font-family: var(--font-body);
+    color: var(--c-ink-3); cursor: pointer; letter-spacing: 0.5px;
     transition: all 0.2s; text-transform: uppercase;
   }
-  .fw-reset-btn:hover { background: var(--fw-navy); color: #fff; }
+  .fw-reset-btn:hover { border-color: var(--fw-navy); color: var(--fw-navy); }
 
   /* ── Mobile filter toggle ── */
   .fw-filter-toggle {
-    display: none; align-items: center; gap: 7px; padding: 8px 18px;
-    border-radius: var(--radius-pill); border: 1.5px solid var(--fw-navy);
+    display: none; align-items: center; gap: 7px; padding: 8px 16px;
+    border-radius: var(--radius-pill); border: 1.5px solid var(--c-rule);
     background: var(--c-white); color: var(--fw-navy); font-size: 13px;
     font-weight: 700; font-family: var(--font-body); cursor: pointer;
     letter-spacing: 0.2px; transition: all 0.18s; flex-shrink: 0;
   }
-  .fw-filter-toggle:hover { background: var(--fw-navy); color: #fff; }
+  .fw-filter-toggle:hover { background: var(--fw-navy); color: #fff; border-color: var(--fw-navy); }
   @media (max-width: 991px) { .fw-filter-toggle { display: flex; } }
 
   /* ── Main ── */
@@ -288,86 +356,136 @@ const INJECTED_STYLE = `
   /* ── Active filter pills ── */
   .fw-active-filter-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; align-items: center; }
   .fw-active-bar-label { font-size: 10px; font-weight: 800; letter-spacing: 0.9px; text-transform: uppercase; color: var(--c-ink-3); }
-  .fw-active-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: var(--radius-pill); font-size: 11.5px; font-weight: 700; background: var(--fw-navy); color: #fff; border: none; cursor: default; letter-spacing: 0.1px; }
+  .fw-active-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;
+    border-radius: var(--radius-pill); font-size: 11.5px; font-weight: 700;
+    background: var(--fw-navy); color: #fff; border: none; cursor: default; letter-spacing: 0.1px;
+  }
   .fw-active-pill__x { font-size: 11px; opacity: 0.6; cursor: pointer; line-height: 1; transition: opacity 0.15s; }
   .fw-active-pill__x:hover { opacity: 1; }
-  .fw-clear-all { font-size: 11px; font-weight: 700; color: var(--fw-teal); background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-body); text-transform: uppercase; letter-spacing: 0.4px; transition: color 0.18s; }
+  .fw-clear-all {
+    font-size: 11px; font-weight: 700; color: var(--fw-teal); background: none;
+    border: none; cursor: pointer; padding: 0; font-family: var(--font-body);
+    text-transform: uppercase; letter-spacing: 0.4px; transition: color 0.18s;
+  }
   .fw-clear-all:hover { color: var(--fw-teal-dark); }
 
   /* ── Listing header bar ── */
   .fw-listing-header {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; background: var(--c-white); border-radius: var(--radius-card);
-    padding: 12px 18px; border: 1.5px solid var(--c-rule); margin-bottom: 24px; flex-wrap: wrap;
+    gap: 10px; background: var(--c-white); border-radius: var(--radius-card);
+    padding: 10px 16px; border: 1.5px solid var(--c-rule); margin-bottom: 24px; flex-wrap: wrap;
   }
-  @media (max-width: 576px) { .fw-listing-header { padding: 10px 14px; gap: 8px; } }
-  .fw-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  @media (max-width: 576px) { .fw-listing-header { padding: 9px 12px; gap: 8px; } }
+
+  .fw-header-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fw-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
   .fw-results-count { font-size: 13px; color: var(--c-ink-3); font-family: var(--font-body); }
   .fw-results-count strong { color: var(--fw-navy); font-weight: 700; }
-  .fw-sort-row { display: flex; align-items: center; gap: 10px; }
-  .fw-sort-label { font-size: 11.5px; color: var(--c-ink-3); font-weight: 600; white-space: nowrap; }
 
-  /* ── Custom Sort Select ── */
-  .fw-sort-select-wrap { position: relative; }
-  .fw-sort-select-wrap::after {
+  .fw-header-divider {
+    width: 1px; height: 20px; background: var(--c-rule); flex-shrink: 0;
+  }
+  @media (max-width: 576px) { .fw-header-divider { display: none; } }
+
+  .fw-ctrl-label {
+    font-size: 11.5px; color: var(--c-ink-3); font-weight: 600; white-space: nowrap;
+  }
+
+  /* ── Shared select wrapper (Type + Sort) ── */
+  .fw-select-wrap { position: relative; }
+  .fw-select-wrap::after {
     content: '';
-    position: absolute;
-    right: 12px; top: 50%;
+    position: absolute; right: 11px; top: 50%;
     transform: translateY(-50%);
     width: 0; height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
     border-top: 5px solid var(--fw-navy);
     pointer-events: none;
-    transition: transform 0.2s;
   }
-  .fw-sort-select {
+  .fw-select {
     appearance: none; -webkit-appearance: none;
-    padding: 8px 34px 8px 14px;
+    padding: 7px 30px 7px 12px;
     border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule);
     background: var(--c-surface);
     font-size: 13px; font-weight: 600;
     font-family: var(--font-body);
     color: var(--fw-navy);
-    cursor: pointer;
-    outline: none;
+    cursor: pointer; outline: none;
     transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-    min-width: 120px;
+    min-width: 110px;
   }
-  .fw-sort-select:hover {
+  .fw-select:hover  { border-color: var(--fw-teal); background: var(--c-white); }
+  .fw-select:focus  { border-color: var(--fw-teal); background: var(--c-white); box-shadow: 0 0 0 3px rgba(28,148,164,0.12); }
+
+  /* Active type select gets teal accent */
+  .fw-select--active {
     border-color: var(--fw-teal);
-    background: var(--c-white);
+    background: rgba(28,148,164,0.06);
+    color: var(--fw-teal-dark);
   }
-  .fw-sort-select:focus {
-    border-color: var(--fw-teal);
-    background: var(--c-white);
-    box-shadow: 0 0 0 3px rgba(28,148,164,0.12);
-  }
+  .fw-select--active + .fw-select-caret { border-top-color: var(--fw-teal-dark); }
 
   /* ── Property Card ── */
-  .fw-prop-card { border-radius: var(--radius-card); overflow: hidden; background: var(--c-white); box-shadow: var(--shadow-card); transition: box-shadow 0.28s ease, transform 0.28s ease; border: 1.5px solid var(--c-rule); display: flex; flex-direction: column; width: 100%; height: 100%; }
+  .fw-prop-card {
+    border-radius: var(--radius-card); overflow: hidden; background: var(--c-white);
+    box-shadow: var(--shadow-card); transition: box-shadow 0.28s ease, transform 0.28s ease;
+    border: 1.5px solid var(--c-rule); display: flex; flex-direction: column;
+    width: 100%; height: 100%;
+  }
   .fw-prop-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-5px); }
   .fw-prop-card__img-wrap { position: relative; overflow: hidden; }
   .fw-prop-card__img-wrap img { transition: transform 0.45s ease; display: block; }
   .fw-prop-card:hover .fw-prop-card__img-wrap img { transform: scale(1.05); }
-  .fw-prop-card__badge { position: absolute; top: 12px; left: 12px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 9.5px; font-weight: 800; letter-spacing: 0.7px; text-transform: uppercase; z-index: 3; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); line-height: 1.6; }
-  .fw-prop-card__fav { position: absolute; top: 11px; right: 11px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.92); display: flex; align-items: center; justify-content: center; z-index: 3; color: #aaa; transition: background 0.2s, color 0.2s, transform 0.2s; text-decoration: none; box-shadow: 0 2px 10px rgba(37,32,96,0.14); }
+  .fw-prop-card__badge {
+    position: absolute; top: 12px; left: 12px; padding: 3px 10px;
+    border-radius: var(--radius-pill); font-size: 9.5px; font-weight: 800;
+    letter-spacing: 0.7px; text-transform: uppercase; z-index: 3;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); line-height: 1.6;
+  }
+  .fw-prop-card__fav {
+    position: absolute; top: 11px; right: 11px; width: 32px; height: 32px;
+    border-radius: 50%; background: rgba(255,255,255,0.92);
+    display: flex; align-items: center; justify-content: center; z-index: 3;
+    color: #aaa; transition: background 0.2s, color 0.2s, transform 0.2s;
+    text-decoration: none; box-shadow: 0 2px 10px rgba(37,32,96,0.14);
+  }
   .fw-prop-card__fav:hover { background: var(--fw-teal); color: #fff; transform: scale(1.12); }
   .fw-prop-card__body { padding: 18px 20px 12px; flex: 1; display: flex; flex-direction: column; }
   .fw-prop-card__type { font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--fw-teal); margin-bottom: 5px; }
-  .fw-prop-card__title { font-family: var(--font-display); font-size: 16.5px; font-weight: 400; color: var(--c-ink); text-decoration: none; line-height: 1.25; display: block; margin-bottom: 6px; transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fw-prop-card__title {
+    font-family: var(--font-display); font-size: 16.5px; font-weight: 400; color: var(--c-ink);
+    text-decoration: none; line-height: 1.25; display: block; margin-bottom: 6px;
+    transition: color 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .fw-prop-card__title:hover { color: var(--fw-teal); }
   .fw-prop-card__location { font-size: 12px; color: var(--c-ink-3); margin-bottom: 14px; display: flex; align-items: center; gap: 4px; }
   .fw-prop-card__divider { height: 1px; background: var(--c-rule); margin: 0 -20px 12px; }
   .fw-prop-card__features { display: flex; gap: 5px; flex-wrap: wrap; }
-  .fw-prop-card__feat { display: flex; align-items: center; gap: 5px; background: var(--fw-teal-faint); border-radius: 7px; padding: 4px 9px; font-size: 11.5px; color: var(--fw-navy); font-weight: 600; border: 1px solid rgba(28,148,164,0.15); }
+  .fw-prop-card__feat {
+    display: flex; align-items: center; gap: 5px; background: var(--fw-teal-faint);
+    border-radius: 7px; padding: 4px 9px; font-size: 11.5px; color: var(--fw-navy);
+    font-weight: 600; border: 1px solid rgba(28,148,164,0.15);
+  }
   .fw-prop-card__feat img { width: 12px; height: 12px; opacity: 0.55; }
-  .fw-prop-card__footer { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px 16px; margin-top: auto; border-top: 1px solid var(--c-rule); }
-  .fw-prop-card__price { font-family: var(--font-display); font-size: 21px; font-weight: 400; color: var(--fw-navy); letter-spacing: -0.5px; line-height: 1; }
+  .fw-prop-card__footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px 16px; margin-top: auto; border-top: 1px solid var(--c-rule);
+  }
+  .fw-prop-card__price {
+    font-family: var(--font-display); font-size: 21px; font-weight: 400;
+    color: var(--fw-navy); letter-spacing: -0.5px; line-height: 1;
+  }
   .fw-prop-card__price sup { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--fw-teal); vertical-align: super; margin-right: 1px; }
   .fw-prop-card__price sub { font-family: var(--font-body); font-size: 11px; font-weight: 400; color: var(--c-ink-3); }
-  .fw-prop-card__arrow { width: 34px; height: 34px; border-radius: 50%; background: var(--fw-navy); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: background 0.2s, transform 0.25s; font-size: 13px; flex-shrink: 0; }
+  .fw-prop-card__arrow {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--fw-navy);
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    text-decoration: none; transition: background 0.2s, transform 0.25s; font-size: 13px; flex-shrink: 0;
+  }
   .fw-prop-card__arrow:hover { background: var(--fw-teal); transform: rotate(45deg); }
 
   .fw-carousel-dot { transition: all 0.22s ease; }
@@ -401,8 +519,6 @@ const INJECTED_STYLE = `
   /* ── Spinner ── */
   .fw-spinner { width: 36px; height: 36px; border: 3px solid var(--c-rule); border-top-color: var(--fw-teal); border-radius: 50%; animation: fw-spin 0.8s linear infinite; margin: 0 auto 14px; }
   @keyframes fw-spin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 767px) { .fw-type-bar { padding: 0 14px; } .fw-type-bar-label { display: none; } }
 `;
 
 function injectStyle() {
@@ -417,22 +533,26 @@ function injectStyle() {
   }
 }
 
-// ─── Custom Sort Select ───────────────────────────────────────
-function SortSelect({
+// ─── Shared Select ────────────────────────────────────────────
+function FwSelect({
   value,
   onChange,
+  options,
+  isActive,
 }: {
   value: string;
   onChange: (v: string) => void;
+  options: { value: string; text: string }[];
+  isActive?: boolean;
 }) {
   return (
-    <div className="fw-sort-select-wrap">
+    <div className="fw-select-wrap">
       <select
-        className="fw-sort-select"
+        className={`fw-select${isActive ? " fw-select--active" : ""}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
-        {SORT_OPTIONS.map((opt) => (
+        {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.text}
           </option>
@@ -684,6 +804,16 @@ function PriceRangeSlider({
   );
 }
 
+// ─── Sidebar Label Helper ─────────────────────────────────────
+function SidebarLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="fw-sidebar-label">
+      <span className="fw-sidebar-label-dot" />
+      {children}
+    </span>
+  );
+}
+
 // ─── Sidebar Filters ──────────────────────────────────────────
 function SidebarFilters({
   filters,
@@ -691,12 +821,14 @@ function SidebarFilters({
   onReset,
   priceMinMax,
   onClose,
+  activeCount,
 }: {
   filters: FiltersState;
   onChange: (p: Partial<FiltersState>) => void;
   onReset: () => void;
   priceMinMax: [number, number];
   onClose?: () => void;
+  activeCount: number;
 }) {
   const toggleAmenity = (a: string) => {
     const next = filters.amenities.includes(a)
@@ -704,10 +836,18 @@ function SidebarFilters({
       : [...filters.amenities, a];
     onChange({ amenities: next });
   };
+
+  const STATUS_PILLS = ["For Sale", "For Rent", "Sold", "Rented"];
+
   return (
     <>
       <div className="fw-sidebar__header">
-        <span className="fw-sidebar__title">Filters</span>
+        <div className="fw-sidebar__title-wrap">
+          <span className="fw-sidebar__title">Filters</span>
+          {activeCount > 0 && (
+            <span className="fw-sidebar__count">{activeCount} active</span>
+          )}
+        </div>
         <button
           className="fw-sidebar__close"
           onClick={onClose}
@@ -716,33 +856,47 @@ function SidebarFilters({
           ✕
         </button>
       </div>
+
       <div className="fw-sidebar-body">
+        {/* Listing Type */}
         <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Listing Type</span>
-          <select
-            className="fw-sidebar-input"
-            value={filters.status}
-            onChange={(e) => onChange({ status: e.target.value })}
-          >
-            <option value="">All Listings</option>
-            <option value="For Sale">For Sale</option>
-            <option value="For Rent">For Rent</option>
-            <option value="Sold">Sold</option>
-            <option value="Rented">Rented</option>
-          </select>
+          <SidebarLabel>Listing Type</SidebarLabel>
+          <div className="fw-status-pills">
+            <button
+              className={`fw-status-pill${filters.status === "" ? " active" : ""}`}
+              onClick={() => onChange({ status: "" })}
+            >
+              All
+            </button>
+            {STATUS_PILLS.map((s) => (
+              <button
+                key={s}
+                className={`fw-status-pill${filters.status === s ? " active" : ""}`}
+                onClick={() =>
+                  onChange({ status: filters.status === s ? "" : s })
+                }
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* Keyword */}
         <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Keyword</span>
+          <SidebarLabel>Keyword</SidebarLabel>
           <input
             type="text"
             className="fw-sidebar-input"
-            placeholder="e.g. home, villa…"
+            placeholder="e.g. home, villa, garden…"
             value={filters.keyword}
             onChange={(e) => onChange({ keyword: e.target.value })}
           />
         </div>
+
+        {/* Location */}
         <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Location</span>
+          <SidebarLabel>Location</SidebarLabel>
           <input
             type="text"
             className="fw-sidebar-input"
@@ -751,16 +905,18 @@ function SidebarFilters({
             onChange={(e) => onChange({ location: e.target.value })}
           />
         </div>
+
+        {/* Beds / Baths */}
         <div className="fw-sidebar-section">
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: "12px",
+              gap: "14px",
             }}
           >
             <div>
-              <span className="fw-sidebar-label">Bedrooms</span>
+              <SidebarLabel>Bedrooms</SidebarLabel>
               <select
                 className="fw-sidebar-input"
                 value={filters.bedrooms}
@@ -775,7 +931,7 @@ function SidebarFilters({
               </select>
             </div>
             <div>
-              <span className="fw-sidebar-label">Bathrooms</span>
+              <SidebarLabel>Bathrooms</SidebarLabel>
               <select
                 className="fw-sidebar-input"
                 value={filters.bathrooms}
@@ -791,8 +947,21 @@ function SidebarFilters({
             </div>
           </div>
         </div>
+
+        {/* Price Range */}
         <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Amenities</span>
+          <SidebarLabel>Price Range</SidebarLabel>
+          <PriceRangeSlider
+            min={priceMinMax[0]}
+            max={priceMinMax[1]}
+            value={filters.priceRange}
+            onChange={(v) => onChange({ priceRange: v })}
+          />
+        </div>
+
+        {/* Amenities */}
+        <div className="fw-sidebar-section">
+          <SidebarLabel>Amenities</SidebarLabel>
           <div className="fw-amenity-grid">
             {AMENITY_OPTIONS.map((a) => (
               <label key={a} className="fw-amenity-item">
@@ -806,17 +975,10 @@ function SidebarFilters({
             ))}
           </div>
         </div>
+
+        {/* Year Built */}
         <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Price Range</span>
-          <PriceRangeSlider
-            min={priceMinMax[0]}
-            max={priceMinMax[1]}
-            value={filters.priceRange}
-            onChange={(v) => onChange({ priceRange: v })}
-          />
-        </div>
-        <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Min Year Built</span>
+          <SidebarLabel>Min Year Built</SidebarLabel>
           <select
             className="fw-sidebar-input"
             value={filters.minYearBuilt}
@@ -830,8 +992,10 @@ function SidebarFilters({
             ))}
           </select>
         </div>
+
+        {/* Square Footage */}
         <div className="fw-sidebar-section">
-          <span className="fw-sidebar-label">Square Footage</span>
+          <SidebarLabel>Square Footage</SidebarLabel>
           <div
             style={{
               display: "grid",
@@ -855,9 +1019,13 @@ function SidebarFilters({
             />
           </div>
         </div>
-        <button className="fw-reset-btn" onClick={onReset}>
-          Reset All Filters
-        </button>
+
+        {/* Reset */}
+        <div style={{ padding: "16px 22px 0" }}>
+          <button className="fw-reset-btn" onClick={onReset}>
+            Reset All Filters
+          </button>
+        </div>
       </div>
     </>
   );
@@ -876,7 +1044,6 @@ function PropertyCard({ item }: { item: Property }) {
           >
             {getStatusLabel(item.status)}
           </span>
-
           <CarouselOrImage images={item.images || []} title={item.title} />
         </div>
       </div>
@@ -960,6 +1127,7 @@ const BuyListing = () => {
     0, 1_000_000,
   ]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const [filters, setFilters] = useState<FiltersState>({
     keyword: "",
@@ -980,6 +1148,11 @@ const BuyListing = () => {
     };
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  useEffect(() => {
+    if (location.state?.selectedType)
+      setSelectedType(location.state.selectedType);
   }, []);
 
   useEffect(() => {
@@ -1141,48 +1314,33 @@ const BuyListing = () => {
       : []),
   ];
 
+  // Count active sidebar filters (for badge)
   const activeFilterCount = [
     filters.amenities.length > 0,
-    filters.status,
-    filters.keyword,
-    filters.location,
-    filters.bedrooms,
-    filters.bathrooms,
+    !!filters.status,
+    !!filters.keyword,
+    !!filters.location,
+    !!filters.bedrooms,
+    !!filters.bathrooms,
+    !!filters.minYearBuilt,
+    !!filters.sqftMin,
+    !!filters.sqftMax,
   ].filter(Boolean).length;
+
+  // Type dropdown options
+  const typeOptions = PROPERTY_TYPES.map((t) => ({ value: t, text: t }));
 
   return (
     <div className="fw-listing-root property-listing-seven lg-pt-100">
-      {/* ── Type Bar ── */}
-      <div className="fw-type-bar">
-        <div className="wrapper">
-          <div className="fw-type-bar-inner">
-            <span className="fw-type-bar-label">Type</span>
-            {PROPERTY_TYPES.map((type, i) => (
-              <a
-                key={i}
-                href="#"
-                className={`fw-type-pill${selectedType === type ? " active" : ""}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelectedType(type);
-                }}
-              >
-                {type}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* ── Mobile overlay ── */}
       <div
         className={`fw-sidebar-overlay${sidebarOpen ? " open" : ""}`}
         onClick={() => setSidebarOpen(false)}
       />
 
-      {/* ── Layout — no inline padding, handled by CSS ── */}
+      {/* ── Layout ── */}
       <div className="fw-layout wrapper">
-        {/* Sidebar */}
+        {/* ── Sidebar ── */}
         <aside className={`fw-sidebar${sidebarOpen ? " mobile-open" : ""}`}>
           <SidebarFilters
             filters={filters}
@@ -1192,12 +1350,13 @@ const BuyListing = () => {
             onReset={handleReset}
             priceMinMax={priceMinMax}
             onClose={() => setSidebarOpen(false)}
+            activeCount={activeFilterCount}
           />
         </aside>
 
-        {/* Main */}
+        {/* ── Main ── */}
         <main className="fw-main">
-          {/* Active filter pills */}
+          {/* Active URL filter pills */}
           {activeUrlFilters.length > 0 && (
             <div className="fw-active-filter-bar">
               <span className="fw-active-bar-label">Searching:</span>
@@ -1225,10 +1384,10 @@ const BuyListing = () => {
             </div>
           )}
 
-          {/* Header bar */}
+          {/* ── Header bar ── */}
           <div className="fw-listing-header">
+            {/* Left: mobile filter toggle + results count */}
             <div className="fw-header-left">
-              {/* Mobile filter toggle */}
               <button
                 className="fw-filter-toggle"
                 onClick={() => setSidebarOpen(true)}
@@ -1261,6 +1420,7 @@ const BuyListing = () => {
                   </span>
                 )}
               </button>
+
               <div className="fw-results-count">
                 {loading ? (
                   <span style={{ color: "var(--c-ink-3)" }}>Loading…</span>
@@ -1279,10 +1439,26 @@ const BuyListing = () => {
               </div>
             </div>
 
-            {/* ── Clean branded Sort ── */}
-            <div className="fw-sort-row">
-              <span className="fw-sort-label">Sort by</span>
-              <SortSelect value={sortBy} onChange={setSortBy} />
+            {/* Right: Type + Sort selects */}
+            <div className="fw-header-right">
+              {/* Type dropdown */}
+              <span className="fw-ctrl-label">Type</span>
+              <FwSelect
+                value={selectedType}
+                onChange={(v) => setSelectedType(v)}
+                options={typeOptions}
+                isActive={selectedType !== "All"}
+              />
+
+              <div className="fw-header-divider" />
+
+              {/* Sort dropdown */}
+              <span className="fw-ctrl-label">Sort by</span>
+              <FwSelect
+                value={sortBy}
+                onChange={setSortBy}
+                options={SORT_OPTIONS}
+              />
             </div>
           </div>
 
