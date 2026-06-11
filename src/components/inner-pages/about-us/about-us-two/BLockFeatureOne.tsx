@@ -504,7 +504,7 @@ function injectAboutStyles() {
 }
 
 // ─── FAQ Item (stateful) ──────────────────────────────────────
-function FaqItem({ q, a, id }: { q: string; a: string; id: string }) {
+function FaqItem({ q, a }: { q: string; a: string; id: string }) {
   const [open, setOpen] = useState(false);
   return (
     <li className="fw-faq-item">

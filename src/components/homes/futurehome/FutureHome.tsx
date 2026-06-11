@@ -1,6 +1,5 @@
 import FutureHeroBanner from "./FutureHeroBanner";
 import FutureFeatureOne from "./FutureFeatureOne";
-import FutureBigProperty from "./FutureBigProperty";
 import FutureFeatureTwo from "./FutureFeatureTwo";
 import FutureBannerOne from "./FutureBannerOne";
 import FutureListingHero from "./FutureListingHero";
