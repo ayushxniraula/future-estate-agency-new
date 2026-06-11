@@ -2,7 +2,6 @@ import { useState } from "react";
 import FutureFooter from "../../../layouts/footers/FutureFooter";
 import NavMenu from "../../../layouts/headers/Menu/FutureNavMenu";
 import LoginModal from "../../../modals/LoginModal";
-import FancyBanner from "../../common/FancyBanner";
 import ListingThirteenArea from "./FutureBuyListing";
 import { useClientSession } from "../../../my-components/userclientsession";
 

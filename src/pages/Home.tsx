@@ -5,7 +5,7 @@ import HomeThree from "../components/homes/futurehome/FutureHome";
 const Home = () => {
   return (
     <Wrapper>
-      <SEO pageTitle={"Homy"} />
+      <SEO pageTitle={"Future State"} />
       <HomeThree />
     </Wrapper>
   );

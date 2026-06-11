@@ -245,7 +245,7 @@ const FutureFooter = () => {
               <div key={col.id} className="ff-nav-col">
                 <h5 className="ff-nav-title">{col.widget_title}</h5>
                 <ul className="ff-nav-list">
-                  {col.links.map((li, i) => (
+                  {col.links.map((li: any, i) => (
                     <li key={i}>
                       {li.modal ? (
                         <button

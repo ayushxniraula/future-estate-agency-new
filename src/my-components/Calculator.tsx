@@ -1,8 +1,7 @@
 import { useState, useCallback } from "react";
 import Wrapper from "../layouts/Wrapper";
 import SEO from "../components/SEO";
-import Brand from "../components/homes/home-four/Brand";
-import FancyBanner from "../components/common/FancyBanner";
+
 import FutureFooter from "../layouts/footers/FutureFooter";
 import { Link } from "react-router-dom";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";

@@ -8,8 +8,6 @@ import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Wrapper from "../layouts/Wrapper";
 import SEO from "../components/SEO";
-import Brand from "../components/homes/home-four/Brand";
-import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 import LoginModal from "../modals/LoginModal";
