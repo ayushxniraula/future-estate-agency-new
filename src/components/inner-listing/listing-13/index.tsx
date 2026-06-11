@@ -14,7 +14,7 @@ const ListingThirteen = () => {
       <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
       <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
       <ListingThirteenArea />
-      <FancyBanner />
+      {/* <FancyBanner /> */}
       <FutureFooter />
     </>
   );

@@ -218,7 +218,7 @@ const FutureFeatureTwo = () => {
                     <li>Sell your property at just 3% commission</li>
                   </ul>
 
-                  <Link to="/about_us_02" className="fw-cta-btn">
+                  <Link to="/about" className="fw-cta-btn">
                     Learn More <i className="bi bi-arrow-up-right" />
                   </Link>
                 </div>

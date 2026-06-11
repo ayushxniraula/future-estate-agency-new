@@ -12,6 +12,7 @@ interface FeatureItem {
   title: string;
   desc: string;
   btn: string;
+  route: string;
 }
 
 const FEATURES: FeatureItem[] = [
@@ -21,6 +22,7 @@ const FEATURES: FeatureItem[] = [
     title: "Buy a Property",
     desc: "Explore premium homes, apartments, and land across the Kathmandu Valley and beyond. Our expert agents guide you to the best deals in Nepal's growing real estate market.",
     btn: "Browse Listings",
+    route: "/buy",
   },
   {
     id: 2,
@@ -28,6 +30,7 @@ const FEATURES: FeatureItem[] = [
     title: "Sell Your Property",
     desc: "List your property for free and reach thousands of verified buyers across Nepal. We charge only 3% commission — you keep the rest of every rupee from your sale.",
     btn: "List Now",
+    route: "/sell",
   },
   {
     id: 3,
@@ -35,6 +38,7 @@ const FEATURES: FeatureItem[] = [
     title: "Invest Smart",
     desc: "Leverage Nepal's booming real estate sector with data-backed investment guidance. Our analysts identify high-yield properties in Kathmandu, Pokhara, and emerging cities.",
     btn: "Start Investing",
+    route: "/about",
   },
 ];
 
@@ -182,7 +186,7 @@ const FutureFeatureOne = () => {
                   </div>
                   <h5>{item.title}</h5>
                   <p>{item.desc}</p>
-                  <Link to="/buy" className="fw-feature-btn">
+                  <Link to={item.route} className="fw-feature-btn">
                     {item.btn} <i className="bi bi-arrow-up-right" />
                   </Link>
                 </div>

@@ -29,7 +29,7 @@ const NAV_ITEMS = [
 // Items grouped under the "Features" dropdown
 const FEATURE_ITEMS = [
   { label: "Property Compare", to: "/propcompare" },
-  { label: "Heat Map", to: "/heat" },
+  { label: "Heat Map", to: "/heatmap" },
   { label: "Smart Finder", to: "/smart" },
 ];
 

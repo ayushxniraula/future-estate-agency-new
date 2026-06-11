@@ -616,14 +616,14 @@ const PriceHeatmap = () => {
         />
         <div className="fwc-banner__inner">
           <h2 className="fwc-banner__title">
-            Let's <em>talk</em>
+            Heat <em>Map</em>
           </h2>
           <ul className="fwc-banner__crumb">
             <li>
               <Link to="/">Home</Link>
             </li>
             <li>/</li>
-            <li>Contact</li>
+            <li>Heat Map</li>
           </ul>
         </div>
       </div>
@@ -1107,8 +1107,8 @@ const PriceHeatmap = () => {
         </div>
       </div>
 
-      <Brand />
-      <FancyBanner />
+      {/* <Brand /> */}
+      {/* <FancyBanner /> */}
       <FutureFooter />
     </Wrapper>
   );
