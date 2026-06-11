@@ -649,8 +649,8 @@ const Calculator = () => {
         </div>
       </div>
 
-      <Brand />
-      <FancyBanner />
+      {/* <Brand /> */}
+      {/* <FancyBanner /> */}
       <FutureFooter />
 
       <style>{`

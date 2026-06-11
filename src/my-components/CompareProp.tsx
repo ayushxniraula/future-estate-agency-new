@@ -1797,8 +1797,8 @@ const PropertyCompare = () => {
         )}
       </div>
 
-      <Brand />
-      <FancyBanner />
+      {/* <Brand />
+      <FancyBanner /> */}
       <FutureFooter />
     </Wrapper>
   );
