@@ -4,7 +4,6 @@ import FutureFeatureTwo from "./FutureFeatureTwo";
 import FutureBannerOne from "./FutureBannerOne";
 import FutureListingHero from "./FutureListingHero";
 import FutureFeedback from "./FutureFeedback";
-import FutureBrand from "./FutureBrand";
 import FutureBannerTwo from "./FutureBannerTwo";
 import FutureFooter from "../../../layouts/footers/FutureFooter";
 import NavMenu from "../../../layouts/headers/Menu/FutureNavMenu";
