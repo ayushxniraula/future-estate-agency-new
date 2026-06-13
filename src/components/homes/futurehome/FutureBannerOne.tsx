@@ -257,7 +257,7 @@ const FutureBannerOne = () => {
           </div>
 
           {/* Marquee strip */}
-          <div className="text-slide-wrapper">
+          {/* <div className="text-slide-wrapper">
             <div className="marquee">
               <p>
                 Kathmandu . Pokhara . Chitwan . Lalitpur . Bhaktapur . Pokhara
@@ -266,7 +266,7 @@ const FutureBannerOne = () => {
                 Kathmandu . Pokhara . Chitwan . Lalitpur . Bhaktapur . Pokhara
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

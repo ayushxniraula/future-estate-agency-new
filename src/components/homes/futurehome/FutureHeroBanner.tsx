@@ -22,7 +22,7 @@ const HERO_STYLES = `
   .fw-hero-banner {
     position: relative;
     z-index: 1;
-    padding-top: 130px;
+    padding-top: 70px;
     padding-bottom: 170px;
     overflow: hidden;
   }
@@ -181,7 +181,7 @@ const FutureHeroBanner = () => {
   injectHeroStyles();
 
   return (
-    <div className="fw-hero-banner hero-banner-three pt-130 lg-pt-100 pb-170 xl-pb-130 lg-pb-100">
+    <div className="fw-hero-banner hero-banner-three pt-100 lg-pt-100 pb-170 xl-pb-130 lg-pb-100">
       <Slider {...setting} className="hero-slider-one m0">
         <div className="item m0">
           <div

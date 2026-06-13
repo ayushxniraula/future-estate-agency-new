@@ -470,7 +470,7 @@ const ContactArea = ({
         />
         <div className="fwc-banner__inner">
           <h2 className="fwc-banner__title">
-            Let's <em>talk</em>
+            Contact <em>Us</em>
           </h2>
           <ul className="fwc-banner__crumb">
             <li>

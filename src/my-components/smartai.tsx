@@ -1737,14 +1737,14 @@ const SmartFinder = () => {
         />
         <div className="fwc-banner__inner">
           <h2 className="fwc-banner__title">
-            Let's <em>talk</em>
+            Smart <em>Finder</em>
           </h2>
           <ul className="fwc-banner__crumb">
             <li>
               <Link to="/">Home</Link>
             </li>
             <li>/</li>
-            <li>Contact</li>
+            <li>Smart Finder</li>
           </ul>
         </div>
       </div>

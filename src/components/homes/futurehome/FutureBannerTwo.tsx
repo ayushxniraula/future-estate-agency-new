@@ -179,7 +179,7 @@ const FutureBannerTwo = () => {
             <div className="col-xl-7 col-lg-8 col-md-10 m-auto text-center">
               {/* Headline */}
               <h2 className="font-garamond text-white">
-                Find the right home for your family across Nepal
+                Find the right home for your family
               </h2>
 
               {/* Subtext */}

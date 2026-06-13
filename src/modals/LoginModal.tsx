@@ -65,7 +65,7 @@ const LOGIN_MODAL_STYLES = `
   /* ── Close button ── */
   .fw-login-close {
     position: absolute;
-    top: 18px; right: 18px;
+    top: 15px; right: 10px;
     width: 36px; height: 36px;
     border: none; border-radius: 50%;
     background: rgba(37,32,96,0.06);

@@ -31,7 +31,7 @@ const FutureHome = () => {
       <FutureFeatureTwo />
       <FutureBannerOne />
       <FutureFeedback style={false} />
-      <FutureBrand />
+      {/* <FutureBrand /> */}
       <FutureBannerTwo />
       <FutureFooter />
     </>

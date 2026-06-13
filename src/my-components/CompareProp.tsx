@@ -1195,14 +1195,14 @@ const PropertyCompare = () => {
         />
         <div className="fwc-banner__inner">
           <h2 className="fwc-banner__title">
-            Let's <em>talk</em>
+            Property <em>Comapare</em>
           </h2>
           <ul className="fwc-banner__crumb">
             <li>
               <Link to="/">Home</Link>
             </li>
             <li>/</li>
-            <li>Contact</li>
+            <li>Compare</li>
           </ul>
         </div>
       </div>
