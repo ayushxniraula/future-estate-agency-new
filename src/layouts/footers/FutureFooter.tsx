@@ -55,11 +55,6 @@ const footer_nav = [
     links: [
       { title: "Calculator", to: "/calculator" },
       { title: "Heat Map", to: "/heatmap" },
-      {
-        title: "Dashboard",
-        to: "https://uat-future-state-new-admin.netlify.app/",
-        external: true,
-      },
     ],
   },
   {
