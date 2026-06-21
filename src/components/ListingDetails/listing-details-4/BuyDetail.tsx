@@ -933,7 +933,7 @@ function Banner({
 
         <div className="col-md-5 fwd-banner__price-col">
           <div className="fwd-banner__price">
-            <sup>$</sup>
+            <sup>NPR</sup>
             {property.price.toLocaleString(undefined, {
               minimumFractionDigits: 0,
               maximumFractionDigits: 0,
@@ -942,7 +942,7 @@ function Banner({
           </div>
           {property.status !== "For Rent" && (
             <div className="fwd-banner__est">
-              Est. mortgage <strong>${monthly.toLocaleString()}/mo</strong>
+              Est. mortgage <strong>NPR {monthly.toLocaleString()}/mo</strong>
             </div>
           )}
           <div className="fwd-actions">
@@ -1352,7 +1352,7 @@ function SimilarProperties({
             )}
             <div className="fwd-similar-card__body">
               <div className="fwd-similar-card__price">
-                <sup>$</sup>
+                <sup>NPR</sup>
                 {item.price.toLocaleString(undefined, {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
@@ -1426,7 +1426,7 @@ function PriceSidebar({ property }: { property: Property }) {
     <div className="fwd-sidebar-card">
       <span className="fwd-sidebar-label">Pricing</span>
       <div className="fwd-sidebar-price">
-        <sup>$</sup>
+        <sup>NPR</sup>
         {property.price.toLocaleString(undefined, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
@@ -1435,7 +1435,7 @@ function PriceSidebar({ property }: { property: Property }) {
       </div>
       {property.status !== "For Rent" && (
         <div className="fwd-sidebar-est">
-          Est. mortgage <strong>${monthly.toLocaleString()}/mo</strong>
+          Est. mortgage <strong>NPR{monthly.toLocaleString()}/mo</strong>
         </div>
       )}
       <div style={{ marginTop: "16px" }}>
@@ -1698,7 +1698,7 @@ const BuyDetails = () => {
             <div className="fwd-breadcrumb">
               <Link to="/">Home</Link>
               <span className="sep">›</span>
-              <Link to="/listing_13">Listings</Link>
+              <Link to="/buy">Listings</Link>
               <span className="sep">›</span>
               <span className="current">{property.title}</span>
             </div>

@@ -9,12 +9,12 @@ import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Wrapper from "../layouts/Wrapper";
 import SEO from "../components/SEO";
-import Brand from "../components/homes/home-four/Brand";
-import FancyBanner from "../components/common/FancyBanner";
+// import Brand from "../components/homes/home-four/Brand";
+// import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 import { useClientSession } from "./userclientsession";
-import LoginModal from "../modals/LoginModal";
+// import LoginModal from "../modals/LoginModal";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://afwvbftvfubboorpiszu.supabase.co";
@@ -1176,7 +1176,7 @@ const SellPropertyArea = () => {
                     </div>
 
                     <div className="col-12">
-                      <Field label="Are you an agent?">
+                      <Field label="Are you an owner or agent?">
                         <div className="agent-toggle">
                           <button
                             type="button"
@@ -1185,7 +1185,7 @@ const SellPropertyArea = () => {
                             }`}
                             onClick={() => set("is_agent", false)}
                           >
-                            No
+                            Owner
                           </button>
                           <button
                             type="button"
@@ -1194,7 +1194,7 @@ const SellPropertyArea = () => {
                             }`}
                             onClick={() => set("is_agent", true)}
                           >
-                            Yes
+                            Agent
                           </button>
                         </div>
                       </Field>

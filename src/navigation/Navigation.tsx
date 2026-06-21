@@ -71,7 +71,7 @@ import SellPropertyArea from "../my-components/Sell";
 import PropertyCompare from "../my-components/CompareProp";
 import PriceHeatmap from "../my-components/priceheatmap";
 import SmartFinder from "../my-components/smartai";
-import { ProtectedRoute } from "../components/ProtectedRoute";
+// import { ProtectedRoute } from "../components/ProtectedRoute";
 import TermsAndConditions from "../my-components/TermsCondi";
 import CookiePolicy from "../my-components/Cookie";
 import PrivacyPolicy from "../my-components/Privacy";

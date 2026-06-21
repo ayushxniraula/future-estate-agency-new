@@ -177,12 +177,13 @@ const INJECTED_STYLE = `
 
   /* ── Layout ── */
   /*
-   * Key sticky approach:
+   * Sticky approach:
    * .fw-layout is a normal flex row — it does NOT set a height or overflow,
-   * so the page itself scrolls. The sidebar uses position:sticky + top:0 +
-   * max-height:100vh + overflow-y:auto, which means it sticks to the top of
-   * the viewport and scrolls internally only when its own content is taller
-   * than the screen. The main column grows naturally and the page scrolls.
+   * so the page itself scrolls. The sidebar uses position:sticky + top:0,
+   * which means it sticks to the top of the viewport and stays fully
+   * visible — no internal scrolling. Its content has been made compact
+   * (tighter paddings/gaps, smaller type) so the whole filter set fits
+   * within a typical viewport height without needing to scroll.
    */
   .fw-layout {
     display: flex;
@@ -201,26 +202,24 @@ const INJECTED_STYLE = `
 
   /* ── Sidebar ── */
   .fw-sidebar {
-    width: 292px;
+    width: 272px;
     flex-shrink: 0;
     background: var(--c-white);
     border-right: 1px solid var(--c-rule);
     box-shadow: var(--shadow-sidebar);
 
-    /* Sticky magic */
+    /* Sticky, fully pinned — no internal scroll */
     position: sticky;
     top: 0;
     max-height: 100vh;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--c-rule) transparent;
+    overflow: hidden;
 
     transition: transform 0.3s cubic-bezier(.4,0,.2,1);
     z-index: 50;
+
+    display: flex;
+    flex-direction: column;
   }
-  .fw-sidebar::-webkit-scrollbar       { width: 4px; }
-  .fw-sidebar::-webkit-scrollbar-track { background: transparent; }
-  .fw-sidebar::-webkit-scrollbar-thumb { background: var(--c-rule); border-radius: 4px; }
 
   @media (max-width: 991px) {
     .fw-sidebar {
@@ -228,6 +227,7 @@ const INJECTED_STYLE = `
       height: 100vh; max-height: 100vh;
       transform: translateX(-100%);
       z-index: 110;
+      overflow-y: auto; /* mobile drawer may still scroll if needed */
     }
     .fw-sidebar.mobile-open { transform: translateX(0); }
     .fw-layout { display: block; }
@@ -236,15 +236,14 @@ const INJECTED_STYLE = `
   /* ── Sidebar header ── */
   .fw-sidebar__header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 22px 22px 16px;
+    padding: 14px 18px 10px;
     border-bottom: 1px solid var(--c-rule);
-    position: sticky; top: 0;
     background: var(--c-white);
-    z-index: 2;
+    flex-shrink: 0;
   }
   .fw-sidebar__title-wrap { display: flex; align-items: center; gap: 9px; }
   .fw-sidebar__title {
-    font-family: var(--font-display); font-size: 18px;
+    font-family: var(--font-display); font-size: 17px;
     font-weight: 400; color: var(--fw-navy); letter-spacing: -0.2px;
   }
   .fw-sidebar__count {
@@ -263,10 +262,17 @@ const INJECTED_STYLE = `
   }
 
   /* ── Sidebar body ── */
-  .fw-sidebar-body { padding: 8px 0 32px; }
+  .fw-sidebar-body {
+    padding: 4px 0 10px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
   .fw-sidebar-section {
-    padding: 16px 22px;
+    padding: 8px 18px;
     border-bottom: 1px solid var(--c-rule);
     position: relative;
   }
@@ -275,7 +281,7 @@ const INJECTED_STYLE = `
   /* Teal left accent line on focus-within */
   .fw-sidebar-section::before {
     content: '';
-    position: absolute; left: 0; top: 12px; bottom: 12px;
+    position: absolute; left: 0; top: 8px; bottom: 8px;
     width: 3px; border-radius: 0 2px 2px 0;
     background: var(--fw-teal);
     opacity: 0; transition: opacity 0.2s;
@@ -283,9 +289,9 @@ const INJECTED_STYLE = `
   .fw-sidebar-section:focus-within::before { opacity: 1; }
 
   .fw-sidebar-label {
-    font-size: 9px; font-weight: 800; letter-spacing: 1.3px;
+    font-size: 9px; font-weight: 800; letter-spacing: 1.1px;
     text-transform: uppercase; color: var(--c-ink-3);
-    margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    margin-bottom: 5px; display: flex; align-items: center; gap: 6px;
   }
   .fw-sidebar-label-dot {
     width: 5px; height: 5px; border-radius: 50%;
@@ -293,8 +299,8 @@ const INJECTED_STYLE = `
   }
 
   .fw-sidebar-input {
-    width: 100%; padding: 9px 13px; border-radius: var(--radius-sm);
-    border: 1.5px solid var(--c-rule); font-size: 13px; font-family: var(--font-body);
+    width: 100%; padding: 6px 11px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule); font-size: 12.5px; font-family: var(--font-body);
     color: var(--c-ink); background: var(--c-surface);
     transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
     outline: none; appearance: none; -webkit-appearance: none;
@@ -305,10 +311,10 @@ const INJECTED_STYLE = `
   }
 
   /* Status pills inside sidebar */
-  .fw-status-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fw-status-pills { display: flex; flex-wrap: wrap; gap: 5px; }
   .fw-status-pill {
-    padding: 5px 12px; border-radius: var(--radius-pill);
-    font-size: 11.5px; font-weight: 700; font-family: var(--font-body);
+    padding: 4px 10px; border-radius: var(--radius-pill);
+    font-size: 11px; font-weight: 700; font-family: var(--font-body);
     border: 1.5px solid var(--c-rule); background: transparent;
     color: var(--c-ink-2); cursor: pointer;
     transition: all 0.18s; letter-spacing: 0.1px;
@@ -318,22 +324,22 @@ const INJECTED_STYLE = `
     background: var(--fw-navy); border-color: var(--fw-navy); color: #fff;
   }
 
-  .fw-amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+  .fw-amenity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
   .fw-amenity-item {
-    display: flex; align-items: center; gap: 7px; font-size: 12px;
-    color: var(--c-ink-2); cursor: pointer; padding: 6px 0;
+    display: flex; align-items: center; gap: 6px; font-size: 11px;
+    color: var(--c-ink-2); cursor: pointer; padding: 3px 0;
     font-family: var(--font-body); transition: color 0.15s;
   }
   .fw-amenity-item:hover { color: var(--fw-teal); }
   .fw-amenity-item input[type="checkbox"] {
-    width: 14px; height: 14px; accent-color: var(--fw-teal);
+    width: 13px; height: 13px; accent-color: var(--fw-teal);
     cursor: pointer; flex-shrink: 0;
   }
 
   .fw-reset-btn {
-    width: 100%; padding: 10px; border-radius: var(--radius-sm);
+    width: 100%; padding: 7px; border-radius: var(--radius-sm);
     border: 1.5px solid var(--c-rule); background: transparent;
-    font-size: 12px; font-weight: 700; font-family: var(--font-body);
+    font-size: 11px; font-weight: 700; font-family: var(--font-body);
     color: var(--c-ink-3); cursor: pointer; letter-spacing: 0.5px;
     transition: all 0.2s; text-transform: uppercase;
   }
@@ -970,7 +976,10 @@ function SidebarFilters({
         </div>
 
         {/* Amenities */}
-        <div className="fw-sidebar-section">
+        <div
+          className="fw-sidebar-section"
+          style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+        >
           <SidebarLabel>Amenities</SidebarLabel>
           <div className="fw-amenity-grid">
             {AMENITY_OPTIONS.map((a) => (
@@ -1031,7 +1040,7 @@ function SidebarFilters({
         </div>
 
         {/* Reset */}
-        <div style={{ padding: "16px 22px 0" }}>
+        <div style={{ padding: "10px 18px 0", flexShrink: 0 }}>
           <button className="fw-reset-btn" onClick={onReset}>
             Reset All Filters
           </button>
@@ -1219,7 +1228,8 @@ const BuyListing = () => {
         (p) =>
           p.title?.toLowerCase().includes(kw) ||
           p.location?.toLowerCase().includes(kw) ||
-          p.description?.toLowerCase().includes(kw),
+          p.description?.toLowerCase().includes(kw) ||
+          p.building_type?.toLowerCase().includes(kw),
       );
     }
     if (filters.location.trim()) {

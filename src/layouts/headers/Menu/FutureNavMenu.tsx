@@ -698,10 +698,10 @@ const NavMenu = ({ onLoginClick, session }: any) => {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [dropdownOpen]);
 
-  const logout = () => {
-    localStorage.removeItem("ea_client_session");
-    window.location.reload();
-  };
+  // const logout = () => {
+  //   localStorage.removeItem("ea_client_session");
+  //   window.location.reload();
+  // };
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname === path;

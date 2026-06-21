@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Wrapper from "../layouts/Wrapper";
 import SEO from "../components/SEO";
 
@@ -74,6 +74,13 @@ function buildAmortSchedule(
 // ─────────────────────────────────────────────────────────────
 //  Range Slider
 // ─────────────────────────────────────────────────────────────
+//
+// NOTE on the fix: the number input now keeps its own local "text" state
+// while the user is typing. It does NOT clamp/convert on every keystroke
+// (that was the bug — clearing the field produced "", Number("") = 0,
+// which got clamped straight back up to `min`, so you could never type a
+// fresh value). Clamping now only happens on blur or Enter, once the user
+// is done typing.
 
 interface SliderProps {
   label: string;
@@ -96,7 +103,32 @@ function RangeSlider({
   suffix,
   onChange,
 }: SliderProps) {
+  const [text, setText] = useState(String(value));
+
+  // Keep the text box in sync when the value changes from outside
+  // (e.g. dragging the range slider), but not while the user is typing.
+  useEffect(() => {
+    setText(String(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const pct = ((value - min) / (max - min)) * 100;
+
+  function commit(raw: string) {
+    if (raw.trim() === "") {
+      setText(String(value));
+      return;
+    }
+    const num = Number(raw);
+    if (isNaN(num)) {
+      setText(String(value));
+      return;
+    }
+    const clamped = Math.min(max, Math.max(min, num));
+    setText(String(clamped));
+    onChange(clamped);
+  }
+
   return (
     <div className="calc-field">
       <div className="calc-field-head">
@@ -104,15 +136,31 @@ function RangeSlider({
         <div className="calc-value-box">
           {prefix && <span className="calc-affix">{prefix}</span>}
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             className="calc-num-input"
-            value={value}
-            min={min}
-            max={max}
-            step={step}
+            value={text}
             onChange={(e) => {
-              const v = Math.min(max, Math.max(min, Number(e.target.value)));
-              onChange(v);
+              const v = e.target.value;
+              // Allow empty string, digits, and a single decimal point
+              // while typing — don't force/clamp here.
+              if (v === "" || /^\d*\.?\d*$/.test(v)) {
+                setText(v);
+                // Live-update results as the user types, but only once
+                // it's a real number — don't clamp yet, so "1" can still
+                // grow into "150000" without snapping back to min.
+                if (v !== "" && v !== ".") {
+                  const num = Number(v);
+                  if (!isNaN(num)) onChange(Math.min(max, Math.max(min, num)));
+                }
+              }
+            }}
+            onBlur={(e) => commit(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                commit((e.target as HTMLInputElement).value);
+                (e.target as HTMLInputElement).blur();
+              }
             }}
           />
           {suffix && <span className="calc-affix">{suffix}</span>}
@@ -216,6 +264,12 @@ function EMICalculator() {
   const [tenureMode, setTenureMode] = useState<"yr" | "mo">("yr");
   const [showAmort, setShowAmort] = useState(false);
 
+  // Local text state for the tenure number box (same fix as RangeSlider)
+  const [tenureText, setTenureText] = useState(String(tenure));
+  useEffect(() => {
+    setTenureText(String(tenure));
+  }, [tenure]);
+
   const tenureYears = tenureMode === "yr" ? tenure : tenure / 12;
   const { emi, totalInterest, totalPayment, n } = calcEMI(
     amount,
@@ -231,6 +285,23 @@ function EMICalculator() {
     if (m === "mo") setTenure(Math.min(360, tenure * 12));
     else setTenure(Math.max(1, Math.round(tenure / 12)));
     setTenureMode(m);
+  }
+
+  const tenureMax = tenureMode === "yr" ? 30 : 360;
+
+  function commitTenure(raw: string) {
+    if (raw.trim() === "") {
+      setTenureText(String(tenure));
+      return;
+    }
+    const num = Number(raw);
+    if (isNaN(num)) {
+      setTenureText(String(tenure));
+      return;
+    }
+    const clamped = Math.min(tenureMax, Math.max(1, Math.round(num)));
+    setTenureText(String(clamped));
+    setTenure(clamped);
   }
 
   return (
@@ -287,20 +358,31 @@ function EMICalculator() {
                 </div>
                 <div className="calc-value-box">
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="calc-num-input"
-                    value={tenure}
-                    min={1}
-                    max={tenureMode === "yr" ? 30 : 360}
-                    step={1}
-                    onChange={(e) =>
-                      setTenure(
-                        Math.min(
-                          tenureMode === "yr" ? 30 : 360,
-                          Math.max(1, Number(e.target.value)),
-                        ),
-                      )
-                    }
+                    value={tenureText}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || /^\d*$/.test(v)) {
+                        setTenureText(v);
+                        // Live-update as the user types (without clamping
+                        // yet, so "1" can still grow into "20" etc).
+                        if (v !== "") {
+                          const num = Number(v);
+                          if (!isNaN(num)) {
+                            setTenure(Math.min(tenureMax, Math.max(1, num)));
+                          }
+                        }
+                      }
+                    }}
+                    onBlur={(e) => commitTenure(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        commitTenure((e.target as HTMLInputElement).value);
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
                   />
                   <span className="calc-affix">{tenureMode}</span>
                 </div>
@@ -310,12 +392,12 @@ function EMICalculator() {
               type="range"
               className="calc-range"
               min={1}
-              max={tenureMode === "yr" ? 30 : 360}
+              max={tenureMax}
               step={1}
               value={tenure}
               style={
                 {
-                  "--pct": `${((tenure - 1) / ((tenureMode === "yr" ? 30 : 360) - 1)) * 100}%`,
+                  "--pct": `${((tenure - 1) / (tenureMax - 1)) * 100}%`,
                 } as React.CSSProperties
               }
               onChange={(e) => setTenure(Number(e.target.value))}
@@ -479,8 +561,8 @@ function UnitGroup({
           <label htmlFor={`u-${key}`}>{label}</label>
           <input
             id={`u-${key}`}
-            type="number"
-            min={0}
+            type="text"
+            inputMode="decimal"
             value={values[key]}
             placeholder="0"
             onChange={(e) => onChange(key, e.target.value)}
@@ -498,13 +580,19 @@ function UnitCalculator() {
   const [vals, setVals] = useState<UnitValues>(empty);
 
   const handleChange = useCallback((src: string, raw: string) => {
+    // Let the user freely type (including clearing the field or typing
+    // a leading "0." etc) — don't reset everything to empty just because
+    // the current keystroke isn't a finished number yet.
     if (raw === "") {
-      setVals({ ...empty });
+      setVals({ ...empty, [src]: "" });
       return;
+    }
+    if (!/^\d*\.?\d*$/.test(raw)) {
+      return; // ignore invalid keystrokes, don't wipe the field
     }
     const num = parseFloat(raw);
     if (isNaN(num) || num < 0) {
-      setVals({ ...empty });
+      setVals({ ...empty, [src]: raw });
       return;
     }
     const sqft = num * UNIT_FACTORS[src];
