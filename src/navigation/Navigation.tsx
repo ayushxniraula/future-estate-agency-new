@@ -75,6 +75,7 @@ import { ProtectedRoute } from "../components/ProtectedRoute";
 import TermsAndConditions from "../my-components/TermsCondi";
 import CookiePolicy from "../my-components/Cookie";
 import PrivacyPolicy from "../my-components/Privacy";
+import TenantLandlordFormArea from "../my-components/TenantForm";
 
 const AppNavigation = () => {
   return (
@@ -128,17 +129,19 @@ const AppNavigation = () => {
         <Route path="/listing_details_01" element={<ListingDetailsOne />} />
         <Route path="/listing_details_02" element={<ListingDetailsTwo />} />
         <Route path="/listing_details_03" element={<ListingDetailsThree />} />
-        <Route
+        <Route path="/sell" element={<SellPropertyArea />} />
+        {/* <Route
           path="/sell"
           element={
             <ProtectedRoute>
               <SellPropertyArea />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route path="/buy/:id" element={<FutureBuyDetailPage />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/propcompare" element={<PropertyCompare />} />
+        <Route path="/form" element={<TenantLandlordFormArea />} />
         <Route path="/heatmap" element={<PriceHeatmap />} />
         <Route path="/smart" element={<SmartFinder />} />
         <Route path="/listing_details_05" element={<ListingDetailsFive />} />

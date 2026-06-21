@@ -54,13 +54,21 @@ const FutureHeader = ({ style_1, style_2 }: any) => {
                         {!session && (
                           <button
                             type="button"
-                            onClick={() => { console.log('Login button clicked'); setLoginModal(true); }}
+                            onClick={() => {
+                              console.log("Login button clicked");
+                              setLoginModal(true);
+                            }}
                             className={
                               style_1 ? "btn-ten" : "btn-two rounded-0"
                             }
                           >
                             <span>Login / Sign Up</span>{" "}
-                            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <svg
+                              width="11"
+                              height="11"
+                              viewBox="0 0 11 11"
+                              fill="none"
+                            >
                               <path
                                 d="M1 10L10 1M10 1H3M10 1V8"
                                 stroke="currentColor"

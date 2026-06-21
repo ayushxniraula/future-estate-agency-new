@@ -7,7 +7,6 @@ const ListingDetailsFour = () => {
   return (
     <>
       <NavMenu /> <ListingDetailsFourArea />
-      <FancyBanner />
       <FutureFooter />
     </>
   );

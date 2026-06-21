@@ -28,6 +28,10 @@ interface SellFormData {
   contact_name: string;
   contact_email: string;
   contact_phone: string;
+  is_agent: boolean;
+  agent_name: string;
+  agent_phone: string;
+  agent_email: string;
   title: string;
   property_type: string;
   status: string;
@@ -319,6 +323,38 @@ const SELL_STYLES = `
     font-size: 11.5px;
     color: var(--c-ink-3);
     margin-top: 5px;
+  }
+
+  /* ── Agent toggle ── */
+  .agent-toggle {
+    display: inline-flex;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--c-rule);
+    overflow: hidden;
+    background: var(--c-surface);
+  }
+  .agent-toggle-btn {
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    color: var(--c-ink-3);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .agent-toggle-btn + .agent-toggle-btn {
+    border-left: 1.5px solid var(--c-rule);
+  }
+  .agent-toggle-btn.active {
+    background: var(--fw-navy);
+    color: var(--c-white);
+  }
+  .agent-fields {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1.5px dashed var(--c-rule);
   }
 
   /* ── KV editor ── */
@@ -663,6 +699,10 @@ const INITIAL_FORM: SellFormData = {
   contact_name: "",
   contact_email: "",
   contact_phone: "",
+  is_agent: false,
+  agent_name: "",
+  agent_phone: "",
+  agent_email: "",
   title: "",
   property_type: "Apartment",
   status: "For Sale",
@@ -852,7 +892,7 @@ function Field({
 const SellPropertyArea = () => {
   injectSellStyles();
 
-  const [loginModal, setLoginModal] = useState(false);
+  // const [loginModal, setLoginModal] = useState(false);
   const { session } = useClientSession();
   const [step, setStep] = useState<"form" | "success">("form");
   const [submitting, setSubmitting] = useState(false);
@@ -930,11 +970,23 @@ const SellPropertyArea = () => {
           Object.entries(obj).filter(([k, v]) => k.trim() && v.trim()),
         );
 
+      // Agent info is entirely optional — only included if "Yes" was
+      // selected, and only non-empty sub-fields are kept.
+      const agentPayload = form.is_agent
+        ? cleanKV({
+            agent_name: form.agent_name,
+            agent_phone: form.agent_phone,
+            agent_email: form.agent_email,
+          })
+        : {};
+      const agentJson = { is_agent: form.is_agent, ...agentPayload };
+
       const { error: dbErr } = await supabase.from("sell_requests").insert([
         {
           contact_name: form.contact_name.trim(),
           contact_email: form.contact_email.trim(),
           contact_phone: form.contact_phone.trim(),
+          agent: agentJson,
           title: form.title.trim(),
           property_type: form.property_type,
           status: form.status,
@@ -969,8 +1021,9 @@ const SellPropertyArea = () => {
   return (
     <Wrapper>
       <SEO pageTitle="List Your Property – Sell or Rent" />
-      <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
-      <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
+      <NavMenu session={session} />
+      {/* <NavMenu onLoginClick={() => setLoginModal(true)} session={session} /> */}
+      {/* <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} /> */}
 
       {/* ── Banner ── */}
       <div className="fwc-banner">
@@ -980,14 +1033,14 @@ const SellPropertyArea = () => {
         />
         <div className="fwc-banner__inner">
           <h2 className="fwc-banner__title">
-            Let's <em>talk</em>
+            Sell <em>Property</em>
           </h2>
           <ul className="fwc-banner__crumb">
             <li>
               <Link to="/">Home</Link>
             </li>
             <li>/</li>
-            <li>Contact</li>
+            <li>Sell Property</li>
           </ul>
         </div>
       </div>
@@ -1120,6 +1173,74 @@ const SellPropertyArea = () => {
                           onChange={(e) => set("contact_phone", e.target.value)}
                         />
                       </Field>
+                    </div>
+
+                    <div className="col-12">
+                      <Field label="Are you an agent?">
+                        <div className="agent-toggle">
+                          <button
+                            type="button"
+                            className={`agent-toggle-btn${
+                              !form.is_agent ? " active" : ""
+                            }`}
+                            onClick={() => set("is_agent", false)}
+                          >
+                            No
+                          </button>
+                          <button
+                            type="button"
+                            className={`agent-toggle-btn${
+                              form.is_agent ? " active" : ""
+                            }`}
+                            onClick={() => set("is_agent", true)}
+                          >
+                            Yes
+                          </button>
+                        </div>
+                      </Field>
+
+                      {form.is_agent && (
+                        <div className="agent-fields row g-3">
+                          <div className="col-md-4">
+                            <Field label="Agent Name">
+                              <input
+                                className="sell-input"
+                                placeholder="e.g. Sujan Rai"
+                                value={form.agent_name}
+                                onChange={(e) =>
+                                  set("agent_name", e.target.value)
+                                }
+                              />
+                            </Field>
+                          </div>
+                          <div className="col-md-4">
+                            <Field label="Agent Phone">
+                              <input
+                                type="tel"
+                                className="sell-input"
+                                placeholder="+977 98XXXXXXXX"
+                                value={form.agent_phone}
+                                onChange={(e) =>
+                                  set("agent_phone", e.target.value)
+                                }
+                              />
+                            </Field>
+                          </div>
+                          <div className="col-md-4">
+                            <Field label="Agent Email">
+                              <input
+                                type="email"
+                                className="sell-input"
+                                placeholder="agent@example.com"
+                                value={form.agent_email}
+                                onChange={(e) =>
+                                  set("agent_email", e.target.value)
+                                }
+                              />
+                            </Field>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </SellCard>
@@ -1438,8 +1559,6 @@ const SellPropertyArea = () => {
         </div>
       </div>
 
-      <Brand />
-      <FancyBanner />
       <FutureFooter />
     </Wrapper>
   );

@@ -34,7 +34,7 @@ const FEATURE_ITEMS = [
 ];
 
 // ─── Routes that require authentication ───────────────────────
-const PROTECTED_ROUTES = ["/sell"];
+const PROTECTED_ROUTES = [""];
 
 // ─── Styles ───────────────────────────────────────────────────
 const NAV_STYLES = `
@@ -162,7 +162,6 @@ const NAV_STYLES = `
 
   /* Protected route lock icon hint */
   .fw-nav__link[data-protected="true"]:not(.active)::before {
-    content: '🔒';
     font-size: 9px;
     position: absolute;
     top: 4px;
@@ -801,8 +800,8 @@ const NavMenu = ({ onLoginClick, session }: any) => {
             </ul>
           </nav>
 
-          {/* Right side */}
-          <div className="fw-header__right">
+          {/* LOGIN LOGOUT BUTTON */}
+          {/* <div className="fw-header__right">
             {!session ? (
               <button
                 onClick={onLoginClick}
@@ -837,7 +836,6 @@ const NavMenu = ({ onLoginClick, session }: any) => {
               </button>
             )}
 
-            {/* Hamburger */}
             <button
               className={`fw-burger${drawerOpen ? " open" : ""}`}
               onClick={() => setDrawerOpen((v) => !v)}
@@ -849,21 +847,18 @@ const NavMenu = ({ onLoginClick, session }: any) => {
               <span className="fw-burger__bar" />
               <span className="fw-burger__bar" />
             </button>
-          </div>
+          </div> */}
         </div>
       </header>
 
-      {/* Spacer */}
       <div className="fw-header-spacer" aria-hidden="true" />
 
-      {/* ── Overlay ── */}
       <div
         className={`fw-drawer-overlay${drawerOpen ? " open" : ""}`}
         onClick={() => setDrawerOpen(false)}
         aria-hidden="true"
       />
 
-      {/* ── Mobile drawer ── */}
       <div
         id="fw-mobile-drawer"
         ref={drawerRef}
@@ -872,7 +867,6 @@ const NavMenu = ({ onLoginClick, session }: any) => {
         aria-modal="true"
         aria-label="Mobile navigation"
       >
-        {/* Drawer header */}
         <div className="fw-drawer__head">
           <Link
             to="/"
@@ -890,7 +884,6 @@ const NavMenu = ({ onLoginClick, session }: any) => {
           </button>
         </div>
 
-        {/* Drawer nav */}
         <ul className="fw-drawer__nav" role="navigation">
           {NAV_ITEMS.map((item) => {
             const needsAuth = isProtectedAndUnauthed(item.to);
@@ -919,7 +912,6 @@ const NavMenu = ({ onLoginClick, session }: any) => {
             );
           })}
 
-          {/* Features section in drawer */}
           <li className="fw-drawer__nav-item">
             <div className="fw-drawer__section-label">Features</div>
             {FEATURE_ITEMS.map((item) => (

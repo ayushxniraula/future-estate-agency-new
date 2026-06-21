@@ -37,6 +37,7 @@ const footer_nav = [
       { title: "About Company", to: "/about" },
       { title: "Contact", to: "/contact" },
       { title: "Explore Career", to: null, modal: true },
+      { title: "Tenant / Landlord Form", to: "/form" },
     ],
   },
   {

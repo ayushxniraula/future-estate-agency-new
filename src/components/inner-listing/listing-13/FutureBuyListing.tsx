@@ -20,6 +20,7 @@ interface Property {
   id: string;
   title: string;
   property_type: string;
+  building_type?: string | null;
   status: string;
   price: number;
   location: string;
@@ -446,6 +447,10 @@ const INJECTED_STYLE = `
     letter-spacing: 0.7px; text-transform: uppercase; z-index: 3;
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); line-height: 1.6;
   }
+  .fw-prop-card__badge--building {
+    top: auto; bottom: 12px; left: 12px;
+    background: rgba(28,148,164,0.92); color: #fff;
+  }
   .fw-prop-card__fav {
     position: absolute; top: 11px; right: 11px; width: 32px; height: 32px;
     border-radius: 50%; background: rgba(255,255,255,0.92);
@@ -455,7 +460,12 @@ const INJECTED_STYLE = `
   }
   .fw-prop-card__fav:hover { background: var(--fw-teal); color: #fff; transform: scale(1.12); }
   .fw-prop-card__body { padding: 18px 20px 12px; flex: 1; display: flex; flex-direction: column; }
-  .fw-prop-card__type { font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--fw-teal); margin-bottom: 5px; }
+  .fw-prop-card__type { font-size: 9.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--fw-teal); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+  .fw-prop-card__building-tag {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: none;
+    color: var(--c-ink-3); background: var(--c-surface); border: 1px solid var(--c-rule);
+    border-radius: var(--radius-pill); padding: 1px 8px;
+  }
   .fw-prop-card__title {
     font-family: var(--font-display); font-size: 16.5px; font-weight: 400; color: var(--c-ink);
     text-decoration: none; line-height: 1.25; display: block; margin-bottom: 6px;
@@ -1044,6 +1054,11 @@ function PropertyCard({ item }: { item: Property }) {
           >
             {getStatusLabel(item.status)}
           </span>
+          {item.building_type && item.building_type.trim() !== "" && (
+            <span className="fw-prop-card__badge fw-prop-card__badge--building">
+              {item.building_type}
+            </span>
+          )}
           <CarouselOrImage images={item.images || []} title={item.title} />
         </div>
       </div>
@@ -1097,7 +1112,7 @@ function PropertyCard({ item }: { item: Property }) {
       </div>
       <div className="fw-prop-card__footer">
         <div className="fw-prop-card__price">
-          <sup>$</sup>
+          <sup>NPR</sup>
           {item.price.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,

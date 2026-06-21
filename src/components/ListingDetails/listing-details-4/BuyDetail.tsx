@@ -46,6 +46,7 @@ interface Property {
   id: string;
   title: string;
   property_type: string;
+  building_type?: string | null;
   status: string;
   price: number;
   location: string;
@@ -501,6 +502,13 @@ const DETAIL_STYLES = `
   .fwd-facts-row:last-child { border-bottom: none; }
   .fwd-facts-key { color: var(--c-ink-3); font-weight: 500; }
   .fwd-facts-val { font-weight: 700; color: var(--fw-navy); }
+  .fwd-facts-val--badge {
+    display: inline-flex; align-items: center;
+    background: var(--fw-teal-faint); color: var(--fw-teal-dark);
+    border: 1px solid rgba(28,148,164,0.25);
+    border-radius: var(--radius-pill); padding: 2px 10px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: 0.2px;
+  }
 
   /* Agent sidebar */
   .fwd-agent-avatar {
@@ -986,9 +994,21 @@ function OverviewBar({ property }: { property: Property }) {
       label: "Kitchens",
       value: property.kitchens ?? "—",
     },
+    ...(property.building_type && property.building_type.trim() !== ""
+      ? [
+          {
+            icon: "bi bi-building",
+            label: "Building Type",
+            value: property.building_type,
+          },
+        ]
+      : []),
   ];
   return (
-    <div className="fwd-overview">
+    <div
+      className="fwd-overview"
+      style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}
+    >
       {items.map((item, i) => (
         <div key={i} className="fwd-ov-item">
           <div className="fwd-ov-icon">
@@ -1382,6 +1402,9 @@ function PriceSidebar({ property }: { property: Property }) {
       : Math.round(property.price * 0.005);
   const facts = [
     { k: "Type", v: property.property_type },
+    ...(property.building_type && property.building_type.trim() !== ""
+      ? [{ k: "Building Type", v: property.building_type, badge: true }]
+      : []),
     { k: "Status", v: property.status },
     ...(property.sqft
       ? [{ k: "Area", v: `${property.sqft.toLocaleString()} ft²` }]
@@ -1419,7 +1442,11 @@ function PriceSidebar({ property }: { property: Property }) {
         {facts.map((f) => (
           <div key={f.k} className="fwd-facts-row">
             <span className="fwd-facts-key">{f.k}</span>
-            <span className="fwd-facts-val">{f.v}</span>
+            {"badge" in f && f.badge ? (
+              <span className="fwd-facts-val--badge">{f.v}</span>
+            ) : (
+              <span className="fwd-facts-val">{f.v}</span>
+            )}
           </div>
         ))}
       </div>
