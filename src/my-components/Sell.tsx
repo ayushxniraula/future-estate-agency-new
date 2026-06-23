@@ -2,6 +2,12 @@
 //  SellPropertyArea.tsx — User-facing "List Your Property" form
 //  Theme: FutureWork brand — #252060 navy / #1C94A4 teal
 //  Font: Plus Jakarta Sans + DM Serif Display
+//  sell_requests schema sync:
+//    - property_type: Apartment | Villa | House | Land | Flat |
+//                     Building | Office | Warehouse
+//    - status:        For Sale | For Rent  (Sold/Rented = admin only)
+//    - All JSONB fields use fixed labeled inputs (no dynamic KV rows)
+//    - agent jsonb: { is_agent, name, phone, email }
 // ============================================================
 
 import { useState, useRef } from "react";
@@ -9,12 +15,9 @@ import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Wrapper from "../layouts/Wrapper";
 import SEO from "../components/SEO";
-// import Brand from "../components/homes/home-four/Brand";
-// import FancyBanner from "../components/common/FancyBanner";
 import FutureFooter from "../layouts/footers/FutureFooter";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 import { useClientSession } from "./userclientsession";
-// import LoginModal from "../modals/LoginModal";
 
 // ─── Supabase ─────────────────────────────────────────────────
 const SUPABASE_URL = "https://afwvbftvfubboorpiszu.supabase.co";
@@ -25,13 +28,16 @@ const STORAGE_BUCKET = "FutureState";
 
 // ─── Types ────────────────────────────────────────────────────
 interface SellFormData {
+  // Contact
   contact_name: string;
   contact_email: string;
   contact_phone: string;
+  // Agent
   is_agent: boolean;
   agent_name: string;
   agent_phone: string;
   agent_email: string;
+  // Core property
   title: string;
   property_type: string;
   status: string;
@@ -43,12 +49,131 @@ interface SellFormData {
   kitchens: string;
   description: string;
   features_description: string;
-  property_details: Record<string, string>;
-  utility_features: Record<string, string>;
-  outdoor_features: Record<string, string>;
-  whats_nearby: Record<string, string>;
+  // Fixed JSONB fields — matches sell_requests schema
+  property_details: {
+    year_built: string;
+    furnishing: string;
+    parking: string;
+    floors: string;
+    building_type: string;
+  };
+  utility_features: {
+    heating: string;
+    cooling: string;
+    water: string;
+    electricity: string;
+  };
+  outdoor_features: {
+    garden: string;
+    balcony: string;
+    garage: string;
+    pool: string;
+  };
+  whats_nearby: {
+    school: string;
+    grocery: string;
+    hospital: string;
+    metro: string;
+    bus: string;
+    market: string;
+    park: string;
+    restaurant: string;
+  };
   amenities: string[];
 }
+
+// ─── Constants ────────────────────────────────────────────────
+// Exactly matches DB CHECK constraint on sell_requests.property_type
+const PROPERTY_TYPES = [
+  "Apartment",
+  "Villa",
+  "House",
+  "Land",
+  "Flat",
+  "Building",
+  "Office",
+  "Warehouse",
+];
+
+// Only For Sale / For Rent — Sold/Rented are admin-set states
+const STATUS_OPTIONS = ["For Sale", "For Rent"];
+
+const AMENITY_OPTIONS = [
+  "A/C & Heating",
+  "Garages",
+  "Garden",
+  "Disabled Access",
+  "Swimming Pool",
+  "Parking",
+  "WiFi",
+  "Pet Friendly",
+  "Ceiling Height",
+  "Fireplace",
+  "Play Ground",
+  "Elevator",
+];
+
+const NAV_ITEMS = [
+  { id: "sec-contact", icon: "👤", label: "Your Details" },
+  { id: "sec-property", icon: "🏠", label: "Property Info" },
+  { id: "sec-details", icon: "📋", label: "Details" },
+  { id: "sec-utility", icon: "⚡", label: "Utilities" },
+  { id: "sec-outdoor", icon: "🌿", label: "Outdoor" },
+  { id: "sec-nearby", icon: "📍", label: "Nearby" },
+  { id: "sec-amenities", icon: "✨", label: "Amenities" },
+  { id: "sec-images", icon: "🖼", label: "Images" },
+];
+
+const INITIAL_FORM: SellFormData = {
+  contact_name: "",
+  contact_email: "",
+  contact_phone: "",
+  is_agent: false,
+  agent_name: "",
+  agent_phone: "",
+  agent_email: "",
+  title: "",
+  property_type: "Apartment",
+  status: "For Sale",
+  price: "",
+  location: "",
+  sqft: "",
+  bedrooms: "",
+  bathrooms: "",
+  kitchens: "",
+  description: "",
+  features_description: "",
+  property_details: {
+    year_built: "",
+    furnishing: "",
+    parking: "",
+    floors: "",
+    building_type: "",
+  },
+  utility_features: {
+    heating: "",
+    cooling: "",
+    water: "",
+    electricity: "",
+  },
+  outdoor_features: {
+    garden: "",
+    balcony: "",
+    garage: "",
+    pool: "",
+  },
+  whats_nearby: {
+    school: "",
+    grocery: "",
+    hospital: "",
+    metro: "",
+    bus: "",
+    market: "",
+    park: "",
+    restaurant: "",
+  },
+  amenities: [],
+};
 
 // ─── Styles ───────────────────────────────────────────────────
 const SELL_STYLES = `
@@ -90,9 +215,7 @@ const SELL_STYLES = `
   }
 
   /* ── Page heading ── */
-  .sell-page-head {
-    margin-bottom: 40px;
-  }
+  .sell-page-head { margin-bottom: 40px; }
   .sell-page-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -183,10 +306,6 @@ const SELL_STYLES = `
     color: var(--fw-navy);
     border-color: var(--c-rule);
   }
-  .sell-nav-item.active {
-    background: var(--fw-navy);
-    color: var(--c-white);
-  }
   .sell-nav-dot {
     width: 6px;
     height: 6px;
@@ -195,7 +314,6 @@ const SELL_STYLES = `
     opacity: 0.4;
     flex-shrink: 0;
   }
-  .sell-nav-item.active .sell-nav-dot { opacity: 1; background: var(--fw-teal); }
 
   /* ── Section progress indicator ── */
   .sell-progress {
@@ -236,9 +354,7 @@ const SELL_STYLES = `
     box-shadow: var(--shadow-card);
     transition: border-color 0.2s;
   }
-  .sell-card:focus-within {
-    border-color: var(--fw-teal-border);
-  }
+  .sell-card:focus-within { border-color: var(--fw-teal-border); }
   @media (max-width: 600px) { .sell-card { padding: 22px 18px; } }
 
   .sell-card__header {
@@ -318,7 +434,13 @@ const SELL_STYLES = `
     min-height: 110px;
     line-height: 1.65;
   }
-  .sell-select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7890' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .sell-select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7890' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
   .sell-hint {
     font-size: 11.5px;
     color: var(--c-ink-3);
@@ -344,71 +466,20 @@ const SELL_STYLES = `
     cursor: pointer;
     transition: all 0.18s;
   }
-  .agent-toggle-btn + .agent-toggle-btn {
-    border-left: 1.5px solid var(--c-rule);
-  }
-  .agent-toggle-btn.active {
-    background: var(--fw-navy);
-    color: var(--c-white);
-  }
+  .agent-toggle-btn + .agent-toggle-btn { border-left: 1.5px solid var(--c-rule); }
+  .agent-toggle-btn.active { background: var(--fw-navy); color: var(--c-white); }
   .agent-fields {
     margin-top: 18px;
     padding-top: 18px;
     border-top: 1.5px dashed var(--c-rule);
   }
 
-  /* ── KV editor ── */
-  .kv-editor { display: flex; flex-direction: column; gap: 8px; }
-  .kv-row {
+  /* ── Fixed field grid (replaces KV editor) ── */
+  .fixed-fields-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 32px;
-    gap: 8px;
-    align-items: center;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
   }
-  .kv-row input {
-    padding: 9px 12px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--c-rule);
-    font-size: 13px;
-    font-family: var(--font-body);
-    color: var(--c-ink);
-    background: var(--c-surface);
-    outline: none;
-    transition: border-color 0.18s, background 0.18s;
-    width: 100%;
-  }
-  .kv-row input:focus {
-    border-color: var(--fw-teal);
-    background: var(--c-white);
-    box-shadow: var(--shadow-focus);
-  }
-  .kv-remove {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    border: 1.5px solid var(--c-rule);
-    background: var(--c-white);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; color: var(--c-ink-3);
-    cursor: pointer;
-    transition: all 0.18s;
-    flex-shrink: 0;
-  }
-  .kv-remove:hover { border-color: #e05f5f; color: #e05f5f; background: #fff5f5; }
-  .kv-add {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    border: 1.5px dashed var(--c-rule);
-    background: transparent;
-    color: var(--c-ink-3);
-    font-size: 12.5px;
-    font-family: var(--font-body);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.18s;
-    margin-top: 4px;
-  }
-  .kv-add:hover { border-color: var(--fw-teal); color: var(--fw-teal); background: var(--fw-teal-faint); }
 
   /* ── Amenities grid ── */
   .amenities-grid {
@@ -431,7 +502,11 @@ const SELL_STYLES = `
     transition: all 0.18s;
     user-select: none;
   }
-  .amenity-label:hover { border-color: var(--fw-teal-border); background: var(--fw-teal-faint); color: var(--fw-navy); }
+  .amenity-label:hover {
+    border-color: var(--fw-teal-border);
+    background: var(--fw-teal-faint);
+    color: var(--fw-navy);
+  }
   .amenity-label.checked {
     border-color: var(--fw-navy);
     background: var(--fw-navy);
@@ -525,22 +600,27 @@ const SELL_STYLES = `
     box-shadow: 0 6px 24px rgba(28,148,164,0.3);
   }
   .sell-submit:active { transform: scale(0.99); }
-  .sell-submit:disabled { background: var(--c-ink-3); cursor: not-allowed; transform: none; box-shadow: none; }
+  .sell-submit:disabled {
+    background: var(--c-ink-3);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 
   /* ── Error banner ── */
   .sell-error {
     padding: 12px 16px;
     border-radius: var(--radius-sm);
-    background: rgba(28,148,164,0.06);
-    border: 1.5px solid var(--fw-teal-border);
-    color: var(--fw-navy);
+    background: rgba(200,64,42,0.06);
+    border: 1.5px solid rgba(200,64,42,0.2);
+    color: #9b2c1a;
     font-size: 13.5px;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .sell-error i { color: var(--fw-teal); font-size: 15px; flex-shrink: 0; }
+  .sell-error i { font-size: 15px; flex-shrink: 0; }
 
   /* ── Success screen ── */
   .sell-success {
@@ -610,38 +690,39 @@ const SELL_STYLES = `
     box-shadow: 0 6px 22px rgba(28,148,164,0.3);
   }
 
+  /* ── Banner ── */
   .fwc-banner {
-  position: relative; overflow: hidden;
-  background: #252060;
-}
-.fwc-banner__bg {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  opacity: 0.18;
-}
-.fwc-banner__inner {
-  position: relative; z-index: 2;
-  padding: 80px 20px 72px;
-  text-align: center;
-}
-.fwc-banner__title {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(32px, 5vw, 54px);
-  color: #fff; letter-spacing: -0.5px;
-  margin: 0 0 18px; line-height: 1.1;
-}
-.fwc-banner__title em { color: #7dd8e4; font-style: italic; }
-.fwc-banner__crumb {
-  list-style: none; padding: 0; margin: 0;
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13px; color: rgba(255,255,255,0.5);
-}
-.fwc-banner__crumb a {
-  color: rgba(255,255,255,0.65); text-decoration: none;
-  transition: color 0.15s;
-}
-.fwc-banner__crumb a:hover { color: #7dd8e4; }
-.fwc-banner__crumb li:last-child { color: rgba(255,255,255,0.35); }
+    position: relative; overflow: hidden;
+    background: #252060;
+  }
+  .fwc-banner__bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.18;
+  }
+  .fwc-banner__inner {
+    position: relative; z-index: 2;
+    padding: 80px 20px 72px;
+    text-align: center;
+  }
+  .fwc-banner__title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(32px, 5vw, 54px);
+    color: #fff; letter-spacing: -0.5px;
+    margin: 0 0 18px; line-height: 1.1;
+  }
+  .fwc-banner__title em { color: #7dd8e4; font-style: italic; }
+  .fwc-banner__crumb {
+    list-style: none; padding: 0; margin: 0;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.5);
+  }
+  .fwc-banner__crumb a {
+    color: rgba(255,255,255,0.65); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .fwc-banner__crumb a:hover { color: #7dd8e4; }
+  .fwc-banner__crumb li:last-child { color: rgba(255,255,255,0.35); }
 `;
 
 function injectSellStyles() {
@@ -656,131 +737,73 @@ function injectSellStyles() {
   }
 }
 
-// ─── Constants ────────────────────────────────────────────────
-const PROPERTY_TYPES = [
-  "Apartment",
-  "Villa",
-  "Loft",
-  "Home",
-  "Flat",
-  "Building",
-  "Office",
-  "Factory",
-  "Industry",
-];
-const STATUS_OPTIONS = ["For Sale", "For Rent"];
-const AMENITY_OPTIONS = [
-  "A/C & Heating",
-  "Garages",
-  "Garden",
-  "Disabled Access",
-  "Swimming Pool",
-  "Parking",
-  "WiFi",
-  "Pet Friendly",
-  "Ceiling Height",
-  "Fireplace",
-  "Play Ground",
-  "Elevator",
-];
-
-const NAV_ITEMS = [
-  { id: "sec-contact", icon: "👤", label: "Your Details" },
-  { id: "sec-property", icon: "🏠", label: "Property Info" },
-  { id: "sec-details", icon: "📋", label: "Details" },
-  { id: "sec-utility", icon: "⚡", label: "Utilities" },
-  { id: "sec-outdoor", icon: "🌿", label: "Outdoor" },
-  { id: "sec-nearby", icon: "📍", label: "Nearby" },
-  { id: "sec-amenities", icon: "✨", label: "Amenities" },
-  { id: "sec-images", icon: "🖼", label: "Images" },
-];
-
-const INITIAL_FORM: SellFormData = {
-  contact_name: "",
-  contact_email: "",
-  contact_phone: "",
-  is_agent: false,
-  agent_name: "",
-  agent_phone: "",
-  agent_email: "",
-  title: "",
-  property_type: "Apartment",
-  status: "For Sale",
-  price: "",
-  location: "",
-  sqft: "",
-  bedrooms: "",
-  bathrooms: "",
-  kitchens: "",
-  description: "",
-  features_description: "",
-  property_details: { year_built: "", furnishing: "", parking: "", floors: "" },
-  utility_features: { heating: "", cooling: "", water: "", electricity: "" },
-  outdoor_features: { garden: "", balcony: "", garage: "", pool: "" },
-  whats_nearby: { school: "", grocery: "", hospital: "", metro: "" },
-  amenities: [],
-};
-
-// ─── KV Editor ───────────────────────────────────────────────
-function KVEditor({
-  data,
-  onChange,
-  placeholder,
-}: {
-  data: Record<string, string>;
-  onChange: (d: Record<string, string>) => void;
-  placeholder?: { k: string; v: string };
-}) {
-  const update = (oldKey: string, newKey: string, value: string) => {
-    const next: Record<string, string> = {};
-    for (const [k, v] of Object.entries(data)) {
-      if (k === oldKey) {
-        if (newKey.trim()) next[newKey] = value;
-      } else next[k] = v;
-    }
-    onChange(next);
+// ─── Helpers ─────────────────────────────────────────────────
+function freshForm(): SellFormData {
+  return {
+    ...INITIAL_FORM,
+    property_details: { ...INITIAL_FORM.property_details },
+    utility_features: { ...INITIAL_FORM.utility_features },
+    outdoor_features: { ...INITIAL_FORM.outdoor_features },
+    whats_nearby: { ...INITIAL_FORM.whats_nearby },
+    amenities: [],
   };
+}
+
+// Strip empty string values before storing in JSONB columns
+function cleanObj(obj: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v.trim() !== ""),
+  );
+}
+
+// ─── Sub-components ───────────────────────────────────────────
+function SellCard({
+  id,
+  title,
+  subtitle,
+  children,
+}: {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="kv-editor">
-      {Object.entries(data).map(([k, v]) => (
-        <div key={k} className="kv-row">
-          <input
-            value={k.replace(/_/g, " ")}
-            onChange={(e) =>
-              update(k, e.target.value.replace(/\s+/g, "_").toLowerCase(), v)
-            }
-            placeholder={placeholder?.k ?? "Field name"}
-          />
-          <input
-            value={v}
-            onChange={(e) => update(k, k, e.target.value)}
-            placeholder={placeholder?.v ?? "Value"}
-          />
-          <button
-            className="kv-remove"
-            type="button"
-            onClick={() => {
-              const n = { ...data };
-              delete n[k];
-              onChange(n);
-            }}
-          >
-            ×
-          </button>
+    <div className="sell-card" id={id}>
+      <div className="sell-card__header">
+        <div>
+          <div className="sell-card__title">{title}</div>
+          {subtitle && <div className="sell-card__subtitle">{subtitle}</div>}
         </div>
-      ))}
-      <button
-        className="kv-add"
-        type="button"
-        onClick={() => onChange({ ...data, [`field_${Date.now()}`]: "" })}
-      >
-        <span>+</span> Add Field
-      </button>
+      </div>
+      {children}
     </div>
   );
 }
 
-// ─── Image Uploader ───────────────────────────────────────────
+function Field({
+  label,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="sell-label">
+        {label}
+        {required && <span className="req"> *</span>}
+      </label>
+      {children}
+      {hint && <div className="sell-hint">{hint}</div>}
+    </div>
+  );
+}
+
 function ImageUploader({
   label,
   subtitle,
@@ -836,80 +859,45 @@ function ImageUploader({
   );
 }
 
-// ─── Section Card ─────────────────────────────────────────────
-function SellCard({
-  id,
-  icon,
-  title,
-  subtitle,
-  children,
-}: {
-  id?: string;
-  icon: string;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="sell-card" id={id}>
-      <div className="sell-card__header">
-        <div className="sell-card__icon">{icon}</div>
-        <div>
-          <div className="sell-card__title">{title}</div>
-          {subtitle && <div className="sell-card__subtitle">{subtitle}</div>}
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ─── Field ────────────────────────────────────────────────────
-function Field({
-  label,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="sell-label">
-        {label}
-        {required && <span className="req"> *</span>}
-      </label>
-      {children}
-      {hint && <div className="sell-hint">{hint}</div>}
-    </div>
-  );
-}
-
 // ─── Main Component ───────────────────────────────────────────
 const SellPropertyArea = () => {
   injectSellStyles();
 
-  // const [loginModal, setLoginModal] = useState(false);
   const { session } = useClientSession();
   const [step, setStep] = useState<"form" | "success">("form");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [floorFiles, setFloorFiles] = useState<File[]>([]);
-  const [form, setForm] = useState<SellFormData>({
-    ...INITIAL_FORM,
-    property_details: { ...INITIAL_FORM.property_details },
-    utility_features: { ...INITIAL_FORM.utility_features },
-    outdoor_features: { ...INITIAL_FORM.outdoor_features },
-    whats_nearby: { ...INITIAL_FORM.whats_nearby },
-    amenities: [],
-  });
+  const [form, setForm] = useState<SellFormData>(freshForm);
 
-  const set = (key: keyof SellFormData, value: unknown) =>
+  const set = <K extends keyof SellFormData>(key: K, value: SellFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  // Nested JSONB helpers
+  const setPropDetail = (
+    k: keyof SellFormData["property_details"],
+    v: string,
+  ) =>
+    setForm((prev) => ({
+      ...prev,
+      property_details: { ...prev.property_details, [k]: v },
+    }));
+  const setUtility = (k: keyof SellFormData["utility_features"], v: string) =>
+    setForm((prev) => ({
+      ...prev,
+      utility_features: { ...prev.utility_features, [k]: v },
+    }));
+  const setOutdoor = (k: keyof SellFormData["outdoor_features"], v: string) =>
+    setForm((prev) => ({
+      ...prev,
+      outdoor_features: { ...prev.outdoor_features, [k]: v },
+    }));
+  const setNearby = (k: keyof SellFormData["whats_nearby"], v: string) =>
+    setForm((prev) => ({
+      ...prev,
+      whats_nearby: { ...prev.whats_nearby, [k]: v },
+    }));
 
   const toggleAmenity = (a: string) => {
     const next = form.amenities.includes(a)
@@ -918,7 +906,7 @@ const SellPropertyArea = () => {
     set("amenities", next);
   };
 
-  // Progress: count non-empty required fields
+  // Progress: count non-empty required fields (6 total)
   const filledCount = [
     form.contact_name,
     form.contact_email,
@@ -936,7 +924,9 @@ const SellPropertyArea = () => {
     const urls: string[] = [];
     for (const file of files) {
       const ext = file.name.split(".").pop();
-      const path = `sell-requests/${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const path = `sell-requests/${folder}/${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2)}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(path, file, { cacheControl: "3600", upsert: false });
@@ -965,28 +955,28 @@ const SellPropertyArea = () => {
         floorFiles.length > 0
           ? await uploadImages(floorFiles, "floor-plans")
           : [];
-      const cleanKV = (obj: Record<string, string>) =>
-        Object.fromEntries(
-          Object.entries(obj).filter(([k, v]) => k.trim() && v.trim()),
-        );
 
-      // Agent info is entirely optional — only included if "Yes" was
-      // selected, and only non-empty sub-fields are kept.
-      const agentPayload = form.is_agent
-        ? cleanKV({
-            agent_name: form.agent_name,
-            agent_phone: form.agent_phone,
-            agent_email: form.agent_email,
-          })
-        : {};
-      const agentJson = { is_agent: form.is_agent, ...agentPayload };
+      // Build agent jsonb — only include sub-fields that have a value
+      const agentPayload: Record<string, string | boolean> = {
+        is_agent: form.is_agent,
+      };
+      if (form.is_agent) {
+        if (form.agent_name.trim()) agentPayload.name = form.agent_name.trim();
+        if (form.agent_phone.trim())
+          agentPayload.phone = form.agent_phone.trim();
+        if (form.agent_email.trim())
+          agentPayload.email = form.agent_email.trim();
+      }
 
       const { error: dbErr } = await supabase.from("sell_requests").insert([
         {
+          // Contact
           contact_name: form.contact_name.trim(),
           contact_email: form.contact_email.trim(),
           contact_phone: form.contact_phone.trim(),
-          agent: agentJson,
+          // Agent jsonb
+          agent: agentPayload,
+          // Core property
           title: form.title.trim(),
           property_type: form.property_type,
           status: form.status,
@@ -998,14 +988,15 @@ const SellPropertyArea = () => {
           kitchens: form.kitchens ? parseInt(form.kitchens) : null,
           description: form.description.trim() || null,
           features_description: form.features_description.trim() || null,
-          property_details: cleanKV(form.property_details),
-          utility_features: cleanKV(form.utility_features),
-          outdoor_features: cleanKV(form.outdoor_features),
-          whats_nearby: cleanKV(form.whats_nearby),
+          // JSONB — strip empty values before storing
+          property_details: cleanObj(form.property_details),
+          utility_features: cleanObj(form.utility_features),
+          outdoor_features: cleanObj(form.outdoor_features),
+          whats_nearby: cleanObj(form.whats_nearby),
           amenities: form.amenities,
           images: imageUrls,
           floor_plans: floorUrls,
-          review_status: "pending",
+          // review_status defaults to 'pending' in DB
         },
       ]);
 
@@ -1018,14 +1009,20 @@ const SellPropertyArea = () => {
     }
   };
 
+  const handleReset = () => {
+    setStep("form");
+    setForm(freshForm());
+    setImageFiles([]);
+    setFloorFiles([]);
+    setError(null);
+  };
+
   return (
     <Wrapper>
       <SEO pageTitle="List Your Property – Sell or Rent" />
       <NavMenu session={session} />
-      {/* <NavMenu onLoginClick={() => setLoginModal(true)} session={session} /> */}
-      {/* <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} /> */}
 
-      {/* ── Banner ── */}
+      {/* ── Hero banner ── */}
       <div className="fwc-banner">
         <div
           className="fwc-banner__bg"
@@ -1048,7 +1045,6 @@ const SellPropertyArea = () => {
       {/* ── Form section ── */}
       <div className="sell-root sell-section">
         <div className="container">
-          {/* Page heading */}
           {step === "form" && (
             <div className="sell-page-head">
               <div className="sell-page-eyebrow">New Listing</div>
@@ -1063,6 +1059,7 @@ const SellPropertyArea = () => {
           )}
 
           {step === "success" ? (
+            /* ── Success state ── */
             <div className="sell-card">
               <div className="sell-success">
                 <div className="sell-success__circle">✓</div>
@@ -1074,22 +1071,7 @@ const SellPropertyArea = () => {
                 </p>
                 <div className="sell-success__badge">Pending Review</div>
                 <br />
-                <button
-                  className="sell-again-btn"
-                  onClick={() => {
-                    setStep("form");
-                    setForm({
-                      ...INITIAL_FORM,
-                      property_details: { ...INITIAL_FORM.property_details },
-                      utility_features: { ...INITIAL_FORM.utility_features },
-                      outdoor_features: { ...INITIAL_FORM.outdoor_features },
-                      whats_nearby: { ...INITIAL_FORM.whats_nearby },
-                      amenities: [],
-                    });
-                    setImageFiles([]);
-                    setFloorFiles([]);
-                  }}
-                >
+                <button className="sell-again-btn" onClick={handleReset}>
                   Submit Another Property
                 </button>
               </div>
@@ -1117,7 +1099,6 @@ const SellPropertyArea = () => {
                   </a>
                 ))}
 
-                {/* Progress */}
                 <div className="sell-progress">
                   <div className="sell-progress__label">
                     <span>Required fields</span>
@@ -1134,10 +1115,9 @@ const SellPropertyArea = () => {
 
               {/* ── Form cards ── */}
               <div>
-                {/* Contact */}
+                {/* 1 · Contact */}
                 <SellCard
                   id="sec-contact"
-                  icon="👤"
                   title="Your Contact Information"
                   subtitle="We'll reach out at these details after review"
                 >
@@ -1180,18 +1160,14 @@ const SellPropertyArea = () => {
                         <div className="agent-toggle">
                           <button
                             type="button"
-                            className={`agent-toggle-btn${
-                              !form.is_agent ? " active" : ""
-                            }`}
+                            className={`agent-toggle-btn${!form.is_agent ? " active" : ""}`}
                             onClick={() => set("is_agent", false)}
                           >
                             Owner
                           </button>
                           <button
                             type="button"
-                            className={`agent-toggle-btn${
-                              form.is_agent ? " active" : ""
-                            }`}
+                            className={`agent-toggle-btn${form.is_agent ? " active" : ""}`}
                             onClick={() => set("is_agent", true)}
                           >
                             Agent
@@ -1245,7 +1221,7 @@ const SellPropertyArea = () => {
                   </div>
                 </SellCard>
 
-                {/* Property Info */}
+                {/* 2 · Property Info */}
                 <SellCard
                   id="sec-property"
                   icon="🏠"
@@ -1263,6 +1239,7 @@ const SellPropertyArea = () => {
                         />
                       </Field>
                     </div>
+
                     <div className="col-md-4">
                       <Field label="Property Type">
                         <select
@@ -1278,6 +1255,7 @@ const SellPropertyArea = () => {
                         </select>
                       </Field>
                     </div>
+
                     <div className="col-md-4">
                       <Field label="Listing Type">
                         <select
@@ -1293,9 +1271,10 @@ const SellPropertyArea = () => {
                         </select>
                       </Field>
                     </div>
+
                     <div className="col-md-4">
                       <Field
-                        label="Price (NPR / USD)"
+                        label="Price (NPR)"
                         required
                         hint={
                           form.status === "For Rent"
@@ -1305,12 +1284,13 @@ const SellPropertyArea = () => {
                       >
                         <input
                           className="sell-input"
-                          placeholder="e.g. 450000"
+                          placeholder="e.g. 4500000"
                           value={form.price}
                           onChange={(e) => set("price", e.target.value)}
                         />
                       </Field>
                     </div>
+
                     <div className="col-12">
                       <Field label="Location / Address" required>
                         <input
@@ -1321,6 +1301,7 @@ const SellPropertyArea = () => {
                         />
                       </Field>
                     </div>
+
                     <div className="col-md-3">
                       <Field label="Area (sqft)">
                         <input
@@ -1379,6 +1360,7 @@ const SellPropertyArea = () => {
                         </select>
                       </Field>
                     </div>
+
                     <div className="col-12">
                       <Field label="Description">
                         <textarea
@@ -1405,63 +1387,229 @@ const SellPropertyArea = () => {
                   </div>
                 </SellCard>
 
-                {/* Property Details KV */}
+                {/* 3 · Property Details */}
                 <SellCard
                   id="sec-details"
                   icon="📋"
                   title="Property Details"
-                  subtitle="Year built, furnishing, parking, floors, etc."
+                  subtitle="Year built, building type, furnishing, parking, and floors"
                 >
-                  <KVEditor
-                    data={form.property_details}
-                    onChange={(d) => set("property_details", d)}
-                    placeholder={{ k: "e.g. year_built", v: "e.g. 2019" }}
-                  />
+                  <div className="fixed-fields-grid">
+                    <Field label="Year Built">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. 2019"
+                        value={form.property_details.year_built}
+                        onChange={(e) =>
+                          setPropDetail("year_built", e.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="Building Type">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. Concrete, Steel Frame"
+                        value={form.property_details.building_type}
+                        onChange={(e) =>
+                          setPropDetail("building_type", e.target.value)
+                        }
+                      />
+                    </Field>
+                    <Field label="Furnishing">
+                      <select
+                        className="sell-select"
+                        value={form.property_details.furnishing}
+                        onChange={(e) =>
+                          setPropDetail("furnishing", e.target.value)
+                        }
+                      >
+                        <option value="">Select</option>
+                        <option>Fully Furnished</option>
+                        <option>Semi Furnished</option>
+                        <option>Unfurnished</option>
+                      </select>
+                    </Field>
+                    <Field label="Parking">
+                      <select
+                        className="sell-select"
+                        value={form.property_details.parking}
+                        onChange={(e) =>
+                          setPropDetail("parking", e.target.value)
+                        }
+                      >
+                        <option value="">Select</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Covered</option>
+                        <option>Open</option>
+                      </select>
+                    </Field>
+                    <Field label="Number of Floors">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. 3"
+                        value={form.property_details.floors}
+                        onChange={(e) =>
+                          setPropDetail("floors", e.target.value)
+                        }
+                      />
+                    </Field>
+                  </div>
                 </SellCard>
 
-                {/* Utility */}
+                {/* 4 · Utility Features */}
                 <SellCard
                   id="sec-utility"
                   icon="⚡"
                   title="Utility & Home Features"
-                  subtitle="Heating, cooling, water supply, electricity, etc."
+                  subtitle="Heating, cooling, water supply, electricity"
                 >
-                  <KVEditor
-                    data={form.utility_features}
-                    onChange={(d) => set("utility_features", d)}
-                    placeholder={{ k: "e.g. heating", v: "e.g. Central Gas" }}
-                  />
+                  <div className="fixed-fields-grid">
+                    <Field label="Heating">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. Central Gas"
+                        value={form.utility_features.heating}
+                        onChange={(e) => setUtility("heating", e.target.value)}
+                      />
+                    </Field>
+                    <Field label="Cooling / A/C">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. Split AC"
+                        value={form.utility_features.cooling}
+                        onChange={(e) => setUtility("cooling", e.target.value)}
+                      />
+                    </Field>
+                    <Field label="Water Supply">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. 24/7 Municipal + Tank"
+                        value={form.utility_features.water}
+                        onChange={(e) => setUtility("water", e.target.value)}
+                      />
+                    </Field>
+                    <Field label="Electricity">
+                      <input
+                        className="sell-input"
+                        placeholder="e.g. NEA + Inverter Backup"
+                        value={form.utility_features.electricity}
+                        onChange={(e) =>
+                          setUtility("electricity", e.target.value)
+                        }
+                      />
+                    </Field>
+                  </div>
                 </SellCard>
 
-                {/* Outdoor */}
+                {/* 5 · Outdoor Features */}
                 <SellCard
                   id="sec-outdoor"
                   icon="🌿"
                   title="Outdoor Features"
-                  subtitle="Garden, balcony, garage, pool, etc."
+                  subtitle="Garden, balcony, garage, pool"
                 >
-                  <KVEditor
-                    data={form.outdoor_features}
-                    onChange={(d) => set("outdoor_features", d)}
-                    placeholder={{ k: "e.g. garden", v: "e.g. Yes, private" }}
-                  />
+                  <div className="fixed-fields-grid">
+                    <Field label="Garden">
+                      <select
+                        className="sell-select"
+                        value={form.outdoor_features.garden}
+                        onChange={(e) => setOutdoor("garden", e.target.value)}
+                      >
+                        <option value="">Select</option>
+                        <option>Yes, private</option>
+                        <option>Yes, shared</option>
+                        <option>No</option>
+                      </select>
+                    </Field>
+                    <Field label="Balcony">
+                      <select
+                        className="sell-select"
+                        value={form.outdoor_features.balcony}
+                        onChange={(e) => setOutdoor("balcony", e.target.value)}
+                      >
+                        <option value="">Select</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                        <option>Multiple</option>
+                      </select>
+                    </Field>
+                    <Field label="Garage">
+                      <select
+                        className="sell-select"
+                        value={form.outdoor_features.garage}
+                        onChange={(e) => setOutdoor("garage", e.target.value)}
+                      >
+                        <option value="">Select</option>
+                        <option>Yes, 1 car</option>
+                        <option>Yes, 2 cars</option>
+                        <option>No</option>
+                      </select>
+                    </Field>
+                    <Field label="Swimming Pool">
+                      <select
+                        className="sell-select"
+                        value={form.outdoor_features.pool}
+                        onChange={(e) => setOutdoor("pool", e.target.value)}
+                      >
+                        <option value="">Select</option>
+                        <option>Yes, private</option>
+                        <option>Yes, shared</option>
+                        <option>No</option>
+                      </select>
+                    </Field>
+                  </div>
                 </SellCard>
 
-                {/* Nearby */}
+                {/* 6 · What's Nearby */}
                 <SellCard
                   id="sec-nearby"
                   icon="📍"
                   title="What's Nearby"
-                  subtitle='Distances to key amenities — e.g. "0.5 km" or "5 min walk"'
+                  subtitle='Walking or driving distance — e.g. "0.5 km" or "5 min walk"'
                 >
-                  <KVEditor
-                    data={form.whats_nearby}
-                    onChange={(d) => set("whats_nearby", d)}
-                    placeholder={{ k: "e.g. school", v: "e.g. 0.4 km" }}
-                  />
+                  <div className="fixed-fields-grid">
+                    {(
+                      [
+                        { key: "school", label: "School", ph: "e.g. 0.4 km" },
+                        { key: "grocery", label: "Grocery", ph: "e.g. 200 m" },
+                        {
+                          key: "hospital",
+                          label: "Hospital",
+                          ph: "e.g. 1.2 km",
+                        },
+                        {
+                          key: "metro",
+                          label: "Metro / MRT",
+                          ph: "e.g. 800 m",
+                        },
+                        {
+                          key: "bus",
+                          label: "Bus Stop",
+                          ph: "e.g. 3 min walk",
+                        },
+                        { key: "market", label: "Market", ph: "e.g. 0.6 km" },
+                        { key: "park", label: "Park", ph: "e.g. 5 min walk" },
+                        {
+                          key: "restaurant",
+                          label: "Restaurant",
+                          ph: "e.g. 100 m",
+                        },
+                      ] as const
+                    ).map(({ key, label, ph }) => (
+                      <Field key={key} label={label}>
+                        <input
+                          className="sell-input"
+                          placeholder={ph}
+                          value={form.whats_nearby[key]}
+                          onChange={(e) => setNearby(key, e.target.value)}
+                        />
+                      </Field>
+                    ))}
+                  </div>
                 </SellCard>
 
-                {/* Amenities */}
+                {/* 7 · Amenities */}
                 <SellCard
                   id="sec-amenities"
                   icon="✨"
@@ -1491,7 +1639,7 @@ const SellPropertyArea = () => {
                   </div>
                 </SellCard>
 
-                {/* Images */}
+                {/* 8 · Property Images */}
                 <SellCard
                   id="sec-images"
                   icon="🖼"
@@ -1500,7 +1648,7 @@ const SellPropertyArea = () => {
                 >
                   <ImageUploader
                     label="Upload property photos"
-                    subtitle="PNG, JPG · Max 10MB each"
+                    subtitle="PNG, JPG · Max 10 MB each"
                     files={imageFiles}
                     onChange={setImageFiles}
                     max={8}
@@ -1511,7 +1659,7 @@ const SellPropertyArea = () => {
                 <SellCard
                   icon="📐"
                   title="Floor Plans"
-                  subtitle="Optional — upload floor plan images"
+                  subtitle="Optional — upload floor plan images (up to 3)"
                 >
                   <ImageUploader
                     label="Upload floor plan images"
@@ -1525,7 +1673,7 @@ const SellPropertyArea = () => {
                 {/* Error */}
                 {error && (
                   <div className="sell-error">
-                    <i className="bi bi-exclamation-circle" />
+                    <i className="bi bi-exclamation-circle-fill" />
                     {error}
                   </div>
                 )}

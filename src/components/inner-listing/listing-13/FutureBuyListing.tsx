@@ -2,6 +2,8 @@
 //  BuyListing.tsx — Future Work branded property listing
 //  Brand colors: #252060 (navy) / #1C94A4 (teal)
 //  Mobile-first responsive design
+//  Types synced to DB: Apartment, Villa, House, Land, Flat,
+//  Building, Office, Warehouse
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -57,17 +59,17 @@ interface FiltersState {
 // ─── Constants ────────────────────────────────────────────────
 const ITEMS_PER_PAGE = 9;
 
+// Exactly matches DB CHECK constraint values
 const PROPERTY_TYPES = [
   "All",
   "Apartment",
   "Villa",
-  "Loft",
-  "Home",
+  "House",
+  "Land",
   "Flat",
   "Building",
   "Office",
-  "Factory",
-  "Industry",
+  "Warehouse",
 ];
 
 const AMENITY_OPTIONS = [
@@ -176,18 +178,9 @@ const INJECTED_STYLE = `
   .fw-listing-root { background: var(--c-surface); min-height: 100vh; }
 
   /* ── Layout ── */
-  /*
-   * Sticky approach:
-   * .fw-layout is a normal flex row — it does NOT set a height or overflow,
-   * so the page itself scrolls. The sidebar uses position:sticky + top:0,
-   * which means it sticks to the top of the viewport and stays fully
-   * visible — no internal scrolling. Its content has been made compact
-   * (tighter paddings/gaps, smaller type) so the whole filter set fits
-   * within a typical viewport height without needing to scroll.
-   */
   .fw-layout {
     display: flex;
-    align-items: flex-start;   /* critical: lets sticky work */
+    align-items: flex-start;
     gap: 0;
     padding: 0 !important;
   }
@@ -207,16 +200,12 @@ const INJECTED_STYLE = `
     background: var(--c-white);
     border-right: 1px solid var(--c-rule);
     box-shadow: var(--shadow-sidebar);
-
-    /* Sticky, fully pinned — no internal scroll */
     position: sticky;
     top: 0;
     max-height: 100vh;
     overflow: hidden;
-
     transition: transform 0.3s cubic-bezier(.4,0,.2,1);
     z-index: 50;
-
     display: flex;
     flex-direction: column;
   }
@@ -227,7 +216,7 @@ const INJECTED_STYLE = `
       height: 100vh; max-height: 100vh;
       transform: translateX(-100%);
       z-index: 110;
-      overflow-y: auto; /* mobile drawer may still scroll if needed */
+      overflow-y: auto;
     }
     .fw-sidebar.mobile-open { transform: translateX(0); }
     .fw-layout { display: block; }
@@ -278,7 +267,6 @@ const INJECTED_STYLE = `
   }
   .fw-sidebar-section:last-of-type { border-bottom: none; }
 
-  /* Teal left accent line on focus-within */
   .fw-sidebar-section::before {
     content: '';
     position: absolute; left: 0; top: 8px; bottom: 8px;
@@ -428,13 +416,11 @@ const INJECTED_STYLE = `
   .fw-select:hover  { border-color: var(--fw-teal); background: var(--c-white); }
   .fw-select:focus  { border-color: var(--fw-teal); background: var(--c-white); box-shadow: 0 0 0 3px rgba(28,148,164,0.12); }
 
-  /* Active type select gets teal accent */
   .fw-select--active {
     border-color: var(--fw-teal);
     background: rgba(28,148,164,0.06);
     color: var(--fw-teal-dark);
   }
-  .fw-select--active + .fw-select-caret { border-top-color: var(--fw-teal-dark); }
 
   /* ── Property Card ── */
   .fw-prop-card {
@@ -704,7 +690,7 @@ function PriceRangeSlider({
   const pct = (v: number) =>
     max === min ? 0 : ((v - min) / (max - min)) * 100;
   const minAtMax = value[0] >= value[1] - 1;
-  const fmt = (n: number) => `$${n.toLocaleString()}`;
+  const fmt = (n: number) => `NPR ${n.toLocaleString()}`;
   return (
     <div className="fw-slider-wrap">
       <div
@@ -1332,7 +1318,7 @@ const BuyListing = () => {
     ...(urlMin || urlMax
       ? [
           {
-            label: `$${Number(urlMin || 0).toLocaleString()} – $${Number(urlMax || 0).toLocaleString()}`,
+            label: `NPR ${Number(urlMin || 0).toLocaleString()} – NPR ${Number(urlMax || 0).toLocaleString()}`,
             key: "price",
           },
         ]
@@ -1352,7 +1338,7 @@ const BuyListing = () => {
     !!filters.sqftMax,
   ].filter(Boolean).length;
 
-  // Type dropdown options
+  // Type dropdown options — matches DB constraint exactly
   const typeOptions = PROPERTY_TYPES.map((t) => ({ value: t, text: t }));
 
   return (

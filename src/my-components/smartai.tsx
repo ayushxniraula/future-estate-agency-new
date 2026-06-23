@@ -3,6 +3,7 @@
 //  Advanced NLP scoring engine + epic AI loading animation
 //  Design: DM Serif Display + DM Sans, matches site tokens
 //  Colors: #252060 (navy) + #1C94A4 (teal) — FutureWork brand
+//  v3: All emojis replaced with inline SVGs
 // ============================================================
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -68,30 +69,807 @@ interface ScoredProperty {
   highlights: string[];
 }
 
+// ─── SVG Icon Components ──────────────────────────────────────
+
+const IconBrain = ({
+  size = 32,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M11 6C8.24 6 6 8.24 6 11c0 1.3.48 2.48 1.27 3.38C6.48 15.24 6 16.5 6 17.88 6 20.7 8.07 23 10.75 23H11v1a2 2 0 0 0 4 0v-1h2v1a2 2 0 0 0 4 0v-1h.25C23.93 23 26 20.7 26 17.88c0-1.38-.48-2.64-1.27-3.5C25.52 13.48 26 12.3 26 11c0-2.76-2.24-5-5-5-1.02 0-1.97.31-2.76.83A4.98 4.98 0 0 0 16 6c-.45 0-.88.06-1.29.17A4.96 4.96 0 0 0 11 6z"
+      fill={color}
+      opacity="0.9"
+    />
+    <circle
+      cx="13"
+      cy="12"
+      r="1.5"
+      fill={color === "#fff" ? "#1C94A4" : "#fff"}
+      opacity="0.7"
+    />
+    <circle
+      cx="19"
+      cy="12"
+      r="1.5"
+      fill={color === "#fff" ? "#1C94A4" : "#fff"}
+      opacity="0.7"
+    />
+    <path
+      d="M13 17c0 1.66 1.34 3 3 3s3-1.34 3-3"
+      stroke={color === "#fff" ? "#1C94A4" : "#fff"}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      opacity="0.7"
+    />
+  </svg>
+);
+
+const IconSearch = ({
+  size = 18,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="9" cy="9" r="6" stroke={color} strokeWidth="1.8" />
+    <path
+      d="M13.5 13.5L17 17"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconLightning = ({
+  size = 20,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M11 2L4 11h6l-1 7 7-9h-6l1-7z"
+      fill={color}
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconChart = ({
+  size = 20,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect x="2" y="10" width="3" height="8" rx="1" fill={color} opacity="0.7" />
+    <rect x="7" y="6" width="3" height="12" rx="1" fill={color} />
+    <rect
+      x="12"
+      y="3"
+      width="3"
+      height="15"
+      rx="1"
+      fill={color}
+      opacity="0.85"
+    />
+    <rect
+      x="17"
+      y="8"
+      width="3"
+      height="10"
+      rx="1"
+      fill={color}
+      opacity="0.6"
+    />
+  </svg>
+);
+
+const IconSparkle = ({
+  size = 20,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10 2l1.5 5.5L17 9l-5.5 1.5L10 16l-1.5-5.5L3 9l5.5-1.5L10 2z"
+      fill={color}
+    />
+    <path
+      d="M16 2l.7 2.3L19 5l-2.3.7L16 8l-.7-2.3L13 5l2.3-.7L16 2z"
+      fill={color}
+      opacity="0.6"
+    />
+  </svg>
+);
+
+const IconDatabase = ({
+  size = 20,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <ellipse cx="10" cy="5" rx="7" ry="2.5" stroke={color} strokeWidth="1.5" />
+    <path
+      d="M3 5v5c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V5"
+      stroke={color}
+      strokeWidth="1.5"
+    />
+    <path
+      d="M3 10v5c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5v-5"
+      stroke={color}
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
+const IconHome = ({
+  size = 24,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M3 12L12 3l9 9"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M5 10v9a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-9"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconHomeLarge = ({
+  size = 56,
+  color = "#1C94A4",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 56 56"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M7 28L28 7l21 21"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity="0.4"
+    />
+    <path
+      d="M11 24v20a2 2 0 0 0 2 2h10v-12h10v12h10a2 2 0 0 0 2-2V24"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="28" cy="30" r="4" fill={color} opacity="0.2" />
+  </svg>
+);
+
+const IconBed = ({
+  size = 12,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      x="1"
+      y="7"
+      width="18"
+      height="7"
+      rx="1.5"
+      stroke={color}
+      strokeWidth="1.5"
+    />
+    <path d="M1 10h18" stroke={color} strokeWidth="1.5" />
+    <path
+      d="M1 14V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <rect x="4" y="5" width="5" height="3" rx="1" fill={color} opacity="0.5" />
+    <rect x="11" y="5" width="5" height="3" rx="1" fill={color} opacity="0.5" />
+  </svg>
+);
+
+const IconBath = ({
+  size = 12,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 18"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M2 9h16v3a6 6 0 0 1-6 6H8a6 6 0 0 1-6-6V9z"
+      stroke={color}
+      strokeWidth="1.5"
+    />
+    <path
+      d="M2 9V4a2 2 0 0 1 4 0v1"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M6 16l-1 2M14 16l1 2"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconRuler = ({
+  size = 12,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M3 13L13 3l4 4L7 17 3 13z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7 7l2 2M10 10l2 2"
+      stroke={color}
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconPin = ({
+  size = 10,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size + 2}
+    viewBox="0 0 11 13"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M5.5 0C3.015 0 1 2.015 1 4.5c0 3.375 4.5 8.5 4.5 8.5S10 7.875 10 4.5C10 2.015 7.985 0 5.5 0zm0 6.25A1.75 1.75 0 1 1 5.5 2.75a1.75 1.75 0 0 1 0 3.5z"
+      fill={color}
+    />
+  </svg>
+);
+
+const IconX = ({
+  size = 14,
+  color = "currentColor",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 14 14"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M2 2l10 10M12 2L2 12"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconArrowUpRight = ({
+  size = 13,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 13 13"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M2 11L11 2M11 2H4M11 2v7"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconStars = ({
+  size = 14,
+  color = "#fff",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M8 1l1.8 5h5.2l-4.2 3 1.6 5L8 11l-4.4 3 1.6-5L1 6h5.2L8 1z"
+      fill={color}
+    />
+  </svg>
+);
+
+const IconMagnify = ({
+  size = 56,
+  color = "#1C94A4",
+}: {
+  size?: number;
+  color?: string;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 56 56"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="24"
+      cy="24"
+      r="14"
+      stroke={color}
+      strokeWidth="2.5"
+      opacity="0.4"
+    />
+    <circle cx="24" cy="24" r="8" fill={color} opacity="0.12" />
+    <path
+      d="M34 34L47 47"
+      stroke={color}
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+    <path
+      d="M20 24h8M24 20v8"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      opacity="0.6"
+    />
+  </svg>
+);
+
+// Feature pill icons
+const IconBedFeature = ({ size = 26 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 26 22"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      x="1"
+      y="10"
+      width="24"
+      height="10"
+      rx="2"
+      stroke="#1C94A4"
+      strokeWidth="1.6"
+    />
+    <path d="M1 14h24" stroke="#1C94A4" strokeWidth="1.6" />
+    <path
+      d="M1 20V5a3 3 0 0 1 3-3h18a3 3 0 0 1 3 3v5"
+      stroke="#1C94A4"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <rect
+      x="5"
+      y="7"
+      width="7"
+      height="4"
+      rx="1.2"
+      fill="#1C94A4"
+      opacity="0.35"
+    />
+    <rect
+      x="14"
+      y="7"
+      width="7"
+      height="4"
+      rx="1.2"
+      fill="#1C94A4"
+      opacity="0.35"
+    />
+  </svg>
+);
+
+const IconPinFeature = ({ size = 26 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 26 30"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M13 1C8.03 1 4 5.03 4 10c0 7.5 9 19 9 19s9-11.5 9-19c0-4.97-4.03-9-9-9z"
+      stroke="#1C94A4"
+      strokeWidth="1.7"
+    />
+    <circle cx="13" cy="10" r="3.5" fill="#1C94A4" opacity="0.4" />
+  </svg>
+);
+
+const IconBudget = ({ size = 26 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 26 26"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="13" cy="13" r="11" stroke="#1C94A4" strokeWidth="1.7" />
+    <path
+      d="M13 6v1.5M13 18.5V20"
+      stroke="#1C94A4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M9.5 9.5C9.5 8.12 11.07 7 13 7s3.5 1.12 3.5 2.5c0 2.5-7 2-7 5 0 1.38 1.57 2.5 3.5 2.5s3.5-1.12 3.5-2.5"
+      stroke="#1C94A4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconAmenity = ({ size = 26 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 26 26"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M13 2l2.5 7.5H23l-6 4.5 2.3 7L13 17l-6.3 4 2.3-7L3 9.5h7.5L13 2z"
+      stroke="#1C94A4"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <circle cx="13" cy="13" r="3" fill="#1C94A4" opacity="0.3" />
+  </svg>
+);
+
+const IconNearby = ({ size = 26 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 26 26"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M3 13h3M20 13h3M13 3v3M13 20v3"
+      stroke="#1C94A4"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <circle cx="13" cy="13" r="5" stroke="#1C94A4" strokeWidth="1.6" />
+    <circle cx="13" cy="13" r="1.5" fill="#1C94A4" />
+    <path
+      d="M13 13l4-4"
+      stroke="#1C94A4"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      opacity="0.5"
+    />
+  </svg>
+);
+
+const IconType = ({ size = 26 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 26 26"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      x="2"
+      y="8"
+      width="10"
+      height="16"
+      rx="1.5"
+      stroke="#1C94A4"
+      strokeWidth="1.6"
+    />
+    <rect
+      x="14"
+      y="2"
+      width="10"
+      height="22"
+      rx="1.5"
+      stroke="#1C94A4"
+      strokeWidth="1.6"
+    />
+    <path
+      d="M5 12h4M5 16h4M17 6h4M17 10h4M17 14h4"
+      stroke="#1C94A4"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      opacity="0.5"
+    />
+  </svg>
+);
+
+// AI step icons
+const IconAIStep1 = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M3 5h14M3 10h10M3 15h7"
+      stroke="#252060"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <circle cx="16" cy="13" r="3" stroke="#1C94A4" strokeWidth="1.4" />
+    <path
+      d="M18.1 15.1L20 17"
+      stroke="#1C94A4"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconAIStep2 = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      x="2"
+      y="3"
+      width="16"
+      height="14"
+      rx="2"
+      stroke="#252060"
+      strokeWidth="1.6"
+    />
+    <path
+      d="M6 8h8M6 11h5"
+      stroke="#1C94A4"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+    <path
+      d="M13 11l3 3"
+      stroke="#252060"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+    />
+    <circle cx="13" cy="10" r="2.5" stroke="#252060" strokeWidth="1.4" />
+  </svg>
+);
+
+const IconAIStep3 = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10 2l1.5 5h5L12 10l1.8 5.5L10 13l-3.8 2.5L8 10 3.5 7h5L10 2z"
+      fill="#1C94A4"
+      opacity="0.85"
+    />
+  </svg>
+);
+
+const IconAIStep4 = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      x="2"
+      y="12"
+      width="3"
+      height="6"
+      rx="1"
+      fill="#252060"
+      opacity="0.6"
+    />
+    <rect x="7" y="8" width="3" height="10" rx="1" fill="#252060" />
+    <rect x="12" y="4" width="3" height="14" rx="1" fill="#1C94A4" />
+    <rect
+      x="17"
+      y="9"
+      width="3"
+      height="9"
+      rx="1"
+      fill="#252060"
+      opacity="0.5"
+    />
+  </svg>
+);
+
+const IconAIStep5 = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M4 10c0-3.31 2.69-6 6-6s6 2.69 6 6-2.69 6-6 6-6-2.69-6-6z"
+      stroke="#252060"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M10 7v3l2 2"
+      stroke="#1C94A4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M16 4l2-2M16 16l2 2M4 4L2 2M4 16l-2 2"
+      stroke="#252060"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      opacity="0.4"
+    />
+  </svg>
+);
+
+const AI_STEP_ICONS = [
+  <IconAIStep1 key="s1" />,
+  <IconAIStep2 key="s2" />,
+  <IconAIStep3 key="s3" />,
+  <IconAIStep4 key="s4" />,
+  <IconAIStep5 key="s5" />,
+];
+
 // ─── AI Loading Steps ─────────────────────────────────────────
 const AI_STEPS = [
   {
-    icon: "🧠",
     label: "Parsing your natural language query…",
     detail: "Extracting intent signals",
   },
   {
-    icon: "🔍",
     label: "Scanning property database…",
     detail: "Analyzing 500+ attributes",
   },
   {
-    icon: "⚡",
     label: "Running semantic scoring engine…",
     detail: "Matching 47 criteria",
   },
   {
-    icon: "📊",
     label: "Ranking by relevance…",
     detail: "Calculating match percentages",
   },
   {
-    icon: "✨",
     label: "Personalizing results…",
     detail: "Applying smart filters",
   },
@@ -138,7 +916,6 @@ function parseIntent(query: string): ParsedIntent {
     modernStyle: null,
   };
 
-  // Status detection
   if (/\b(rent|renting|rental|to rent|for rent|lease|leasing)\b/.test(q))
     intent.status = "For Rent";
   else if (
@@ -146,7 +923,6 @@ function parseIntent(query: string): ParsedIntent {
   )
     intent.status = "For Sale";
 
-  // Bedrooms: "3 bed", "3bhk", "3 bedroom", "three bedroom", "studio"
   const wordNums: Record<string, number> = {
     one: 1,
     two: 2,
@@ -165,7 +941,6 @@ function parseIntent(query: string): ParsedIntent {
   }
   if (/\bstudio\b/.test(q)) intent.bedrooms = 0;
 
-  // Bathrooms
   const bathMatch = q.match(
     /(\d+|one|two|three|four|five)\s*(bath|bathroom|bathrooms|ba)\b/,
   );
@@ -173,35 +948,29 @@ function parseIntent(query: string): ParsedIntent {
     intent.bathrooms = parseInt(bathMatch[1]) || wordNums[bathMatch[1]] || null;
   }
 
-  // Kitchens
   const kitchenMatch = q.match(/(\d+|one|two|three)\s*(kitchen|kitchens)\b/);
   if (kitchenMatch) {
     intent.kitchens =
       parseInt(kitchenMatch[1]) || wordNums[kitchenMatch[1]] || null;
   }
 
-  // Furnished
   if (/\b(furnished|fully furnished|semi-furnished)\b/.test(q))
     intent.furnished = true;
   if (/\b(unfurnished|bare|empty)\b/.test(q)) intent.furnished = false;
 
-  // New construction
   if (
     /\b(new|brand new|newly built|new construction|modern building)\b/.test(q)
   )
     intent.newConstruction = true;
 
-  // Quiet / peaceful area
   if (/\b(quiet|peaceful|serene|calm|silent|away from traffic)\b/.test(q))
     intent.quietArea = true;
 
-  // Modern style
   if (
     /\b(modern|contemporary|sleek|minimalist|luxury|high-end|premium)\b/.test(q)
   )
     intent.modernStyle = true;
 
-  // Sqft
   const sqftMatch = q.match(/(\d+)\s*(?:sq\.?ft|sqft|square\s*feet|sft)/);
   if (sqftMatch) {
     if (/min|above|over|atleast|at least/.test(q))
@@ -211,7 +980,6 @@ function parseIntent(query: string): ParsedIntent {
     else intent.minSqft = parseInt(sqftMatch[1]);
   }
 
-  // Price range
   const rangeMatch = q.match(
     /([\d.]+\s*(?:cr(?:ore)?|l(?:akh)?|k|m(?:illion)?)?)\s*(?:to|-)\s*([\d.]+\s*(?:cr(?:ore)?|l(?:akh)?|k|m(?:illion)?)?)/,
   );
@@ -223,14 +991,12 @@ function parseIntent(query: string): ParsedIntent {
       /(?:under|below|max|maximum|upto|up to|within|budget|less than|no more than)\s*([\d.]+\s*(?:cr(?:ore)?|l(?:akh)?|k|m(?:illion)?)?)/,
     );
     if (underMatch) intent.maxPrice = parseNPRAmount(underMatch[1].trim());
-
     const aboveMatch = q.match(
       /(?:above|over|min|minimum|atleast|at least|more than|starting)\s*([\d.]+\s*(?:cr(?:ore)?|l(?:akh)?|k|m(?:illion)?)?)/,
     );
     if (aboveMatch) intent.minPrice = parseNPRAmount(aboveMatch[1].trim());
   }
 
-  // Property type (expanded)
   const typeMap: Record<string, string> = {
     apartment: "Apartment",
     flat: "Apartment",
@@ -255,7 +1021,6 @@ function parseIntent(query: string): ParsedIntent {
     }
   }
 
-  // Nearby keywords (expanded)
   const nearbyWords = [
     "school",
     "hospital",
@@ -284,7 +1049,6 @@ function parseIntent(query: string): ParsedIntent {
     if (q.includes(nw)) intent.nearbyKeywords.push(nw);
   }
 
-  // Amenities (expanded)
   const amenityMap: Record<string, string> = {
     pool: "Swimming Pool",
     swimming: "Swimming Pool",
@@ -322,7 +1086,6 @@ function parseIntent(query: string): ParsedIntent {
     }
   }
 
-  // Location extraction (improved)
   const locPatterns = [
     /(?:in|near|at|around|within|located in)\s+([a-z][a-z\s]{1,25})(?:\s+(?:with|under|below|above|for|having|and|near|that|is|are|,|$))/,
     /([a-z][a-z\s]{1,20})\s+(?:area|neighborhood|district|ward|zone|locality)/,
@@ -346,7 +1109,6 @@ function parseIntent(query: string): ParsedIntent {
     }
   }
 
-  // General keywords
   const stopWords = new Set([
     "a",
     "an",
@@ -421,13 +1183,11 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
   const reasons: string[] = [];
   const highlights: string[] = [];
 
-  // Status match
   if (intent.status && p.status === intent.status) {
     score += 30;
     reasons.push(`Listed ${intent.status}`);
   }
 
-  // Bedrooms
   if (intent.bedrooms !== null && p.bedrooms !== null) {
     const diff = Math.abs(p.bedrooms - intent.bedrooms);
     if (diff === 0) {
@@ -440,7 +1200,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Bathrooms
   if (intent.bathrooms !== null && p.bathrooms !== null) {
     const diff = Math.abs(p.bathrooms - intent.bathrooms);
     if (diff === 0) {
@@ -449,7 +1208,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     } else if (diff === 1) score += 5;
   }
 
-  // Kitchens
   if (intent.kitchens !== null && p.kitchens !== null) {
     if (p.kitchens >= intent.kitchens) {
       score += 10;
@@ -457,7 +1215,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Price range
   const inPriceRange =
     (intent.minPrice === null || p.price >= intent.minPrice) &&
     (intent.maxPrice === null || p.price <= intent.maxPrice);
@@ -475,7 +1232,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Property type
   if (intent.type) {
     const typeMatch =
       p.property_type?.toLowerCase() === intent.type.toLowerCase();
@@ -486,7 +1242,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Sqft
   if (intent.minSqft !== null && p.sqft !== null) {
     if (p.sqft >= intent.minSqft) {
       score += 10;
@@ -497,7 +1252,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     if (p.sqft <= intent.maxSqft) score += 8;
   }
 
-  // Location match (fuzzy)
   if (intent.location) {
     const loc = p.location?.toLowerCase() || "";
     const locWords = intent.location.split(" ").filter((w) => w.length > 2);
@@ -513,7 +1267,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Nearby
   const nearby = p.whats_nearby || {};
   for (const kw of intent.nearbyKeywords) {
     if (Object.keys(nearby).some((k) => k.toLowerCase().includes(kw))) {
@@ -522,7 +1275,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Amenities
   const amenities = (p.amenities || []).map((a) => a.toLowerCase());
   for (const aw of intent.amenityKeywords) {
     if (amenities.some((a) => a.toLowerCase().includes(aw.toLowerCase()))) {
@@ -532,7 +1284,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // Modern / luxury bonus
   if (intent.modernStyle) {
     const modernKeywords = [
       "modern",
@@ -549,7 +1300,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     if (modernKeywords.some((kw) => searchText.includes(kw))) score += 8;
   }
 
-  // New construction bonus
   if (intent.newConstruction) {
     const daysSince =
       (Date.now() - new Date(p.created_at).getTime()) / 86400000;
@@ -559,7 +1309,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     }
   }
 
-  // General keyword fuzzy match
   const searchableText = [p.title, p.location, p.description, p.property_type]
     .filter(Boolean)
     .join(" ")
@@ -573,7 +1322,6 @@ function scoreProperty(p: Property, intent: ParsedIntent): ScoredProperty {
     if (kwHits >= 2) reasons.push("Strong keyword match ✓");
   }
 
-  // Recency boost
   const daysSince = (Date.now() - new Date(p.created_at).getTime()) / 86400000;
   if (daysSince < 7) score += 6;
   else if (daysSince < 30) score += 3;
@@ -606,9 +1354,9 @@ function fmtNPR(v: number): string {
 function statusColor(status: string): string {
   switch (status) {
     case "For Sale":
-      return "rgba(37,32,96,0.92)"; // navy
+      return "rgba(37,32,96,0.92)";
     case "For Rent":
-      return "rgba(28,148,164,0.92)"; // teal
+      return "rgba(28,148,164,0.92)";
     case "Sold":
       return "rgba(56,161,105,0.92)";
     default:
@@ -617,8 +1365,8 @@ function statusColor(status: string): string {
 }
 
 function scoreColor(score: number): { bg: string; text: string; ring: string } {
-  if (score >= 70) return { bg: "#e8f7f9", text: "#1C94A4", ring: "#a8dde4" }; // teal tint
-  if (score >= 45) return { bg: "#eceaf5", text: "#252060", ring: "#b5b0d8" }; // navy tint
+  if (score >= 70) return { bg: "#e8f7f9", text: "#1C94A4", ring: "#a8dde4" };
+  if (score >= 45) return { bg: "#eceaf5", text: "#252060", ring: "#b5b0d8" };
   return { bg: "#faf9f7", text: "#8a8785", ring: "#ede9e4" };
 }
 
@@ -635,12 +1383,6 @@ const SUGGESTIONS = [
 ];
 
 // ─── All Styles ───────────────────────────────────────────────
-// Color mapping:
-//   --c-accent  : #1C94A4  (teal  — was red   #c8402a)
-//   --c-navy    : #252060  (navy  — was blue   #1d4ed8)
-//   --c-better  : #2d7a4f  (green — unchanged)
-//   Token blues  → navy tints  (#eceaf5 bg, #b5b0d8 ring, #252060 text)
-//   Token reds   → teal tints  (#e8f7f9 bg, #a8dde4 ring, #1C94A4 text)
 const SF_STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
@@ -732,8 +1474,9 @@ const SF_STYLES = `
     border-color: var(--c-accent);
   }
   .sf-input-icon {
-    padding: 0 16px 0 20px;
-    font-size: 18px;
+    padding: 0 14px 0 18px;
+    display: flex;
+    align-items: center;
     color: var(--c-ink-3);
     flex-shrink: 0;
     pointer-events: none;
@@ -754,10 +1497,11 @@ const SF_STYLES = `
     border-radius: 50%;
     border: none; background: var(--c-surface);
     display: flex; align-items: center; justify-content: center;
-    color: var(--c-ink-3); font-size: 14px;
+    color: var(--c-ink-3);
     cursor: pointer; margin-right: 6px;
     flex-shrink: 0;
     transition: all 0.18s;
+    padding: 0;
   }
   .sf-clear-btn:hover { background: var(--c-rule); color: var(--c-ink); }
   .sf-search-btn {
@@ -846,20 +1590,15 @@ const SF_STYLES = `
     from { opacity: 0; transform: translateY(4px) scale(0.95); }
     to   { opacity: 1; transform: none; }
   }
-  /* navy tints (was blue) */
   .sf-token--blue   { background: #eceaf5; border-color: #b5b0d8; color: #252060; }
-  /* teal tints (was green) */
   .sf-token--green  { background: #e8f7f9; border-color: #a8dde4; color: #1C94A4; }
-  /* amber — unchanged */
   .sf-token--amber  { background: #fef9ec; border-color: #fde68a; color: #7a5f00; }
-  /* teal tints (was red) */
   .sf-token--red    { background: #e8f7f9; border-color: #a8dde4; color: #1C94A4; }
-  /* navy tints (was purple) */
   .sf-token--purple { background: #eceaf5; border-color: #b5b0d8; color: #252060; }
   .sf-token--gray   { background: var(--c-surface); border-color: var(--c-rule); color: var(--c-ink-2); }
 
   /* ══════════════════════════════════════════
-     AI LOADING OVERLAY — Epic animation
+     AI LOADING OVERLAY
   ══════════════════════════════════════════ */
   .sf-ai-overlay {
     position: fixed;
@@ -872,7 +1611,6 @@ const SF_STYLES = `
     overflow: hidden;
   }
 
-  /* Frosted glass backdrop */
   .sf-ai-backdrop {
     position: absolute;
     inset: 0;
@@ -886,7 +1624,6 @@ const SF_STYLES = `
     to   { opacity: 1; }
   }
 
-  /* Animated ambient orbs */
   .sf-ai-orb {
     position: absolute;
     border-radius: 50%;
@@ -920,7 +1657,6 @@ const SF_STYLES = `
     100% { transform: translate(-15px, 25px) scale(0.97); }
   }
 
-  /* Main card */
   .sf-ai-card {
     position: relative;
     z-index: 2;
@@ -938,7 +1674,6 @@ const SF_STYLES = `
     to   { opacity: 1; transform: none; }
   }
 
-  /* Card shimmer sweep */
   .sf-ai-card::before {
     content: '';
     position: absolute;
@@ -952,13 +1687,11 @@ const SF_STYLES = `
     100% { transform: translateX(200%); }
   }
 
-  /* Brain / logo area */
   .sf-ai-brain {
     width: 72px; height: 72px;
     border-radius: 20px;
     background: var(--c-navy);
     display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
     margin: 0 auto 24px;
     position: relative;
     animation: sf-brain-pulse 2s ease-in-out infinite;
@@ -967,8 +1700,6 @@ const SF_STYLES = `
     0%, 100% { box-shadow: 0 0 0 0 rgba(28,148,164,0.35); }
     50%       { box-shadow: 0 0 0 12px rgba(28,148,164,0); }
   }
-
-  /* Rings around brain */
   .sf-ai-brain::after {
     content: '';
     position: absolute;
@@ -997,8 +1728,6 @@ const SF_STYLES = `
     margin-bottom: 36px;
     line-height: 1.5;
   }
-
-  /* Query echo */
   .sf-ai-query {
     background: var(--c-surface);
     border: 1px solid var(--c-rule);
@@ -1016,7 +1745,6 @@ const SF_STYLES = `
     overflow: hidden;
   }
 
-  /* Step list */
   .sf-ai-steps {
     display: flex;
     flex-direction: column;
@@ -1049,9 +1777,11 @@ const SF_STYLES = `
     border-color: #a8dde4;
   }
   .sf-ai-step__icon {
-    font-size: 20px;
     width: 36px;
-    text-align: center;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
   }
   .sf-ai-step__text { flex: 1; }
@@ -1066,13 +1796,21 @@ const SF_STYLES = `
     color: var(--c-ink-3);
   }
   .sf-ai-step__check {
-    font-size: 14px;
-    transition: all 0.3s;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
-  .sf-ai-step.done .sf-ai-step__check::after { content: '✓'; color: #1C94A4; font-weight: 700; }
-  .sf-ai-step.active .sf-ai-step__check::after { content: ''; }
 
-  /* Spinner for active step — teal */
+  .sf-ai-step-check-icon {
+    display: none;
+  }
+  .sf-ai-step.done .sf-ai-step-check-icon {
+    display: block;
+  }
+
   .sf-ai-spinner {
     width: 16px; height: 16px;
     border: 2px solid #a8dde4;
@@ -1083,7 +1821,6 @@ const SF_STYLES = `
   }
   @keyframes sf-spin { to { transform: rotate(360deg); } }
 
-  /* Progress bar — navy → teal gradient */
   .sf-ai-progress-wrap {
     height: 4px;
     background: var(--c-rule);
@@ -1103,7 +1840,6 @@ const SF_STYLES = `
     0%   { background-position: 0% 50%; }
     100% { background-position: 200% 50%; }
   }
-
   .sf-ai-progress-label {
     font-size: 11px;
     color: var(--c-ink-3);
@@ -1112,7 +1848,6 @@ const SF_STYLES = `
     letter-spacing: 0.5px;
   }
 
-  /* Particle dots — navy + teal + green */
   .sf-ai-particles {
     position: absolute;
     inset: 0;
@@ -1124,7 +1859,6 @@ const SF_STYLES = `
     position: absolute;
     width: 4px; height: 4px;
     border-radius: 50%;
-    background: var(--c-accent);
     opacity: 0;
     animation: sf-particle-float 3s ease-in-out infinite;
   }
@@ -1219,10 +1953,9 @@ const SF_STYLES = `
   .sf-card__img-placeholder {
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 3rem;
+    background: linear-gradient(135deg, #eceaf5 0%, #e8f7f9 100%);
   }
 
-  /* Score badge */
   .sf-score-badge {
     position: absolute;
     top: 10px; right: 10px;
@@ -1243,7 +1976,6 @@ const SF_STYLES = `
     color: #fff; z-index: 2;
   }
 
-  /* Card body */
   .sf-card__body { padding: 18px 20px 12px; flex: 1; }
   .sf-card__type {
     font-size: 10px; font-weight: 700;
@@ -1265,7 +1997,6 @@ const SF_STYLES = `
     margin-bottom: 12px;
   }
 
-  /* Match reasons — teal */
   .sf-reasons {
     display: flex;
     flex-wrap: wrap;
@@ -1282,7 +2013,6 @@ const SF_STYLES = `
     opacity: 0.9;
   }
 
-  /* Feature chips */
   .sf-feats {
     display: flex; gap: 6px; flex-wrap: wrap;
     border-top: 1px solid var(--c-rule);
@@ -1299,7 +2029,6 @@ const SF_STYLES = `
     font-weight: 500;
   }
 
-  /* Card footer */
   .sf-card__footer {
     display: flex;
     align-items: center;
@@ -1315,13 +2044,13 @@ const SF_STYLES = `
     width: 36px; height: 36px; border-radius: 50%;
     background: var(--c-navy); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    text-decoration: none; font-size: 13px;
+    text-decoration: none;
     transition: background 0.18s, transform 0.22s;
     flex-shrink: 0;
   }
   .sf-card__arrow:hover { background: var(--c-accent); transform: rotate(45deg); }
 
-  /* ── Initial state (centered, padded) ── */
+  /* ── Initial state ── */
   .sf-state {
     display: flex;
     flex-direction: column;
@@ -1333,7 +2062,6 @@ const SF_STYLES = `
     margin: 0 auto;
   }
   .sf-state__icon {
-    font-size: 3.5rem;
     margin-bottom: 20px;
     animation: sf-icon-float 3s ease-in-out infinite;
   }
@@ -1357,7 +2085,6 @@ const SF_STYLES = `
     max-width: 420px;
   }
 
-  /* Feature pill grid */
   .sf-feat-grid {
     margin-top: 36px;
     display: grid;
@@ -1387,8 +2114,6 @@ const SF_STYLES = `
     box-shadow: 0 4px 16px rgba(28,148,164,0.12);
     transform: translateY(-2px);
   }
-  .sf-feat-pill span:first-child { font-size: 1.6rem; }
-
   @keyframes sf-pill-in {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: none; }
@@ -1409,38 +2134,48 @@ const SF_STYLES = `
   .sf-root ::-webkit-scrollbar-track { background: var(--c-surface); }
   .sf-root ::-webkit-scrollbar-thumb { background: var(--c-rule); border-radius: 3px; }
 
+  /* ── Banner ── */
   .fwc-banner {
-  position: relative; overflow: hidden;
-  background: #252060;
-}
-.fwc-banner__bg {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  opacity: 0.18;
-}
-.fwc-banner__inner {
-  position: relative; z-index: 2;
-  padding: 80px 20px 72px;
-  text-align: center;
-}
-.fwc-banner__title {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(32px, 5vw, 54px);
-  color: #fff; letter-spacing: -0.5px;
-  margin: 0 0 18px; line-height: 1.1;
-}
-.fwc-banner__title em { color: #7dd8e4; font-style: italic; }
-.fwc-banner__crumb {
-  list-style: none; padding: 0; margin: 0;
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13px; color: rgba(255,255,255,0.5);
-}
-.fwc-banner__crumb a {
-  color: rgba(255,255,255,0.65); text-decoration: none;
-  transition: color 0.15s;
-}
-.fwc-banner__crumb a:hover { color: #7dd8e4; }
-.fwc-banner__crumb li:last-child { color: rgba(255,255,255,0.35); }
+    position: relative; overflow: hidden;
+    background: #252060;
+  }
+  .fwc-banner__bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.18;
+  }
+  .fwc-banner__inner {
+    position: relative; z-index: 2;
+    padding: 80px 20px 72px;
+    text-align: center;
+  }
+  .fwc-banner__title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(32px, 5vw, 54px);
+    color: #fff; letter-spacing: -0.5px;
+    margin: 0 0 18px; line-height: 1.1;
+  }
+  .fwc-banner__title em { color: #7dd8e4; font-style: italic; }
+  .fwc-banner__crumb {
+    list-style: none; padding: 0; margin: 0;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.5);
+  }
+  .fwc-banner__crumb a {
+    color: rgba(255,255,255,0.65); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .fwc-banner__crumb a:hover { color: #7dd8e4; }
+  .fwc-banner__crumb li:last-child { color: rgba(255,255,255,0.35); }
+
+  /* ── DB loading spinner ── */
+  .sf-db-spinner {
+    width: 2rem; height: 2rem;
+    border: 2px solid var(--c-rule);
+    border-top-color: var(--c-accent);
+    border-radius: 50%;
+    animation: sf-spin 0.8s linear infinite;
+  }
 `;
 
 function injectSFStyles() {
@@ -1454,6 +2189,25 @@ function injectSFStyles() {
     document.head.appendChild(el);
   }
 }
+
+// ─── Check icon SVG ───────────────────────────────────────────
+const IconCheck = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M3 8l3.5 3.5L13 5"
+      stroke="#1C94A4"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 // ─── AI Loading Overlay ────────────────────────────────────────
 function AILoadingOverlay({
@@ -1470,7 +2224,6 @@ function AILoadingOverlay({
   useEffect(() => {
     const totalMs = 5000;
     const stepMs = totalMs / AI_STEPS.length;
-
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     AI_STEPS.forEach((_, i) => {
@@ -1483,7 +2236,6 @@ function AILoadingOverlay({
       );
     });
 
-    // Final
     timers.push(
       setTimeout(() => {
         setDoneSteps([0, 1, 2, 3, 4]);
@@ -1495,7 +2247,6 @@ function AILoadingOverlay({
     return () => timers.forEach(clearTimeout);
   }, [onDone]);
 
-  // Particle positions — navy + teal + green
   const particles = Array.from({ length: 12 }, (_, i) => ({
     left: `${8 + ((i * 7.5) % 85)}%`,
     bottom: `${10 + ((i * 11) % 30)}%`,
@@ -1526,7 +2277,9 @@ function AILoadingOverlay({
           ))}
         </div>
 
-        <div className="sf-ai-brain">🔮</div>
+        <div className="sf-ai-brain">
+          <IconBrain size={34} color="#fff" />
+        </div>
 
         <div className="sf-ai-title">Analysing your query</div>
         <div className="sf-ai-subtitle">
@@ -1546,13 +2299,19 @@ function AILoadingOverlay({
                 key={i}
                 className={`sf-ai-step ${isDone ? "done" : ""} ${isActive ? "active" : ""}`}
               >
-                <div className="sf-ai-step__icon">{step.icon}</div>
+                <div className="sf-ai-step__icon">{AI_STEP_ICONS[i]}</div>
                 <div className="sf-ai-step__text">
                   <div className="sf-ai-step__label">{step.label}</div>
                   <div className="sf-ai-step__detail">{step.detail}</div>
                 </div>
-                {isActive && <div className="sf-ai-spinner" />}
-                <div className="sf-ai-step__check" />
+                <div className="sf-ai-step__check">
+                  {isActive && <div className="sf-ai-spinner" />}
+                  {isDone && (
+                    <span className="sf-ai-step-check-icon">
+                      <IconCheck />
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -1724,7 +2483,6 @@ const SmartFinder = () => {
       <NavMenu onLoginClick={() => setLoginModal(true)} session={session} />
       <LoginModal loginModal={loginModal} setLoginModal={setLoginModal} />
 
-      {/* AI Loading Overlay */}
       {showAILoader && (
         <AILoadingOverlay query={pendingQuery} onDone={handleAILoadingDone} />
       )}
@@ -1766,7 +2524,9 @@ const SmartFinder = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="sf-input-wrap">
-                <span className="sf-input-icon">🔍</span>
+                <span className="sf-input-icon">
+                  <IconSearch size={18} color="#8a8785" />
+                </span>
                 <input
                   ref={inputRef}
                   className="sf-input"
@@ -1787,7 +2547,7 @@ const SmartFinder = () => {
                       setSubmitted("");
                     }}
                   >
-                    ✕
+                    <IconX size={12} color="#8a8785" />
                   </button>
                 )}
                 <button
@@ -1795,7 +2555,7 @@ const SmartFinder = () => {
                   className="sf-search-btn"
                   disabled={loading || !query.trim() || showAILoader}
                 >
-                  <i className="bi bi-stars" />
+                  <IconStars size={14} color="#fff" />
                   Find Matches
                 </button>
               </div>
@@ -1826,16 +2586,7 @@ const SmartFinder = () => {
           {/* Loading DB */}
           {loading && (
             <div className="sf-state">
-              <div
-                className="spinner-border"
-                role="status"
-                style={{
-                  width: "2rem",
-                  height: "2rem",
-                  color: "var(--c-accent)",
-                  borderWidth: "2px",
-                }}
-              />
+              <div className="sf-db-spinner" />
               <p
                 style={{
                   marginTop: "14px",
@@ -1851,7 +2602,9 @@ const SmartFinder = () => {
           {/* Initial state */}
           {!loading && !hasSearched && (
             <div className="sf-state">
-              <div className="sf-state__icon">🏡</div>
+              <div className="sf-state__icon">
+                <IconHomeLarge size={56} color="#1C94A4" />
+              </div>
               <div className="sf-state__title">What are you looking for?</div>
               <p className="sf-state__sub">
                 Use the search bar above to describe your ideal property.
@@ -1861,19 +2614,19 @@ const SmartFinder = () => {
 
               <div className="sf-feat-grid">
                 {[
-                  { icon: "🛏", label: "Bedrooms" },
-                  { icon: "📍", label: "Location" },
-                  { icon: "💰", label: "Budget" },
-                  { icon: "✨", label: "Amenities" },
-                  { icon: "🏫", label: "Nearby" },
-                  { icon: "🏠", label: "Type" },
+                  { icon: <IconBedFeature size={26} />, label: "Bedrooms" },
+                  { icon: <IconPinFeature size={26} />, label: "Location" },
+                  { icon: <IconBudget size={26} />, label: "Budget" },
+                  { icon: <IconAmenity size={26} />, label: "Amenities" },
+                  { icon: <IconNearby size={26} />, label: "Nearby" },
+                  { icon: <IconType size={26} />, label: "Type" },
                 ].map((item, i) => (
                   <div
                     key={item.label}
                     className="sf-feat-pill"
                     style={{ animationDelay: `${i * 70}ms` }}
                   >
-                    <span>{item.icon}</span>
+                    {item.icon}
                     <span>{item.label}</span>
                   </div>
                 ))}
@@ -1938,8 +2691,14 @@ const SmartFinder = () => {
 
               {sortedResults.length === 0 ? (
                 <div className="sf-no-results">
-                  <div style={{ fontSize: "2.5rem", marginBottom: "14px" }}>
-                    🔍
+                  <div
+                    style={{
+                      marginBottom: "14px",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <IconMagnify size={56} color="#1C94A4" />
                   </div>
                   <div
                     style={{
@@ -1973,7 +2732,7 @@ const SmartFinder = () => {
                       setQuery("");
                     }}
                   >
-                    Clear & try again
+                    Clear &amp; try again
                   </button>
                 </div>
               ) : (
@@ -2001,7 +2760,7 @@ const SmartFinder = () => {
                                 />
                               ) : (
                                 <div className="sf-card__img-placeholder">
-                                  🏠
+                                  <IconHome size={48} color="#b5b0d8" />
                                 </div>
                               )}
                               <span
@@ -2038,18 +2797,7 @@ const SmartFinder = () => {
                                 {p.title}
                               </Link>
                               <div className="sf-card__loc">
-                                <svg
-                                  width="10"
-                                  height="12"
-                                  viewBox="0 0 11 13"
-                                  fill="none"
-                                  style={{ flexShrink: 0 }}
-                                >
-                                  <path
-                                    d="M5.5 0C3.015 0 1 2.015 1 4.5c0 3.375 4.5 8.5 4.5 8.5S10 7.875 10 4.5C10 2.015 7.985 0 5.5 0zm0 6.25A1.75 1.75 0 1 1 5.5 2.75a1.75 1.75 0 0 1 0 3.5z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
+                                <IconPin size={10} color="#8a8785" />
                                 {p.location}
                               </div>
 
@@ -2069,31 +2817,19 @@ const SmartFinder = () => {
                                 <div className="sf-feats">
                                   {p.sqft && (
                                     <span className="sf-feat">
-                                      <img
-                                        src="/assets/images/icon/icon_32.svg"
-                                        alt=""
-                                        style={{ width: 12, opacity: 0.6 }}
-                                      />
+                                      <IconRuler size={12} color="#8a8785" />
                                       {p.sqft.toLocaleString()} ft²
                                     </span>
                                   )}
                                   {p.bedrooms != null && (
                                     <span className="sf-feat">
-                                      <img
-                                        src="/assets/images/icon/icon_33.svg"
-                                        alt=""
-                                        style={{ width: 12, opacity: 0.6 }}
-                                      />
+                                      <IconBed size={12} color="#8a8785" />
                                       {p.bedrooms} bed
                                     </span>
                                   )}
                                   {p.bathrooms != null && (
                                     <span className="sf-feat">
-                                      <img
-                                        src="/assets/images/icon/icon_34.svg"
-                                        alt=""
-                                        style={{ width: 12, opacity: 0.6 }}
-                                      />
+                                      <IconBath size={12} color="#8a8785" />
                                       {p.bathrooms} bath
                                     </span>
                                   )}
@@ -2109,7 +2845,7 @@ const SmartFinder = () => {
                                 to={`/buy/${p.id}`}
                                 className="sf-card__arrow"
                               >
-                                <i className="bi bi-arrow-up-right" />
+                                <IconArrowUpRight size={13} color="#fff" />
                               </Link>
                             </div>
                           </div>
@@ -2154,8 +2890,6 @@ const SmartFinder = () => {
         </div>
       </div>
 
-      {/* <Brand /> */}
-      {/* <FancyBanner /> */}
       <FutureFooter />
     </Wrapper>
   );

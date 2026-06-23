@@ -761,7 +761,7 @@ function Field({
 // ─── Section Card ─────────────────────────────────────────────
 function TntCard({
   id,
-  icon,
+
   title,
   subtitle,
   children,
@@ -775,7 +775,6 @@ function TntCard({
   return (
     <div className="tnt-card" id={id}>
       <div className="tnt-card__header">
-        <div className="tnt-card__icon">{icon}</div>
         <div>
           <div className="tnt-card__title">{title}</div>
           {subtitle && <div className="tnt-card__subtitle">{subtitle}</div>}

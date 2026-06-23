@@ -6,6 +6,8 @@
 //  - Live counts from Supabase per property type
 //  - Routes to /buy?type=<type> (BuyListing reads selectedType)
 //  - "All" category shows total count
+//  - Types synced to DB: Apartment, Villa, House, Land, Flat,
+//    Building, Office, Warehouse
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -19,7 +21,8 @@ const SUPABASE_ANON_KEY =
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── Category config ──────────────────────────────────────────
-// SVG icon paths drawn inline — no external icon dep needed here
+// Types exactly match DB CHECK constraint:
+// Apartment | Villa | House | Land | Flat | Building | Office | Warehouse
 const CATEGORIES = [
   {
     type: "All",
@@ -77,8 +80,9 @@ const CATEGORIES = [
     ),
   },
   {
-    type: "Home",
-    label: "Home",
+    // "House" replaces old "Home" — new SVG with cleaner detached-house silhouette
+    type: "House",
+    label: "House",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -90,6 +94,26 @@ const CATEGORIES = [
       >
         <path d="M3 11.5L12 3l9 8.5" />
         <path d="M5 9.5V21h5v-5h4v5h5V9.5" />
+        <path d="M10 21v-5h4v5" />
+      </svg>
+    ),
+  },
+  {
+    // "Land" — new type, plot/terrain icon
+    type: "Land",
+    label: "Land",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M2 17l4-6 4 4 4-8 4 6" />
+        <line x1="2" y1="21" x2="22" y2="21" />
+        <path d="M4 21v-2M10 21v-2M16 21v-2M20 21v-2" />
       </svg>
     ),
   },
@@ -108,25 +132,6 @@ const CATEGORIES = [
         <rect x="2" y="7" width="20" height="14" rx="1.5" />
         <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" />
         <path d="M6 12h3M6 16h3M12 12h6M12 16h6" />
-      </svg>
-    ),
-  },
-  {
-    type: "Loft",
-    label: "Loft",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 21V10l8-7 8 7v11" />
-        <path d="M4 13h16" />
-        <rect x="9" y="16" width="6" height="5" rx="0.5" />
-        <path d="M8 10h8" />
       </svg>
     ),
   },
@@ -172,8 +177,9 @@ const CATEGORIES = [
     ),
   },
   {
-    type: "Factory",
-    label: "Factory",
+    // "Warehouse" — new type, large shed/loading-bay silhouette
+    type: "Warehouse",
+    label: "Warehouse",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -183,27 +189,10 @@ const CATEGORIES = [
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M3 21V9l5 3V9l5 3V8h8v13H3z" />
-        <path d="M14 12h2M14 16h2M7 16h2M7 12h2" />
-      </svg>
-    ),
-  },
-  {
-    type: "Industry",
-    label: "Industry",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="2" y="14" width="8" height="7" rx="0.5" />
-        <rect x="8" y="9" width="8" height="12" rx="0.5" />
-        <rect x="14" y="5" width="8" height="16" rx="0.5" />
-        <path d="M2 21h20" />
+        <path d="M2 9.5L12 4l10 5.5V21H2V9.5z" />
+        <rect x="8" y="14" width="8" height="7" rx="0.5" />
+        <path d="M8 14v7M16 14v7M8 17h8" />
+        <path d="M5 12h2M17 12h2" />
       </svg>
     ),
   },
@@ -533,8 +522,6 @@ const CategorySection = () => {
     if (type === "All") {
       navigate("/buy");
     } else {
-      // BuyListing reads `selectedType` from state; pass via location state
-      // so the type bar pre-selects on arrival
       navigate("/buy", { state: { selectedType: type } });
     }
   };
