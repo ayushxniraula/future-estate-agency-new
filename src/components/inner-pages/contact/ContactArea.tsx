@@ -489,21 +489,24 @@ const ContactArea = ({
             <div className="fwc-strip__icon">📞</div>
             <div>
               <span className="fwc-strip__label">Phone</span>
-              <span className="fwc-strip__val">+977 98-0000-0000</span>
+              <span className="fwc-strip__val">+977 982-3488860</span>
             </div>
           </a>
           <a href="mailto:hello@futurework.com.np" className="fwc-strip__item">
             <div className="fwc-strip__icon">✉️</div>
             <div>
               <span className="fwc-strip__label">Email</span>
-              <span className="fwc-strip__val">hello@futurework.com.np</span>
+              <span className="fwc-strip__val">
+                {" "}
+                futureworkestate01@gmail.com
+              </span>
             </div>
           </a>
           <div className="fwc-strip__item">
             <div className="fwc-strip__icon">📍</div>
             <div>
               <span className="fwc-strip__label">Office</span>
-              <span className="fwc-strip__val">Durbar Marg, Kathmandu</span>
+              <span className="fwc-strip__val">Gairidhara, Kathmandu</span>
             </div>
           </div>
           <div className="fwc-strip__item">

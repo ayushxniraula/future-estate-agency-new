@@ -5,7 +5,7 @@ import PContactMain from "../components/inner-pages/contact";
 const FutureContact = () => {
   return (
     <Wrapper>
-      <SEO pageTitle={"Contact Homy"} />
+      <SEO pageTitle={"Contact"} />
       <PContactMain />
     </Wrapper>
   );

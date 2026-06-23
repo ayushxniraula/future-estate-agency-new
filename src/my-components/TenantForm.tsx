@@ -3,6 +3,7 @@
 //  Theme: FutureWork brand — #252060 navy / #1C94A4 teal
 //  Font: Plus Jakarta Sans + DM Serif Display
 //  Source: Tenant/Landlord intake form (PAN 610495137, Baluwatar)
+//  Image upload: cPanel upload.php (same as SellPropertyArea)
 // ============================================================
 
 import { useState, useRef } from "react";
@@ -15,12 +16,15 @@ import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 import { useClientSession } from "./userclientsession";
 import LoginModal from "../modals/LoginModal";
 
-// ─── Supabase ─────────────────────────────────────────────────
+// ─── Supabase (database only — ID images go to cPanel) ────────
 const SUPABASE_URL = "https://afwvbftvfubboorpiszu.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmd3ZiZnR2ZnViYm9vcnBpc3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjg4MzksImV4cCI6MjA5Njc0NDgzOX0.vw7hvZMrNeS_vqU7By6C69F1SsN_mWY6gSs2ipliLZY";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const STORAGE_BUCKET = "FutureState";
+
+// ─── cPanel upload config (mirrors SellPropertyArea exactly) ──
+const CPANEL_UPLOAD_URL = "https://futurestateagency.com/upload.php";
+const CPANEL_UPLOAD_SECRET = ""; // must match $UPLOAD_SECRET in upload.php
 
 // ─── Types ────────────────────────────────────────────────────
 interface TenantFormData {
@@ -761,7 +765,6 @@ function Field({
 // ─── Section Card ─────────────────────────────────────────────
 function TntCard({
   id,
-
   title,
   subtitle,
   children,
@@ -854,7 +857,7 @@ function CounterBox({
   );
 }
 
-// ─── ID Uploader (single file) ──────────────────────────────────
+// ─── ID Uploader (single image file — no PDF) ──────────────────
 function IdUploader({
   file,
   onChange,
@@ -869,11 +872,11 @@ function IdUploader({
         <div className="upload-zone" onClick={() => ref.current?.click()}>
           <div className="upload-zone__icon">🪪</div>
           <div className="upload-zone__title">Upload ID / Citizenship Card</div>
-          <div className="upload-zone__sub">PNG, JPG, or PDF · Max 10MB</div>
+          <div className="upload-zone__sub">PNG, JPG, WEBP · Max 10MB</div>
           <input
             ref={ref}
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             style={{ display: "none" }}
             onChange={(e) => {
               const f = e.target.files?.[0] ?? null;
@@ -884,23 +887,7 @@ function IdUploader({
         </div>
       ) : (
         <div className="id-preview">
-          {file.type.startsWith("image/") ? (
-            <img src={URL.createObjectURL(file)} alt={file.name} />
-          ) : (
-            <div
-              className="id-preview"
-              style={{
-                width: 52,
-                height: 52,
-                border: "none",
-                padding: 0,
-                fontSize: 22,
-                justifyContent: "center",
-              }}
-            >
-              📄
-            </div>
-          )}
+          <img src={URL.createObjectURL(file)} alt={file.name} />
           <div className="id-preview__name">{file.name}</div>
           <button
             type="button"
@@ -954,17 +941,33 @@ const TenantLandlordFormArea = () => {
     ((filledCount + (form.agreed_to_terms ? 1 : 0)) / requiredTotal) * 100,
   );
 
+  // ─── cPanel upload (mirrors uploadImage in app.js / SellPropertyArea) ───
   async function uploadIdFile(file: File): Promise<string> {
-    const ext = file.name.split(".").pop();
-    const path = `tenant-landlord-requests/id-docs/${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2)}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(path, file, { cacheControl: "3600", upsert: false });
-    if (upErr) throw new Error(`ID upload failed: ${upErr.message}`);
-    const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-    return data.publicUrl;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "listings"); // reuses existing allowed folder — no PHP change needed
+
+    const headers: Record<string, string> = {};
+    if (CPANEL_UPLOAD_SECRET) headers["X-Upload-Secret"] = CPANEL_UPLOAD_SECRET;
+
+    const res = await fetch(CPANEL_UPLOAD_URL, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let msg = `Upload failed (${res.status})`;
+      try {
+        const errBody = await res.json();
+        if (errBody?.error) msg = errBody.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
+
+    const json = await res.json();
+    if (!json.url) throw new Error("Upload response missing URL.");
+    return json.url;
   }
 
   const handleSubmit = async () => {

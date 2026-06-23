@@ -16,14 +16,25 @@ interface ContentType {
 
 const footer_content: ContentType = {
   desc: "Nepal's trusted platform for buying, selling, and renting property — from Kathmandu to Pokhara.",
-  address: "Thamel, Kathmandu, Nepal",
-  email: "futureworkestateaganecy@gmail.com",
-  number: "+977 01-4XXXXXX",
+  address: "Gairidhara, Kathmandu, Nepal",
+  email: "futureworkestate01@gmail.com",
+  number: "+977 982-3488860",
   socials: [
-    { icon: "fa-facebook-f", label: "Facebook", href: "#" },
-    { icon: "fa-twitter", label: "Twitter", href: "#" },
-    { icon: "fa-instagram", label: "Instagram", href: "#" },
-    { icon: "fa-linkedin-in", label: "LinkedIn", href: "#" },
+    {
+      icon: "fa-facebook-f",
+      label: "Facebook",
+      href: "https://www.facebook.com/p/Future-Work-Estate-Agency-PvtLtd-61558124601931/",
+    },
+    {
+      icon: "fa-tiktok",
+      label: "Twitter",
+      href: "https://www.tiktok.com/@futurework_estate",
+    },
+    {
+      icon: "fa-instagram",
+      label: "Instagram",
+      href: "https://www.instagram.com/futurework_estate",
+    },
   ],
 };
 
