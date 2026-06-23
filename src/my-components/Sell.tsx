@@ -19,12 +19,16 @@ import FutureFooter from "../layouts/footers/FutureFooter";
 import NavMenu from "../layouts/headers/Menu/FutureNavMenu";
 import { useClientSession } from "./userclientsession";
 
-// ─── Supabase ─────────────────────────────────────────────────
+// ─── Supabase (database only — images go to cPanel, see below) ─
 const SUPABASE_URL = "https://afwvbftvfubboorpiszu.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmd3ZiZnR2ZnViYm9vcnBpc3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjg4MzksImV4cCI6MjA5Njc0NDgzOX0.vw7hvZMrNeS_vqU7By6C69F1SsN_mWY6gSs2ipliLZY";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const STORAGE_BUCKET = "FutureState";
+
+// ─── cPanel image upload config ─────────────────────────────────
+// Same upload.php / delete.php endpoints used by the EstateAdmin panel.
+const CPANEL_UPLOAD_URL = "https://futurestateagency.com/upload.php";
+const CPANEL_UPLOAD_SECRET = ""; // must match $UPLOAD_SECRET in upload.php, if set
 
 // ─── Types ────────────────────────────────────────────────────
 interface SellFormData {
@@ -919,20 +923,36 @@ const SellPropertyArea = () => {
 
   async function uploadImages(
     files: File[],
-    folder: string,
+    folder: "listings" | "floorplans",
   ): Promise<string[]> {
     const urls: string[] = [];
     for (const file of files) {
-      const ext = file.name.split(".").pop();
-      const path = `sell-requests/${folder}/${Date.now()}_${Math.random()
-        .toString(36)
-        .slice(2)}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(path, file, { cacheControl: "3600", upsert: false });
-      if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
-      const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-      urls.push(data.publicUrl);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", folder);
+
+      const headers: Record<string, string> = {};
+      if (CPANEL_UPLOAD_SECRET)
+        headers["X-Upload-Secret"] = CPANEL_UPLOAD_SECRET;
+
+      const res = await fetch(CPANEL_UPLOAD_URL, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+
+      if (!res.ok) {
+        let msg = `Upload failed (${res.status})`;
+        try {
+          const errBody = await res.json();
+          if (errBody?.error) msg = errBody.error;
+        } catch (_) {}
+        throw new Error(msg);
+      }
+
+      const json = await res.json();
+      if (!json.url) throw new Error("Upload response missing URL.");
+      urls.push(json.url);
     }
     return urls;
   }
@@ -950,10 +970,10 @@ const SellPropertyArea = () => {
     setSubmitting(true);
     try {
       const imageUrls =
-        imageFiles.length > 0 ? await uploadImages(imageFiles, "images") : [];
+        imageFiles.length > 0 ? await uploadImages(imageFiles, "listings") : [];
       const floorUrls =
         floorFiles.length > 0
-          ? await uploadImages(floorFiles, "floor-plans")
+          ? await uploadImages(floorFiles, "floorplans")
           : [];
 
       // Build agent jsonb — only include sub-fields that have a value
