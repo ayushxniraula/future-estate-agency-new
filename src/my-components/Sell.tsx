@@ -1244,7 +1244,6 @@ const SellPropertyArea = () => {
                 {/* 2 · Property Info */}
                 <SellCard
                   id="sec-property"
-                  icon="🏠"
                   title="Property Information"
                   subtitle="Core details shown to buyers and renters"
                 >
@@ -1410,7 +1409,6 @@ const SellPropertyArea = () => {
                 {/* 3 · Property Details */}
                 <SellCard
                   id="sec-details"
-                  icon="📋"
                   title="Property Details"
                   subtitle="Year built, building type, furnishing, parking, and floors"
                 >
@@ -1480,7 +1478,6 @@ const SellPropertyArea = () => {
                 {/* 4 · Utility Features */}
                 <SellCard
                   id="sec-utility"
-                  icon="⚡"
                   title="Utility & Home Features"
                   subtitle="Heating, cooling, water supply, electricity"
                 >
@@ -1525,7 +1522,6 @@ const SellPropertyArea = () => {
                 {/* 5 · Outdoor Features */}
                 <SellCard
                   id="sec-outdoor"
-                  icon="🌿"
                   title="Outdoor Features"
                   subtitle="Garden, balcony, garage, pool"
                 >
@@ -1584,7 +1580,6 @@ const SellPropertyArea = () => {
                 {/* 6 · What's Nearby */}
                 <SellCard
                   id="sec-nearby"
-                  icon="📍"
                   title="What's Nearby"
                   subtitle='Walking or driving distance — e.g. "0.5 km" or "5 min walk"'
                 >
@@ -1632,7 +1627,6 @@ const SellPropertyArea = () => {
                 {/* 7 · Amenities */}
                 <SellCard
                   id="sec-amenities"
-                  icon="✨"
                   title="Amenities"
                   subtitle="Select all that apply to this property"
                 >
@@ -1662,7 +1656,6 @@ const SellPropertyArea = () => {
                 {/* 8 · Property Images */}
                 <SellCard
                   id="sec-images"
-                  icon="🖼"
                   title="Property Images"
                   subtitle="Upload up to 8 high-quality photos"
                 >
@@ -1677,7 +1670,6 @@ const SellPropertyArea = () => {
 
                 {/* Floor Plans */}
                 <SellCard
-                  icon="📐"
                   title="Floor Plans"
                   subtitle="Optional — upload floor plan images (up to 3)"
                 >
