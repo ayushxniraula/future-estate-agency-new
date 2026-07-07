@@ -10,7 +10,7 @@
 //    - agent jsonb: { is_agent, name, phone, email }
 // ============================================================
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Wrapper from "../layouts/Wrapper";
@@ -178,6 +178,32 @@ const INITIAL_FORM: SellFormData = {
   },
   amenities: [],
 };
+
+// ─── Agent info persistence ────────────────────────────────────
+const AGENT_STORAGE_KEY = "fw_agent_contact";
+
+interface SavedAgentInfo {
+  agent_name: string;
+  agent_phone: string;
+  agent_email: string;
+}
+
+function loadSavedAgentInfo(): SavedAgentInfo | null {
+  try {
+    const raw = localStorage.getItem(AGENT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveAgentInfo(info: SavedAgentInfo) {
+  try {
+    localStorage.setItem(AGENT_STORAGE_KEY, JSON.stringify(info));
+  } catch {
+    // localStorage unavailable (private mode, etc.) — fail silently
+  }
+}
 
 // ─── Styles ───────────────────────────────────────────────────
 const SELL_STYLES = `
@@ -875,6 +901,19 @@ const SellPropertyArea = () => {
   const [floorFiles, setFloorFiles] = useState<File[]>([]);
   const [form, setForm] = useState<SellFormData>(freshForm);
 
+  // Prefill agent details from a previous submission, if any
+  useEffect(() => {
+    const saved = loadSavedAgentInfo();
+    if (saved) {
+      setForm((prev) => ({
+        ...prev,
+        agent_name: saved.agent_name,
+        agent_phone: saved.agent_phone,
+        agent_email: saved.agent_email,
+      }));
+    }
+  }, []);
+
   const set = <K extends keyof SellFormData>(key: K, value: SellFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -1021,6 +1060,14 @@ const SellPropertyArea = () => {
       ]);
 
       if (dbErr) throw new Error(dbErr.message);
+      // Remember agent details for next time
+      if (form.is_agent) {
+        saveAgentInfo({
+          agent_name: form.agent_name.trim(),
+          agent_phone: form.agent_phone.trim(),
+          agent_email: form.agent_email.trim(),
+        });
+      }
       setStep("success");
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Please try again.");
@@ -1031,7 +1078,14 @@ const SellPropertyArea = () => {
 
   const handleReset = () => {
     setStep("form");
-    setForm(freshForm());
+    const next = freshForm();
+    const saved = loadSavedAgentInfo();
+    if (saved) {
+      next.agent_name = saved.agent_name;
+      next.agent_phone = saved.agent_phone;
+      next.agent_email = saved.agent_email;
+    }
+    setForm(next);
     setImageFiles([]);
     setFloorFiles([]);
     setError(null);

@@ -63,6 +63,10 @@ interface Property {
   agent_info: Record<string, string> | null;
   agent?: Record<string, string> | null;
   google_maps_url?: string | null;
+  // Optional precise coordinates — when present these are used directly and
+  // skip the geocoding round-trip entirely (fastest + most accurate path).
+  latitude?: number | null;
+  longitude?: number | null;
   created_at: string;
 }
 
@@ -95,6 +99,67 @@ function normalisePhone(phone: string): string {
   const trimmed = phone.trim();
   if (trimmed.startsWith("+")) return trimmed;
   return `+977${trimmed}`;
+}
+
+// ─── Geocode cache (avoid re-hitting Nominatim for the same string) ───
+const GEOCODE_CACHE: Record<string, { lat: number; lon: number }> = {};
+// Fallback center — Kathmandu, Nepal, since that's this platform's market.
+// NOTE: this is only ever used when BOTH stored coordinates AND live
+// geocoding are unavailable. If every property is landing here, geocoding
+// is silently failing (check the console for warnings + your network tab —
+// this is almost always CORS, rate-limiting, or a blocked outbound request).
+const FALLBACK_COORDS = { lat: 27.7172, lon: 85.324 };
+
+async function geocodeLocation(
+  location: string,
+): Promise<{ lat: number; lon: number }> {
+  const key = location.trim().toLowerCase();
+  if (GEOCODE_CACHE[key]) return GEOCODE_CACHE[key];
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+        location,
+      )}`,
+    );
+    if (!res.ok) throw new Error(`Nominatim responded ${res.status}`);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      const coords = {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+      };
+      if (!Number.isNaN(coords.lat) && !Number.isNaN(coords.lon)) {
+        GEOCODE_CACHE[key] = coords;
+        return coords;
+      }
+    }
+    throw new Error(`No geocode match for "${location}"`);
+  } catch (err) {
+    // Log instead of swallowing — if this fires for every property, the
+    // fetch itself is failing, which is why the map always lands on the
+    // same fallback point regardless of the location text.
+    // eslint-disable-next-line no-console
+    console.warn("[PropertyMap] geocoding failed, using fallback center:", err);
+    return FALLBACK_COORDS;
+  }
+}
+
+// Extracts lat/lng directly from a FULL (non-shortened) Google Maps URL,
+// e.g. https://www.google.com/maps/place/.../@27.7172,85.324,15z/...
+// This does NOT work for shortened links like maps.app.goo.gl/xxxx — those
+// require following a redirect server-side, which the browser can't do.
+// If you only have a short link, open it once and copy the resulting full
+// URL (or the lat/lng shown in the address bar) into the property record.
+function parseCoordsFromGoogleMapsUrl(
+  url: string | null | undefined,
+): { lat: number; lon: number } | null {
+  if (!url) return null;
+  const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (atMatch)
+    return { lat: parseFloat(atMatch[1]), lon: parseFloat(atMatch[2]) };
+  const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (qMatch) return { lat: parseFloat(qMatch[1]), lon: parseFloat(qMatch[2]) };
+  return null;
 }
 
 // ─── Design tokens ────────────────────────────────────────────
@@ -1014,21 +1079,107 @@ function WalkScore({ nearby }: { nearby: Record<string, string> | null }) {
 }
 
 // ─── Map ──────────────────────────────────────────────────────
+// Coordinates are resolved in priority order, each one skipping the need
+// for the next:
+//   1. Explicit `latitude`/`longitude` on the property — no network call,
+//      always correct. This should be the long-term source of truth.
+//   2. Coordinates parsed directly out of a FULL Google Maps URL (one
+//      containing "@lat,lng"). Shortened links (maps.app.goo.gl/...) can't
+//      be parsed this way — see parseCoordsFromGoogleMapsUrl for why.
+//   3. Live geocoding of the location text via Nominatim, as a last resort.
+//      If this call itself fails (CORS, rate-limiting, blocked network),
+//      every property will silently collapse to the same fallback point —
+//      that's a sign to check the console for a "[PropertyMap] geocoding
+//      failed" warning, not a sign the location text is being ignored.
 function PropertyMap({
   location,
   googleMapsUrl,
+  latitude,
+  longitude,
 }: {
   location: string;
   googleMapsUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }) {
-  const q = encodeURIComponent(location);
+  const hasExplicitCoords =
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    !Number.isNaN(latitude) &&
+    !Number.isNaN(longitude);
+
+  const parsedFromUrl = hasExplicitCoords
+    ? null
+    : parseCoordsFromGoogleMapsUrl(googleMapsUrl);
+
+  const initialCoords = hasExplicitCoords
+    ? { lat: latitude as number, lon: longitude as number }
+    : parsedFromUrl;
+
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+    initialCoords,
+  );
+  const [mapLoading, setMapLoading] = useState(!initialCoords);
+
+  useEffect(() => {
+    if (hasExplicitCoords) {
+      setCoords({ lat: latitude as number, lon: longitude as number });
+      setMapLoading(false);
+      return;
+    }
+    const fromUrl = parseCoordsFromGoogleMapsUrl(googleMapsUrl);
+    if (fromUrl) {
+      setCoords(fromUrl);
+      setMapLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setMapLoading(true);
+    (async () => {
+      const resolved = await geocodeLocation(location);
+      if (!cancelled) {
+        setCoords(resolved);
+        setMapLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, googleMapsUrl, hasExplicitCoords, latitude, longitude]);
+
   const openLink =
-    googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${q}`;
+    googleMapsUrl ||
+    (coords
+      ? `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lon}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`);
+
+  if (mapLoading || !coords) {
+    return (
+      <div className="fwd-map">
+        <div className="fwd-skeleton" style={{ height: 380 }} />
+        <div className="fwd-map-footer">
+          <i className="bi bi-geo-alt" style={{ color: "var(--fw-teal)" }} />
+          {location}
+        </div>
+      </div>
+    );
+  }
+
+  // ~1.1km-wide box around the point — comfortably zoomed to street/block level.
+  const delta = 0.01;
+  const bbox = [
+    coords.lon - delta,
+    coords.lat - delta,
+    coords.lon + delta,
+    coords.lat + delta,
+  ].join(",");
+
   return (
     <div className="fwd-map">
       <iframe
         title={`Map: ${location}`}
-        src={`https://www.openstreetmap.org/export/embed.html?layer=mapnik&query=${q}`}
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat},${coords.lon}`}
         height="380"
         style={{ border: 0, width: "100%" }}
         allowFullScreen
@@ -1639,6 +1790,8 @@ const BuyDetails = () => {
                   <PropertyMap
                     location={property.location}
                     googleMapsUrl={property.google_maps_url}
+                    latitude={property.latitude}
+                    longitude={property.longitude}
                   />
                 </div>
               </div>
