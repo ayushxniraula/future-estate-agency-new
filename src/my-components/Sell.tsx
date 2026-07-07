@@ -1387,50 +1387,38 @@ const SellPropertyArea = () => {
                     </div>
                     <div className="col-md-3">
                       <Field label="Bedrooms">
-                        <select
-                          className="sell-select"
+                        <input
+                          type="number"
+                          min={0}
+                          className="sell-input"
+                          placeholder="e.g. 3"
                           value={form.bedrooms}
                           onChange={(e) => set("bedrooms", e.target.value)}
-                        >
-                          <option value="">Select</option>
-                          {[1, 2, 3, 4, 5, 6].map((n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </Field>
                     </div>
                     <div className="col-md-3">
                       <Field label="Bathrooms">
-                        <select
-                          className="sell-select"
+                        <input
+                          type="number"
+                          min={0}
+                          className="sell-input"
+                          placeholder="e.g. 2"
                           value={form.bathrooms}
                           onChange={(e) => set("bathrooms", e.target.value)}
-                        >
-                          <option value="">Select</option>
-                          {[1, 2, 3, 4, 5].map((n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </Field>
                     </div>
                     <div className="col-md-3">
                       <Field label="Kitchens">
-                        <select
-                          className="sell-select"
+                        <input
+                          type="number"
+                          min={0}
+                          className="sell-input"
+                          placeholder="e.g. 1"
                           value={form.kitchens}
                           onChange={(e) => set("kitchens", e.target.value)}
-                        >
-                          <option value="">Select</option>
-                          {[1, 2, 3].map((n) => (
-                            <option key={n} value={n}>
-                              {n}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </Field>
                     </div>
 

@@ -68,6 +68,7 @@ interface Property {
   latitude?: number | null;
   longitude?: number | null;
   created_at: string;
+  views?: number | null;
 }
 
 // ─── LocalStorage helpers ─────────────────────────────────────
@@ -90,6 +91,30 @@ function toggleSavedId(id: string): boolean {
     ids.splice(idx, 1);
     localStorage.setItem(LS_SAVED_KEY, JSON.stringify(ids));
     return false;
+  }
+}
+
+// ─── View-count session dedup ──────────────────────────────────
+// Prevents the same visitor from inflating the counter on every
+// refresh within one browser session (sessionStorage clears on tab close).
+const LS_VIEWED_KEY = "fw_viewed_properties";
+function hasViewedThisSession(id: string): boolean {
+  try {
+    const viewed = JSON.parse(sessionStorage.getItem(LS_VIEWED_KEY) || "[]");
+    return viewed.includes(id);
+  } catch {
+    return false;
+  }
+}
+function markViewedThisSession(id: string) {
+  try {
+    const viewed = JSON.parse(sessionStorage.getItem(LS_VIEWED_KEY) || "[]");
+    if (!viewed.includes(id)) {
+      viewed.push(id);
+      sessionStorage.setItem(LS_VIEWED_KEY, JSON.stringify(viewed));
+    }
+  } catch {
+    // sessionStorage unavailable (private mode, etc.) — fail silently
   }
 }
 
@@ -283,7 +308,7 @@ const DETAIL_STYLES = `
   .fwd-section:last-child { border-bottom: none; margin-bottom: 0; }
   .fwd-section__heading { font-family: var(--font-display); font-size: 20px; font-weight: 400; color: var(--fw-navy); margin-bottom: 16px; letter-spacing: -0.2px; display: flex; align-items: center; gap: 12px; }
   .fwd-section__heading::after { content: ""; flex: 1; height: 1.5px; background: linear-gradient(90deg, var(--c-rule) 0%, transparent 100%); }
-  .fwd-body-text { font-size: 14.5px; line-height: 1.85; color: var(--c-ink-2); }
+  .fwd-body-text { font-size: 14.5px; line-height: 1.85; color: var(--c-ink-2); white-space: pre-wrap; }
 
   /* ── Accordion ── */
   .fwd-accordion { display: flex; flex-direction: column; gap: 7px; }
@@ -752,6 +777,13 @@ function Banner({
             </span>
             {property.property_type && (
               <span className="fwd-meta-chip">{property.property_type}</span>
+            )}
+            {typeof property.views === "number" && (
+              <span className="fwd-meta-chip">
+                <i className="bi bi-eye" style={{ color: "var(--fw-teal)" }} />
+                {property.views.toLocaleString()} view
+                {property.views === 1 ? "" : "s"}
+              </span>
             )}
           </div>
         </div>
@@ -1655,6 +1687,27 @@ const BuyDetails = () => {
           .single();
         if (sbError) throw sbError;
         setProperty(data as Property);
+
+        // Count this as a view once per session per property. The actual
+        // increment happens atomically in Postgres via the RPC (see
+        // increment_property_views), so concurrent visitors can't race
+        // each other the way a client-side read-then-write would.
+        if (!hasViewedThisSession(id)) {
+          markViewedThisSession(id);
+          supabase
+            .rpc("increment_property_views", { prop_id: id })
+            .then(({ error: rpcError }) => {
+              if (rpcError) {
+                // eslint-disable-next-line no-console
+                console.warn("[views] increment failed:", rpcError);
+              }
+            });
+          // Reflect the increment optimistically so the number on screen
+          // is correct immediately, without waiting on a refetch.
+          setProperty((prev) =>
+            prev ? { ...prev, views: (prev.views ?? 0) + 1 } : prev,
+          );
+        }
       } catch (err: any) {
         setError(err?.message || "Failed to load property");
       } finally {
