@@ -9,6 +9,8 @@ import Slider from "react-slick";
 import { Link } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Fancybox from "../../common/Fancybox";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const SUPABASE_URL = "https://afwvbftvfubboorpiszu.supabase.co";
 const SUPABASE_ANON_KEY =
@@ -37,6 +39,20 @@ const LISTING_HERO_STYLES = `
     padding-top: 80px;
     padding-bottom: 80px;
     overflow: hidden;
+  }
+
+  .listing-slider-one.slick-slider { display: block; }
+  .listing-slider-one .slick-list { overflow: hidden; }
+  .listing-slider-one .slick-track {
+    display: flex !important;
+    align-items: stretch;
+  }
+  .listing-slider-one .slick-slide {
+    height: auto;
+    float: none;
+  }
+  .listing-slider-one .slick-slide > div {
+    height: 100%;
   }
   @media (max-width: 1199px) { .fw-listing-hero { margin-top: 120px; padding-top: 60px; padding-bottom: 60px; } }
   @media (max-width: 767px) { .fw-listing-hero { margin-top: 60px; padding-top: 44px; padding-bottom: 44px; } }
@@ -327,27 +343,37 @@ function getTagLabel(status: string): string {
   }
 }
 
-const sliderSettings = {
-  dots: false,
-  arrows: false,
-  centerPadding: "0px",
-  slidesToShow: 4,
-  slidesToScroll: 1,
-  autoplay: true,
-  autoplaySpeed: 3500,
-  responsive: [
-    { breakpoint: 1400, settings: { slidesToShow: 3 } },
-    { breakpoint: 992, settings: { slidesToShow: 2 } },
-    { breakpoint: 640, settings: { slidesToShow: 1 } },
-  ],
-};
-
 const FutureListingHero = ({ style }: { style?: boolean }) => {
   injectListingHeroStyles();
 
   const sliderRef = useRef<Slider | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // sliderSettings lives inside the component so it can react to
+  // how many properties were actually fetched (fixes the "only one
+  // stacked card" layout bug when there are fewer items than slidesToShow).
+  const sliderSettings = {
+    dots: false,
+    arrows: false,
+    centerPadding: "0px",
+    slidesToShow: Math.min(4, properties.length || 1),
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3500,
+    infinite: properties.length > 4,
+    responsive: [
+      {
+        breakpoint: 1400,
+        settings: { slidesToShow: Math.min(3, properties.length || 1) },
+      },
+      {
+        breakpoint: 992,
+        settings: { slidesToShow: Math.min(2, properties.length || 1) },
+      },
+      { breakpoint: 640, settings: { slidesToShow: 1 } },
+    ],
+  };
 
   useEffect(() => {
     (async () => {
