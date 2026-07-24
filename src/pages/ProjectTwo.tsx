@@ -5,7 +5,7 @@ import ProjectTwoMain from '../components/inner-pages/projects/project-two';
 const ProjectTwo = () => {
    return (
       <Wrapper>
-         <SEO pageTitle={'Project Two Homy'} />
+         <SEO pageTitle={'Project'} />
          <ProjectTwoMain />
       </Wrapper>
    );

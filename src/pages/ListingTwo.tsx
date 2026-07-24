@@ -5,7 +5,7 @@ import ListingTwoMain from '../components/inner-listing/listing-01';
 const ListingTwo = () => {
   return (
     <Wrapper>
-      <SEO pageTitle={'Listing Two Homy'} />
+      <SEO pageTitle={'Listing'} />
       <ListingTwoMain />
     </Wrapper>
   );

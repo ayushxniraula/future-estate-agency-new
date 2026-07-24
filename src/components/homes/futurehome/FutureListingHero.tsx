@@ -71,14 +71,17 @@ const LISTING_HERO_STYLES = `
   .fw-listing-hero .title-one p { color: #6b7191; }
 
   /* Slider card */
-  .fw-new-listing-card {
-    background: #fff;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1.5px solid #eef0f8;
-    margin-bottom: 8px;
-    transition: box-shadow 0.28s, transform 0.28s;
-  }
+ .fw-new-listing-card {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid #eef0f8;
+  margin-bottom: 8px;
+  transition: box-shadow 0.28s, transform 0.28s;
+  display: flex;              /* NEW */
+  flex-direction: column;     /* NEW */
+  height: 100%;                /* NEW */
+}
   .fw-new-listing-card:hover {
     box-shadow: 0 12px 44px rgba(37,32,96,0.13);
     transform: translateY(-4px);
@@ -151,7 +154,10 @@ const LISTING_HERO_STYLES = `
   }
 
   /* Card body */
-  .fw-nlc__body { padding: 16px 18px 0; }
+  .fw-nlc__body { 
+  padding: 16px 18px 0; 
+  flex: 1 1 auto;   /* NEW */
+}
   .fw-nlc__type {
     font-size: 10px;
     font-weight: 700;
@@ -218,11 +224,12 @@ const LISTING_HERO_STYLES = `
     font-weight: 400;
     letter-spacing: -0.3px;
   }
-  .fw-nlc__price-sub {
-    font-size: 11px;
-    color: #8a8e9e;
-    font-family: sans-serif;
-  }
+ .fw-nlc__price-sub {
+  font-size: 11px;
+  color: #8a8e9e;
+  font-family: sans-serif;
+  min-height: 15px;   /* NEW — reserves space even when empty */
+}
 
   .fw-nlc__actions {
     list-style: none;
@@ -551,12 +558,12 @@ const FutureListingHero = ({ style }: { style?: boolean }) => {
                     {/* Footer */}
                     <div className="fw-nlc__footer">
                       <div>
-                        <div className="fw-nlc__price">
-                          {formatPrice(item.price)}
-                        </div>
-                        {item.status === "For Rent" && (
-                          <div className="fw-nlc__price-sub">per month</div>
-                        )}
+                      <div className="fw-nlc__price">
+  {formatPrice(item.price)}
+</div>
+<div className="fw-nlc__price-sub">
+  {item.status === "For Rent" ? "per month" : "\u00A0"}
+</div>
                       </div>
                     </div>
                   </div>

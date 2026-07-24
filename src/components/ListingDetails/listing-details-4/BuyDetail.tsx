@@ -63,8 +63,6 @@ interface Property {
   agent_info: Record<string, string> | null;
   agent?: Record<string, string> | null;
   google_maps_url?: string | null;
-  // Optional precise coordinates — when present these are used directly and
-  // skip the geocoding round-trip entirely (fastest + most accurate path).
   latitude?: number | null;
   longitude?: number | null;
   created_at: string;
@@ -95,8 +93,6 @@ function toggleSavedId(id: string): boolean {
 }
 
 // ─── View-count session dedup ──────────────────────────────────
-// Prevents the same visitor from inflating the counter on every
-// refresh within one browser session (sessionStorage clears on tab close).
 const LS_VIEWED_KEY = "fw_viewed_properties";
 function hasViewedThisSession(id: string): boolean {
   try {
@@ -128,11 +124,6 @@ function normalisePhone(phone: string): string {
 
 // ─── Geocode cache (avoid re-hitting Nominatim for the same string) ───
 const GEOCODE_CACHE: Record<string, { lat: number; lon: number }> = {};
-// Fallback center — Kathmandu, Nepal, since that's this platform's market.
-// NOTE: this is only ever used when BOTH stored coordinates AND live
-// geocoding are unavailable. If every property is landing here, geocoding
-// is silently failing (check the console for warnings + your network tab —
-// this is almost always CORS, rate-limiting, or a blocked outbound request).
 const FALLBACK_COORDS = { lat: 27.7172, lon: 85.324 };
 
 async function geocodeLocation(
@@ -160,21 +151,12 @@ async function geocodeLocation(
     }
     throw new Error(`No geocode match for "${location}"`);
   } catch (err) {
-    // Log instead of swallowing — if this fires for every property, the
-    // fetch itself is failing, which is why the map always lands on the
-    // same fallback point regardless of the location text.
     // eslint-disable-next-line no-console
     console.warn("[PropertyMap] geocoding failed, using fallback center:", err);
     return FALLBACK_COORDS;
   }
 }
 
-// Extracts lat/lng directly from a FULL (non-shortened) Google Maps URL,
-// e.g. https://www.google.com/maps/place/.../@27.7172,85.324,15z/...
-// This does NOT work for shortened links like maps.app.goo.gl/xxxx — those
-// require following a redirect server-side, which the browser can't do.
-// If you only have a short link, open it once and copy the resulting full
-// URL (or the lat/lng shown in the address bar) into the property record.
 function parseCoordsFromGoogleMapsUrl(
   url: string | null | undefined,
 ): { lat: number; lon: number } | null {
@@ -275,21 +257,28 @@ const DETAIL_STYLES = `
   .fwd-share-copy-btn.copied { background: #38a169; }
 
   /* ── Gallery ── */
-  .fwd-gallery { border-radius: var(--radius-card); overflow: hidden; position: relative; box-shadow: var(--shadow-hover); background: var(--c-surface); margin-bottom: 24px; border: 1.5px solid var(--c-rule); }
-  .fwd-gallery__main-wrap { overflow: hidden; position: relative; }
-  .fwd-gallery__main-img { width: 100%; height: clamp(280px, 45vw, 500px); object-fit: cover; display: block; cursor: zoom-in; transition: transform 0.4s ease; }
+  .fwd-gallery { border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow-hover); background: var(--c-surface); margin-bottom: 24px; border: 1.5px solid var(--c-rule); }
+  .fwd-gallery__grid { display: grid; grid-template-columns: 3fr 1fr; gap: 8px; padding: 8px; }
+  @media (max-width: 767px) { .fwd-gallery__grid { grid-template-columns: 1fr; } }
+
+  .fwd-gallery__main-wrap { position: relative; overflow: hidden; border-radius: 10px; background: var(--c-surface); }
+  .fwd-gallery__main-img { width: 100%; height: clamp(360px, 42vw, 620px); object-fit: cover; display: block; cursor: zoom-in; transition: transform 0.4s ease; }
+  @media (max-width: 767px) { .fwd-gallery__main-img { height: clamp(260px, 60vw, 420px); } }
   .fwd-gallery:hover .fwd-gallery__main-img { transform: scale(1.015); }
-  .fwd-gallery__placeholder { width: 100%; height: clamp(280px, 45vw, 500px); display: flex; align-items: center; justify-content: center; font-size: 4rem; background: linear-gradient(135deg, #f0eef8 0%, #e8f5f7 100%); }
+  .fwd-gallery__placeholder { width: 100%; height: clamp(360px, 42vw, 620px); display: flex; align-items: center; justify-content: center; font-size: 4rem; background: linear-gradient(135deg, #f0eef8 0%, #e8f5f7 100%); border-radius: 10px; }
   .fwd-gallery__arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.95); border: none; box-shadow: 0 2px 14px rgba(37,32,96,0.16); display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--fw-navy); cursor: pointer; z-index: 5; transition: all 0.2s; }
   .fwd-gallery__arrow:hover { background: var(--fw-teal); color: #fff; box-shadow: 0 4px 20px rgba(28,148,164,0.35); transform: translateY(-50%) scale(1.06); }
   .fwd-gallery__arrow--prev { left: 14px; }
   .fwd-gallery__arrow--next { right: 14px; }
   .fwd-gallery__counter { position: absolute; bottom: 14px; right: 14px; background: rgba(37,32,96,0.6); backdrop-filter: blur(6px); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 10px; z-index: 5; letter-spacing: 0.4px; }
-  .fwd-gallery__thumbs { display: flex; gap: 6px; padding: 10px; background: var(--c-surface); border-top: 1.5px solid var(--c-rule); overflow-x: auto; scrollbar-width: none; }
-  .fwd-gallery__thumbs::-webkit-scrollbar { display: none; }
-  .fwd-gallery__thumb { flex-shrink: 0; width: 68px; height: 50px; border-radius: 7px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: border-color 0.18s, opacity 0.18s; opacity: 0.55; }
+
+  .fwd-gallery__side { display: flex; flex-direction: column; gap: 8px; max-height: clamp(360px, 42vw, 620px); overflow-y: auto; scrollbar-width: none; }
+  .fwd-gallery__side::-webkit-scrollbar { display: none; }
+  @media (max-width: 767px) { .fwd-gallery__side { flex-direction: row; overflow-x: auto; max-height: none; } }
+  .fwd-gallery__thumb { flex: 1; min-height: 0; width: 100%; aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: border-color 0.18s, opacity 0.18s; opacity: 0.6; }
+  @media (max-width: 767px) { .fwd-gallery__thumb { flex-shrink: 0; width: 110px; aspect-ratio: 4 / 3; } }
   .fwd-gallery__thumb.active { border-color: var(--fw-teal); opacity: 1; }
-  .fwd-gallery__thumb:hover { opacity: 0.85; }
+  .fwd-gallery__thumb:hover { opacity: 0.9; }
   .fwd-gallery__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   /* ── Overview bar ── */
@@ -631,8 +620,8 @@ function ShareModal({
           </div>
           <div className="fwd-share-grid">
             {shareLinks.map((s) => (
-              <a
-                key={s.key}
+              
+               <a key={s.key}
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -675,55 +664,61 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
   if (imgs.length === 0) {
     return (
       <div className="fwd-gallery">
-        <div className="fwd-gallery__placeholder">🏠</div>
+        <div className="fwd-gallery__grid">
+          <div className="fwd-gallery__placeholder">🏠</div>
+        </div>
       </div>
     );
   }
   const prev = () => setActive((i) => (i === 0 ? imgs.length - 1 : i - 1));
   const next = () => setActive((i) => (i === imgs.length - 1 ? 0 : i + 1));
+
   return (
     <div className="fwd-gallery">
-      <div className="fwd-gallery__main-wrap">
-        <img
-          src={imgs[active]}
-          alt={`${title} — ${active + 1}`}
-          className="fwd-gallery__main-img"
-        />
+      <div className="fwd-gallery__grid">
+        <div className="fwd-gallery__main-wrap">
+          <img
+            src={imgs[active]}
+            alt={`${title} — ${active + 1}`}
+            className="fwd-gallery__main-img"
+          />
+          {imgs.length > 1 && (
+            <>
+              <button
+                className="fwd-gallery__arrow fwd-gallery__arrow--prev"
+                onClick={prev}
+                aria-label="Previous image"
+              >
+                <i className="bi bi-arrow-left" />
+              </button>
+              <button
+                className="fwd-gallery__arrow fwd-gallery__arrow--next"
+                onClick={next}
+                aria-label="Next image"
+              >
+                <i className="bi bi-arrow-right" />
+              </button>
+              <div className="fwd-gallery__counter">
+                {active + 1} / {imgs.length}
+              </div>
+            </>
+          )}
+        </div>
+
         {imgs.length > 1 && (
-          <>
-            <button
-              className="fwd-gallery__arrow fwd-gallery__arrow--prev"
-              onClick={prev}
-              aria-label="Previous image"
-            >
-              <i className="bi bi-arrow-left" />
-            </button>
-            <button
-              className="fwd-gallery__arrow fwd-gallery__arrow--next"
-              onClick={next}
-              aria-label="Next image"
-            >
-              <i className="bi bi-arrow-right" />
-            </button>
-            <div className="fwd-gallery__counter">
-              {active + 1} / {imgs.length}
-            </div>
-          </>
+          <div className="fwd-gallery__side">
+            {imgs.map((src, i) => (
+              <div
+                key={i}
+                className={`fwd-gallery__thumb${i === active ? " active" : ""}`}
+                onClick={() => setActive(i)}
+              >
+                <img src={src} alt={`Thumb ${i + 1}`} />
+              </div>
+            ))}
+          </div>
         )}
       </div>
-      {imgs.length > 1 && (
-        <div className="fwd-gallery__thumbs">
-          {imgs.map((src, i) => (
-            <div
-              key={i}
-              className={`fwd-gallery__thumb${i === active ? " active" : ""}`}
-              onClick={() => setActive(i)}
-            >
-              <img src={src} alt={`Thumb ${i + 1}`} />
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -1111,18 +1106,6 @@ function WalkScore({ nearby }: { nearby: Record<string, string> | null }) {
 }
 
 // ─── Map ──────────────────────────────────────────────────────
-// Coordinates are resolved in priority order, each one skipping the need
-// for the next:
-//   1. Explicit `latitude`/`longitude` on the property — no network call,
-//      always correct. This should be the long-term source of truth.
-//   2. Coordinates parsed directly out of a FULL Google Maps URL (one
-//      containing "@lat,lng"). Shortened links (maps.app.goo.gl/...) can't
-//      be parsed this way — see parseCoordsFromGoogleMapsUrl for why.
-//   3. Live geocoding of the location text via Nominatim, as a last resort.
-//      If this call itself fails (CORS, rate-limiting, blocked network),
-//      every property will silently collapse to the same fallback point —
-//      that's a sign to check the console for a "[PropertyMap] geocoding
-//      failed" warning, not a sign the location text is being ignored.
 function PropertyMap({
   location,
   googleMapsUrl,
@@ -1198,7 +1181,6 @@ function PropertyMap({
     );
   }
 
-  // ~1.1km-wide box around the point — comfortably zoomed to street/block level.
   const delta = 0.01;
   const bbox = [
     coords.lon - delta,
@@ -1409,7 +1391,6 @@ function AgentContactSidebar({
   const hasAgent = !!agent?.name;
   const phone = agent?.phone ? normalisePhone(agent.phone) : null;
 
-  // Contact form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
@@ -1461,7 +1442,6 @@ function AgentContactSidebar({
 
   return (
     <div className="fwd-sidebar-card" ref={sidebarRef}>
-      {/* Agent info — only if agent has a name */}
       {hasAgent && (
         <>
           <span className="fwd-sidebar-label">Listed By</span>
@@ -1502,11 +1482,10 @@ function AgentContactSidebar({
             </div>
           )}
 
-          {/* ── Contact channel buttons ── */}
           <div className="fwd-contact-channels">
             {phone && (
-              <a
-                href={`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in "${property.title}" at ${property.location}.`)}`}
+              
+               <a href={`https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in "${property.title}" at ${property.location}.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="fwd-channel-btn fwd-channel-btn--wa"
@@ -1518,8 +1497,8 @@ function AgentContactSidebar({
               </a>
             )}
             {phone && (
-              <a
-                href={`tel:${phone}`}
+              
+               <a href={`tel:${phone}`}
                 className="fwd-channel-btn fwd-channel-btn--call"
               >
                 <div className="fwd-channel-btn__icon">
@@ -1529,8 +1508,8 @@ function AgentContactSidebar({
               </a>
             )}
             {agent!.email && (
-              <a
-                href={`mailto:${agent!.email}?subject=${encodeURIComponent(`Enquiry: ${property.title}`)}&body=${encodeURIComponent(`Hi, I'm interested in "${property.title}" at ${property.location}.`)}`}
+              
+               <a href={`mailto:${agent!.email}?subject=${encodeURIComponent(`Enquiry: ${property.title}`)}&body=${encodeURIComponent(`Hi, I'm interested in "${property.title}" at ${property.location}.`)}`}
                 className="fwd-channel-btn fwd-channel-btn--email"
               >
                 <div className="fwd-channel-btn__icon">
@@ -1545,7 +1524,6 @@ function AgentContactSidebar({
         </>
       )}
 
-      {/* Contact form — always shown */}
       {!hasAgent && <span className="fwd-sidebar-label">Send a Message</span>}
 
       {success ? (
@@ -1688,10 +1666,6 @@ const BuyDetails = () => {
         if (sbError) throw sbError;
         setProperty(data as Property);
 
-        // Count this as a view once per session per property. The actual
-        // increment happens atomically in Postgres via the RPC (see
-        // increment_property_views), so concurrent visitors can't race
-        // each other the way a client-side read-then-write would.
         if (!hasViewedThisSession(id)) {
           markViewedThisSession(id);
           supabase
@@ -1702,8 +1676,6 @@ const BuyDetails = () => {
                 console.warn("[views] increment failed:", rpcError);
               }
             });
-          // Reflect the increment optimistically so the number on screen
-          // is correct immediately, without waiting on a refetch.
           setProperty((prev) =>
             prev ? { ...prev, views: (prev.views ?? 0) + 1 } : prev,
           );
@@ -1751,7 +1723,6 @@ const BuyDetails = () => {
               location={property.location}
             />
 
-            {/* Breadcrumb */}
             <div className="fwd-breadcrumb">
               <Link to="/">Home</Link>
               <span className="sep">›</span>
@@ -1760,17 +1731,13 @@ const BuyDetails = () => {
               <span className="current">{property.title}</span>
             </div>
 
-            {/* Banner */}
             <Banner property={property} onShare={() => setShareOpen(true)} />
 
-            {/* Gallery */}
             <Gallery images={property.images || []} title={property.title} />
 
-            {/* Overview bar */}
             <OverviewBar property={property} />
 
             <div className="row">
-              {/* ── Left column ── */}
               <div className="col-xl-8">
                 {property.description && (
                   <div className="fwd-section">
@@ -1849,7 +1816,6 @@ const BuyDetails = () => {
                 </div>
               </div>
 
-              {/* ── Right sidebar ── */}
               <div className="col-xl-4">
                 <div style={{ position: "sticky", top: "90px" }}>
                   <PriceSidebar property={property} />
@@ -1862,7 +1828,6 @@ const BuyDetails = () => {
               </div>
             </div>
 
-            {/* ── Mobile sticky CTA ── */}
             <div className="fwd-mobile-cta">
               <div className="fwd-mobile-cta__price">
                 <sup>NPR</sup>
@@ -1899,8 +1864,8 @@ const BuyDetails = () => {
                 Contact Agent
               </button>
               {agent?.phone && (
-                <a
-                  href={`https://wa.me/${normalisePhone(agent.phone).replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in "${property.title}"`)}`}
+                
+                 <a href={`https://wa.me/${normalisePhone(agent.phone).replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in "${property.title}"`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

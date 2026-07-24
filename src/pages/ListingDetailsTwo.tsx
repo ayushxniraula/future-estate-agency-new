@@ -5,7 +5,7 @@ import ListingDetailsTwoMain from '../components/ListingDetails/listing-details-
 const ListingDetailsTwo = () => {
    return (
       <Wrapper>
-         <SEO pageTitle={'Listing Details Two Homy'} />
+         <SEO pageTitle={'Listing Details'} />
          <ListingDetailsTwoMain />
       </Wrapper>
    );

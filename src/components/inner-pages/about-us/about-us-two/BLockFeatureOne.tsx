@@ -5,6 +5,22 @@
 // ============================================================
 
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = "https://afwvbftvfubboorpiszu.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmd3ZiZnR2ZnViYm9vcnBpc3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNjg4MzksImV4cCI6MjA5Njc0NDgzOX0.vw7hvZMrNeS_vqU7By6C69F1SsN_mWY6gSs2ipliLZY";const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  since_year: string | null;
+  image_url: string | null;
+  linkedin_url: string | null;
+  email: string | null;
+}
 
 // ─── Data ────────────────────────────────────────────────────
 
@@ -31,32 +47,6 @@ const VALUES = [
   },
 ];
 
-const TEAM = [
-  {
-    name: "Placeholder Name",
-    role: "Founder & CEO",
-    image: "/assets/images/team/team_01.jpg",
-    since: "Since 2010",
-  },
-  {
-    name: "Placeholder Name",
-    role: "Head of Sales",
-    image: "/assets/images/team/team_02.jpg",
-    since: "Since 2014",
-  },
-  {
-    name: "Placeholder Name",
-    role: "Lead Property Analyst",
-    image: "/assets/images/team/team_03.jpg",
-    since: "Since 2017",
-  },
-  {
-    name: "Placeholder Name",
-    role: "Client Relations",
-    image: "/assets/images/team/team_04.jpg",
-    since: "Since 2019",
-  },
-];
 
 const FAQS = [
   {
@@ -528,7 +518,15 @@ import { useState } from "react";
 
 const BLockFeatureOne = () => {
   injectAboutStyles();
+const [team, setTeam] = useState<TeamMember[]>([]);
 
+useEffect(() => {
+  supabase
+    .from("team_members")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .then(({ data }) => setTeam(data || []));
+}, []);
   return (
     <div className="fw-about">
       {/* ══════════════════════════════════════════
@@ -632,6 +630,13 @@ const BLockFeatureOne = () => {
       {/* ══════════════════════════════════════════
           5. TEAM
       ══════════════════════════════════════════ */}
+  
+
+
+
+{/* ══════════════════════════════════════════
+          5. TEAM
+      ══════════════════════════════════════════ */}
       <section className="fw-about__section fw-team">
         <div className="container">
           <div className="text-center mb-60 lg-mb-40">
@@ -644,12 +649,12 @@ const BLockFeatureOne = () => {
             </p>
           </div>
           <div className="row gx-4 gy-4">
-            {TEAM.map((member, i) => (
-              <div key={i} className="col-lg-3 col-sm-6">
+            {team.map((member) => (
+              <div key={member.id} className="col-lg-3 col-sm-6">
                 <div className="fw-team-card">
                   <div className="fw-team-card__img-wrap">
                     <img
-                      src={member.image}
+                      src={member.image_url || ""}
                       alt={member.name}
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
@@ -664,15 +669,17 @@ const BLockFeatureOne = () => {
                     />
                     <div className="fw-team-card__overlay">
                       <div className="fw-team-card__socials">
-                        <a
-                          href="#"
+                        
+                         <a href={member.linkedin_url || "#"}
+                          target={member.linkedin_url ? "_blank" : undefined}
+                          rel={member.linkedin_url ? "noopener noreferrer" : undefined}
                           className="fw-team-card__social"
                           aria-label="LinkedIn"
                         >
                           <i className="bi bi-linkedin" />
                         </a>
-                        <a
-                          href="#"
+                        
+                         <a href={member.email ? `mailto:${member.email}` : "#"}
                           className="fw-team-card__social"
                           aria-label="Email"
                         >
@@ -682,7 +689,9 @@ const BLockFeatureOne = () => {
                     </div>
                   </div>
                   <div className="fw-team-card__body">
-                    <div className="fw-team-card__since">{member.since}</div>
+                    <div className="fw-team-card__since">
+                      {member.since_year ? `Since ${member.since_year}` : ""}
+                    </div>
                     <div className="fw-team-card__name">{member.name}</div>
                     <div className="fw-team-card__role">{member.role}</div>
                   </div>
@@ -692,6 +701,9 @@ const BLockFeatureOne = () => {
           </div>
         </div>
       </section>
+
+
+
 
       {/* ══════════════════════════════════════════
           6. FAQ

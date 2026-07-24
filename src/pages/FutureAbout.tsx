@@ -5,7 +5,7 @@ import AboutUsTwoMain from "../components/inner-pages/about-us/about-us-two";
 const FutureAbout = () => {
   return (
     <Wrapper>
-      <SEO pageTitle={"About Us Two Homy"} />
+      <SEO pageTitle={"About Us"} />
       <AboutUsTwoMain />
     </Wrapper>
   );

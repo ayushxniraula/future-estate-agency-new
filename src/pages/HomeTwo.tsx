@@ -5,7 +5,7 @@ import HomeTwoMain from '../components/homes/home-two';
 const HomeTwo = () => {
   return (
     <Wrapper>
-      <SEO pageTitle={'Home Two Homy'} />
+      <SEO pageTitle={'Home'} />
       <HomeTwoMain />
     </Wrapper>
   );

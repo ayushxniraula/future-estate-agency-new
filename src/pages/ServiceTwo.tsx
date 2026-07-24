@@ -5,7 +5,7 @@ import ServiceTwoMain from '../components/inner-pages/services/service-two';
 const ServiceTwo = () => {
    return (
       <Wrapper>
-         <SEO pageTitle={'Service Two Homy'} />
+         <SEO pageTitle={'Service'} />
          <ServiceTwoMain />
       </Wrapper>
    );

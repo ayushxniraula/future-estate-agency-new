@@ -5,7 +5,7 @@ import PricingTwoMain from '../components/inner-pages/pricing/pricing-two';
 const PricingTwo = () => {
    return (
       <Wrapper>
-         <SEO pageTitle={'Pricing Two Homy'} />
+         <SEO pageTitle={'Pricing'} />
          <PricingTwoMain />
       </Wrapper>
    );
